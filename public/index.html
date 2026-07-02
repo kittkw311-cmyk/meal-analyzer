@@ -126,6 +126,31 @@
             <p class="advisor-comment" id="res-comment">食事の写真を解析して、ここにアドバイスを表示します。</p>
           </div>
         </div>
+
+        <!-- 本日の合計栄養素サマリー (常に表示) -->
+        <div class="card daily-summary-card" id="daily-summary-card">
+          <h3 class="daily-summary-title">📅 本日の合計摂取量</h3>
+          <div class="daily-summary-grid">
+            <div class="daily-summary-calorie-box">
+              <span class="daily-summary-label">エネルギー</span>
+              <span class="daily-summary-val"><span id="daily-total-calories">0</span> <span class="daily-summary-unit">kcal</span></span>
+            </div>
+            <div class="daily-summary-pfc-list">
+              <div class="daily-summary-pfc-item">
+                <span class="pfc-dot p"></span>
+                <span class="label">P: <span id="daily-total-protein">0</span>g</span>
+              </div>
+              <div class="daily-summary-pfc-item">
+                <span class="pfc-dot f"></span>
+                <span class="label">F: <span id="daily-total-fat">0</span>g</span>
+              </div>
+              <div class="daily-summary-pfc-item">
+                <span class="pfc-dot c"></span>
+                <span class="label">C: <span id="daily-total-carbs">0</span>g</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 2. 履歴タブ -->

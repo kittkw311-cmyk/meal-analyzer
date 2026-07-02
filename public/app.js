@@ -208,6 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const record = await response.json();
       displayResult(record.nutrition);
+      
+      // 今日の合計表示をリアルタイム更新
+      updateDailySummary();
 
     } catch (err) {
       console.error(err);
@@ -246,6 +249,48 @@ document.addEventListener('DOMContentLoaded', () => {
     resultContainer.style.display = 'block';
     resultContainer.scrollIntoView({ behavior: 'smooth' });
   }
+
+  // ==========================================================================
+  // Update Daily Summary (Always Visible Card on Analyze Tab)
+  // ==========================================================================
+  async function updateDailySummary() {
+    try {
+      const response = await fetch('/api/history');
+      const history = await response.json();
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      let totalCal = 0;
+      let totalP = 0;
+      let totalF = 0;
+      let totalC = 0;
+
+      history.forEach(item => {
+        const itemDate = new Date(item.mealDate || item.date);
+        const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
+        
+        if (itemDateStr === todayStr) {
+          totalCal += item.nutrition.calories;
+          totalP += item.nutrition.protein;
+          totalF += item.nutrition.fat;
+          totalC += item.nutrition.carbohydrates;
+        }
+      });
+
+      // DOM要素の更新
+      document.getElementById('daily-total-calories').textContent = totalCal;
+      document.getElementById('daily-total-protein').textContent = Math.round(totalP * 10) / 10;
+      document.getElementById('daily-total-fat').textContent = Math.round(totalF * 10) / 10;
+      document.getElementById('daily-total-carbs').textContent = Math.round(totalC * 10) / 10;
+
+    } catch (err) {
+      console.error('Failed to update daily summary:', err);
+    }
+  }
+
+  // 起動時に今日の合計をロード
+  updateDailySummary();
 
   // ==========================================================================
   // Load History Tab (With Daily Grouping)

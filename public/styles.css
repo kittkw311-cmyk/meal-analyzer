@@ -921,4 +921,73 @@ body {
   font-weight: 600;
 }
 
+/* ==========================================================================
+   Daily Summary Card (Always Visible on Analyze Tab)
+   ========================================================================== */
+.daily-summary-card {
+  margin-top: 20px;
+  border: 1.5px solid rgba(156, 212, 176, 0.4);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 8px 32px rgba(156, 212, 176, 0.05);
+}
+
+.daily-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  text-align: left;
+  letter-spacing: 0.5px;
+}
+
+.daily-summary-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.daily-summary-calorie-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.daily-summary-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.daily-summary-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.1;
+}
+
+.daily-summary-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.daily-summary-pfc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.daily-summary-pfc-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+}
+
+
 
