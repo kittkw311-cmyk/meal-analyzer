@@ -221,10 +221,28 @@
       <button class="modal-close-btn" id="btn-close-modal">✕</button>
       <div class="modal-body">
         <h3 class="modal-title" id="modal-meal-title">食事詳細</h3>
-        <div class="modal-meta">
-          <span id="modal-meal-date"></span>
-          <span id="modal-meal-type" class="history-meal-badge"></span>
+        
+        <!-- 編集用の日付・時刻・区分インラインフォーム -->
+        <div class="modal-meta-edit">
+          <div class="edit-field">
+            <span class="edit-label">📅 日付</span>
+            <input type="date" id="modal-date-input" class="modal-date-input">
+          </div>
+          <div class="edit-field">
+            <span class="edit-label">⏰ 時刻</span>
+            <input type="time" id="modal-time-input" class="modal-time-input">
+          </div>
+          <div class="edit-field">
+            <span class="edit-label">🍟 区分</span>
+            <select id="modal-type-select" class="modal-type-select">
+              <option value="morning">朝 🌅</option>
+              <option value="noon">昼 ☀️</option>
+              <option value="night">夕 🌙</option>
+              <option value="snack">間 🍰</option>
+            </select>
+          </div>
         </div>
+
         <div class="modal-image-container">
           <img id="modal-meal-image" src="" alt="食事画像">
         </div>
@@ -251,6 +269,11 @@
           <div class="comment-header">👩‍⚕️ 管理栄養士 AI のアドバイス</div>
           <p class="comment-text" id="modal-comment"></p>
         </div>
+
+        <!-- 変更を保存ボタン -->
+        <button type="button" class="btn btn-primary btn-block modal-save-btn" id="btn-save-modal">
+          変更を保存する
+        </button>
       </div>
     </div>
   </div>

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabContents = document.querySelectorAll('.tab-content');
   
   // Upload Elements (Camera / Gallery Split)
-  const dropZone = document.getElementById('drop-zone'); // Keep drop zone reference for compatibility
+  const dropZone = document.getElementById('drop-zone');
   const cameraInput = document.getElementById('camera-input');
   const galleryInput = document.getElementById('gallery-input');
   const btnCameraTrigger = document.getElementById('btn-camera-trigger');
@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // History Detail Modal Elements
   const historyDetailModal = document.getElementById('history-detail-modal');
   const btnCloseModal = document.getElementById('btn-close-modal');
+  const btnSaveModal = document.getElementById('btn-save-modal');
+  
+  // Modal Edit Inputs
+  const modalDateInput = document.getElementById('modal-date-input');
+  const modalTimeInput = document.getElementById('modal-time-input');
+  const modalTypeSelect = document.getElementById('modal-type-select');
 
   // Chart instances
   let caloriesChart = null;
@@ -52,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Selected file reference
   let selectedFile = null;
   let activeMealType = 'snack';
+  
+  // Current editing history ID (for Modal save)
+  let currentEditingHistoryId = null;
 
   // ==========================================================================
   // Selector Initializer
@@ -208,8 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function validateInputs() {
     const hasImage = !!selectedFile;
     const hasText = mealTextInput.value.trim().length > 0;
-    
-    // 画像があるか、またはテキストが入力されている場合ボタンを有効化
     btnAnalyze.disabled = !(hasImage || hasText);
   }
 
@@ -224,6 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!hasImage && !hasText) return;
 
     btnAnalyze.disabled = true;
+    
+    // ローディング文言の設定
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = 'AIが栄養素を解析しています...';
+    loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
     loadingOverlay.style.display = 'flex';
     resultContainer.style.display = 'none';
 
@@ -336,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDailySummary();
 
   // ==========================================================================
-  // Load History Tab (With Daily Grouping)
+  // Load History Tab (With Daily Grouping & Priority sorting)
   // ==========================================================================
   async function loadHistory() {
     try {
@@ -392,6 +405,23 @@ document.addEventListener('DOMContentLoaded', () => {
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
         
+        // 食事区分優先順ソートロジック：夕食 (night:4) ➡ 昼食 (noon:3) ➡ 朝食 (morning:2) ➡ 間食 (snack:1)
+        const typeWeight = {
+          night: 4,
+          noon: 3,
+          morning: 2,
+          snack: 1
+        };
+        group.meals.sort((a, b) => {
+          const weightA = typeWeight[a.mealType || 'snack'] || 1;
+          const weightB = typeWeight[b.mealType || 'snack'] || 1;
+          if (weightB !== weightA) {
+            return weightB - weightA; // 降順
+          }
+          // 重みが同じ場合は登録時間の降順
+          return new Date(b.mealDate || b.date) - new Date(a.mealDate || a.date);
+        });
+        
         // 1. 日別合計ヘッダーの生成 (日付の右側にインラインで並べる)
         const headerEl = document.createElement('div');
         headerEl.className = 'history-date-header';
@@ -425,32 +455,31 @@ document.addEventListener('DOMContentLoaded', () => {
           const card = document.createElement('div');
           card.className = 'card history-card';
           
-          // 履歴カードクリックで単独モーダルを開く
+          // 履歴カードクリックで単独モーダルを開く ＆ 編集用の値バインド
           card.addEventListener('click', () => {
+            currentEditingHistoryId = item.id;
+            
             // 画像が無い場合のプレースホルダー対応
             const modalImage = document.getElementById('modal-meal-image');
             if (item.imageId) {
               modalImage.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
               modalImage.style.display = 'block';
             } else {
-              modalImage.style.display = 'none'; // 画像がない場合は非表示
+              modalImage.style.display = 'none';
             }
             
+            // モーダル編集インプットのバインド処理
             const dateObj = new Date(item.mealDate || item.date);
-            const formattedDate = dateObj.toLocaleDateString('ja-JP', {
-              month: 'long',
-              day: 'numeric',
-              weekday: 'short'
-            });
-            const timeStr = dateObj.toLocaleTimeString('ja-JP', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            document.getElementById('modal-meal-date').textContent = `${formattedDate} ${timeStr}`;
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            modalDateInput.value = `${yyyy}-${mm}-${dd}`;
             
-            const typeBadge = document.getElementById('modal-meal-type');
-            typeBadge.className = `history-meal-badge ${item.mealType || 'snack'}`;
-            typeBadge.textContent = mealTypeJa;
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            modalTimeInput.value = `${hours}:${minutes}`;
+            
+            modalTypeSelect.value = item.mealType || 'snack';
 
             document.getElementById('modal-calories').textContent = item.nutrition.calories;
             document.getElementById('modal-protein').textContent = item.nutrition.protein;
@@ -494,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `;
 
-          // 削除ボタン (ゴミ箱) の生成と挿入
+          // 削除ボタン (ゴミ箱) の生成と挿入 (削除中の画面ブロック制御を追加)
           const deleteBtn = document.createElement('button');
           deleteBtn.className = 'btn-delete-history';
           deleteBtn.innerHTML = '🗑️';
@@ -502,17 +531,30 @@ document.addEventListener('DOMContentLoaded', () => {
           deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation(); // モーダル展開へのバブリングを防止
             if (confirm('この食事履歴を削除しますか？\n登録されたデータ（および画像ファイル）が完全に削除されます。')) {
+              
+              // 削除中のローディング画面表示と操作ブロック
+              const loadingTextEl = loadingOverlay.querySelector('p');
+              const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+              loadingTextEl.textContent = '履歴を削除しています...';
+              loadingSubTextEl.textContent = 'Googleドライブからデータを消去中';
+              loadingOverlay.style.display = 'flex';
+
               try {
                 const deleteRes = await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
                 if (deleteRes.ok) {
-                  loadHistory();
-                  updateDailySummary();
+                  await loadHistory();
+                  await updateDailySummary();
                 } else {
                   alert('削除に失敗しました。');
                 }
               } catch (err) {
                 console.error(err);
                 alert('削除処理中にエラーが発生しました。');
+              } finally {
+                loadingOverlay.style.display = 'none';
+                // 表示メッセージの初期復元
+                loadingTextEl.textContent = 'AIが栄養素を解析しています...';
+                loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
               }
             }
           });
@@ -529,10 +571,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // History Detail Modal Control
+  // History Detail Modal Control & Inline Save Handler
   // ==========================================================================
   const closeModal = () => {
     historyDetailModal.style.display = 'none';
+    currentEditingHistoryId = null;
   };
 
   btnCloseModal.addEventListener('click', closeModal);
@@ -541,6 +584,63 @@ document.addEventListener('DOMContentLoaded', () => {
   historyDetailModal.addEventListener('click', (e) => {
     if (e.target === historyDetailModal) {
       closeModal();
+    }
+  });
+
+  // 日付・区分の変更を保存
+  btnSaveModal.addEventListener('click', async () => {
+    if (!currentEditingHistoryId) return;
+
+    // 入力値から新しい食事日時（ISO 8601）を結合構築
+    const selectedDate = modalDateInput.value; // YYYY-MM-DD
+    const selectedTime = modalTimeInput.value; // HH:MM
+    if (!selectedDate || !selectedTime) {
+      alert('日付と時刻を正しく入力してください。');
+      return;
+    }
+
+    const newDateTimeStr = `${selectedDate}T${selectedTime}:00`;
+    const newMealDate = new Date(newDateTimeStr).toISOString();
+    const newMealType = modalTypeSelect.value;
+
+    btnSaveModal.disabled = true;
+
+    // 処理中のローディング表示
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '変更を保存しています...';
+    loadingSubTextEl.textContent = 'Googleドライブと同期中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const response = await fetch(`/api/history/${currentEditingHistoryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mealDate: newMealDate,
+          mealType: newMealType
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('更新に失敗しました。');
+      }
+
+      closeModal();
+      await loadHistory();
+      await updateDailySummary();
+
+    } catch (err) {
+      console.error(err);
+      alert('変更の保存に失敗しました: ' + err.message);
+    } finally {
+      loadingOverlay.style.display = 'none';
+      btnSaveModal.disabled = false;
+      // 文言の復元
+      loadingTextEl.textContent = 'AIが栄養素を解析しています...';
+      loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
     }
   });
 

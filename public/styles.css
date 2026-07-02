@@ -508,9 +508,9 @@ body {
 }
 
 .history-date {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .history-info-row {
@@ -521,7 +521,7 @@ body {
 }
 
 .history-calories {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   color: var(--text-main);
@@ -530,7 +530,7 @@ body {
 }
 
 .history-calories span {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -543,10 +543,10 @@ body {
 }
 
 .history-pfc-tag {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
   font-family: 'Outfit', sans-serif;
 }
 
@@ -1280,6 +1280,65 @@ body {
   text-align: center;
   padding: 4px;
   box-sizing: border-box;
+}
+
+/* ==========================================================================
+   History Detail Modal Form Editing Styles
+   ========================================================================== */
+.modal-meta-edit {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  background-color: rgba(220, 230, 224, 0.15);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 10px;
+}
+
+.modal-meta-edit .edit-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-meta-edit .edit-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.modal-date-input,
+.modal-time-input,
+.modal-type-select {
+  width: 100%;
+  padding: 6px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-main);
+  outline: none;
+  transition: var(--transition);
+}
+
+.modal-date-input:focus,
+.modal-time-input:focus,
+.modal-type-select:focus {
+  border-color: var(--primary);
+  background-color: #fff;
+}
+
+.modal-save-btn {
+  margin-top: 14px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(156, 212, 176, 0.25);
 }
 
 

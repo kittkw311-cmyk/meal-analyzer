@@ -194,11 +194,23 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
     console.log(`Analyzing meal input with Gemini 2.5 Flash (${mealDate} - ${mealType})...`);
     
-    // プロンプトの設計 (使われているすべての食材と調味料を推測して栄養算出することを明示)
+    // プロンプトの設計 (食材・調味料の厳密な推測と計算根拠の明記を強制)
     let promptInstruction = `
-入力された食事内容（添付された写真、または料理名・レシピURL・商品URLのテキスト: "${textInput}"）から、使われているすべての食材と調味料を丁寧に推測した上で、カロリー、たんぱく質（P）、脂質（F）、炭水化物（C）のグラム数を算出してください。
+入力された食事内容（添付された写真、または料理名・レシピURL・商品URLのテキスト: "${textInput}"）から、使われているすべての食材と調味料を推測した上で、カロリー、たんぱく質（P）、脂質（F）、炭水化物（C）のグラム数を算出してください。
 
-アドバイス（comment）には、推測した主な食材と調味料のリストと、管理栄養士としての優しく丁寧な日本語での健康・栄養アドバイス（合計200文字程度）を含めてください。
+【厳格な計算・推測ガイドライン】
+1. 食材の重量が不明な場合は、一般的な1食分の目安量（例：ご飯1膳150g、オートミール1食30g、卵1個50gなど）を想定し、計算の根拠とした想定グラム数を必ず明記してください。
+2. 以下の食材は指定がない場合も一般的なものを仮定して明記し、厳密に区別して計算してください。
+   - 肉類：鶏むね肉の「皮あり・皮なし」、部位（もも肉、ささみなど）を判断・仮定し明記。
+   - 大豆製品：豆腐の「木綿・絹ごし」などの種類を判断・仮定し明記。
+3. 調味料と調理法による「隠れカロリー（特に脂質）」を漏れなく推測・計算に含めてください。
+   - マヨネーズ、ごまドレッシング、焼肉のたれ、調理油などの高脂質・高カロリーな調味料の使用量を推測（大さじ・小さじ等）して加算してください。
+   - 逆に、ポン酢やレモン汁、塩などの低カロリー調味料も正確に反映させてください。
+   - 調理法（揚げる、炒める、蒸す、ゆでるなど）による油の吸収量（吸油率）も考慮して加算してください。
+
+アドバイス（comment）には、以下の2点を含めてください：
+- 【食材・調味料の推測と計算根拠】：想定グラム数、肉の部位や皮の有無、豆腐の種類、使用調味料と調理法による油の推測根拠などを箇条書きで必ず明記してください。
+- 【栄養アドバイス】：管理栄養士としての優しく丁寧な日本語アドバイスを記述してください。
 `;
 
     // contents 配列の組み立て
@@ -310,6 +322,31 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
   } catch (error) {
     console.error('Analysis error:', error);
     res.status(500).json({ error: '解析中にエラーが発生しました。: ' + error.message });
+  }
+});
+
+// 履歴編集 API (日付・食事区分の更新)
+app.put('/api/history/:id', async (req, res) => {
+  const { id } = req.params;
+  const { mealDate, mealType } = req.body;
+  try {
+    const history = await readHistory();
+    const recordIndex = history.findIndex(r => r.id === id);
+
+    if (recordIndex === -1) {
+      return res.status(404).json({ error: '指定された履歴が見つかりません。' });
+    }
+
+    // mealDate と mealType を更新
+    if (mealDate) history[recordIndex].mealDate = mealDate;
+    if (mealType) history[recordIndex].mealType = mealType;
+
+    await writeHistory(history);
+    res.json(history[recordIndex]);
+
+  } catch (error) {
+    console.error('Update history error:', error);
+    res.status(500).json({ error: '履歴の更新中にエラーが発生しました。: ' + error.message });
   }
 });
 
