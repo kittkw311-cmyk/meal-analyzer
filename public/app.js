@@ -45,11 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const historyDetailModal = document.getElementById('history-detail-modal');
   const btnCloseModal = document.getElementById('btn-close-modal');
   const btnSaveModal = document.getElementById('btn-save-modal');
+  const btnReanalyzeModal = document.getElementById('btn-reanalyze-modal');
   
   // Modal Edit Inputs
   const modalDateInput = document.getElementById('modal-date-input');
   const modalTimeInput = document.getElementById('modal-time-input');
   const modalTypeSelect = document.getElementById('modal-type-select');
+  const modalTextInput = document.getElementById('modal-text-input');
 
   // Chart instances
   let caloriesChart = null;
@@ -59,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedFile = null;
   let activeMealType = 'snack';
   
-  // Current editing history ID (for Modal save)
+  // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
 
   // ==========================================================================
@@ -245,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('image', selectedFile);
     }
     formData.append('textInput', mealTextInput.value.trim());
+    
     // 日付 (YYYY-MM-DD) にアップロードした瞬間の現在時刻 (HH:MM:SS) をマージして送信
     const selectedDate = mealDateInput.value;
     const now = new Date();
@@ -489,6 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modalTimeInput.value = `${hours}:${minutes}`;
             
             modalTypeSelect.value = item.mealType || 'snack';
+            modalTextInput.value = item.textInput || '';
+
+            // モーダル表示用料理名タイトル
+            const displayTitle = item.mealName || item.nutrition.mealName || (item.textInput && item.textInput.trim() ? item.textInput.trim() : '食事詳細');
+            document.getElementById('modal-meal-title').textContent = displayTitle;
 
             document.getElementById('modal-calories').textContent = item.nutrition.calories;
             document.getElementById('modal-protein').textContent = item.nutrition.protein;
@@ -505,10 +513,11 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">`
             : `<div class="history-no-img">✍️ テキスト入力</div>`;
 
-          // 表示用の料理名・テキスト（無い場合は画像解析プレースホルダー）
+          // 表示用の料理名・テキスト（Geminiが解析した具体的な料理名 mealName を優先表示）
           const displayText = item.textInput && item.textInput.trim() 
             ? item.textInput.trim() 
             : (item.imageId ? '📸 画像から解析' : '🍽️ 食事データ');
+          const displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
 
           // カロリーの右側にPFCをインライン横並びで配置 (history-info-row-v3) - 添付画像と同等スタイル
           card.innerHTML = `
@@ -519,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="history-date">
                 <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
-              <div class="history-meal-text">${displayText}</div>
+              <div class="history-meal-text">${displayMealName}</div>
               <div class="history-info-row-v3">
                 <div class="history-calories-v3">${item.nutrition.calories}<span class="unit">kcal</span></div>
                 <div class="history-pfc-boxes-v3">
@@ -588,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // History Detail Modal Control & Inline Save Handler
+  // History Detail Modal Control & Inline Save/Reanalyze Handlers
   // ==========================================================================
   const closeModal = () => {
     historyDetailModal.style.display = 'none';
@@ -619,6 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newDateTimeStr = `${selectedDate}T${selectedTime}:00`;
     const newMealDate = new Date(newDateTimeStr).toISOString();
     const newMealType = modalTypeSelect.value;
+    const newTextInput = modalTextInput.value.trim();
 
     btnSaveModal.disabled = true;
 
@@ -637,7 +647,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         body: JSON.stringify({
           mealDate: newMealDate,
-          mealType: newMealType
+          mealType: newMealType,
+          textInput: newTextInput
         })
       });
 
@@ -655,6 +666,74 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       loadingOverlay.style.display = 'none';
       btnSaveModal.disabled = false;
+      // 文言の復元
+      loadingTextEl.textContent = 'AIが栄養素を解析しています...';
+      loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
+    }
+  });
+
+  // 履歴詳細から再分析（再計算）を実行
+  btnReanalyzeModal.addEventListener('click', async () => {
+    if (!currentEditingHistoryId) return;
+
+    const selectedDate = modalDateInput.value;
+    const selectedTime = modalTimeInput.value;
+    if (!selectedDate || !selectedTime) {
+      alert('日付と時刻を正しく入力してください。');
+      return;
+    }
+
+    const newDateTimeStr = `${selectedDate}T${selectedTime}:00`;
+    const newMealDate = new Date(newDateTimeStr).toISOString();
+    const newMealType = modalTypeSelect.value;
+    const newTextInput = modalTextInput.value.trim();
+
+    btnReanalyzeModal.disabled = true;
+
+    // 処理中ローディング表示
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '食事データを再計算中...';
+    loadingSubTextEl.textContent = 'AIが隠れカロリー・調味料を再推測しています';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const response = await fetch(`/api/history/${currentEditingHistoryId}/reanalyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mealDate: newMealDate,
+          mealType: newMealType,
+          textInput: newTextInput
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('再計算に失敗しました。');
+      }
+
+      const updatedRecord = await response.json();
+
+      // モーダル内の表示値をリアルタイムで上書き（アニメーション反映）
+      document.getElementById('modal-meal-title').textContent = updatedRecord.mealName || updatedRecord.textInput || '食事詳細';
+      document.getElementById('modal-calories').textContent = updatedRecord.nutrition.calories;
+      document.getElementById('modal-protein').textContent = updatedRecord.nutrition.protein;
+      document.getElementById('modal-fat').textContent = updatedRecord.nutrition.fat;
+      document.getElementById('modal-carbs').textContent = updatedRecord.nutrition.carbohydrates;
+      document.getElementById('modal-comment').textContent = updatedRecord.nutrition.comment;
+
+      // 履歴一覧と今日の合計を非同期でリロード
+      await loadHistory();
+      await updateDailySummary();
+
+    } catch (err) {
+      console.error(err);
+      alert('再計算に失敗しました: ' + err.message);
+    } finally {
+      loadingOverlay.style.display = 'none';
+      btnReanalyzeModal.disabled = false;
       // 文言の復元
       loadingTextEl.textContent = 'AIが栄養素を解析しています...';
       loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';

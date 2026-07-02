@@ -222,6 +222,12 @@
       <div class="modal-body">
         <h3 class="modal-title" id="modal-meal-title">食事詳細</h3>
         
+        <!-- 編集用の食事内容テキストエリア -->
+        <div class="modal-text-edit-block">
+          <span class="edit-label">📝 食事内容（料理名、レシピURLなど）</span>
+          <textarea id="modal-text-input" class="modal-textarea" rows="2" placeholder="食事内容を入力または修正..."></textarea>
+        </div>
+
         <!-- 編集用の日付・時刻・区分インラインフォーム -->
         <div class="modal-meta-edit">
           <div class="edit-field">
@@ -270,10 +276,15 @@
           <p class="comment-text" id="modal-comment"></p>
         </div>
 
-        <!-- 変更を保存ボタン -->
-        <button type="button" class="btn btn-primary btn-block modal-save-btn" id="btn-save-modal">
-          変更を保存する
-        </button>
+        <!-- ボタンアクションエリア -->
+        <div class="modal-action-row">
+          <button type="button" class="btn btn-secondary modal-reanalyze-btn" id="btn-reanalyze-modal">
+            🔄 再計算する
+          </button>
+          <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-modal">
+            変更を保存する
+          </button>
+        </div>
       </div>
     </div>
   </div>
