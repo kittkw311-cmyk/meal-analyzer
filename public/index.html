@@ -130,23 +130,23 @@
         <!-- 本日の合計栄養素サマリー (常に表示) -->
         <div class="card daily-summary-card" id="daily-summary-card">
           <h3 class="daily-summary-title">📅 本日の合計摂取量</h3>
-          <div class="daily-summary-grid">
-            <div class="daily-summary-calorie-box">
-              <span class="daily-summary-label">エネルギー</span>
+          <div class="daily-summary-grid-v2">
+            <div class="daily-summary-calorie-box-v2">
               <span class="daily-summary-val"><span id="daily-total-calories">0</span> <span class="daily-summary-unit">kcal</span></span>
+              <span class="daily-summary-label">総エネルギー</span>
             </div>
-            <div class="daily-summary-pfc-list">
-              <div class="daily-summary-pfc-item">
-                <span class="pfc-dot p"></span>
-                <span class="label">P: <span id="daily-total-protein">0</span>g</span>
+            <div class="daily-summary-pfc-boxes">
+              <div class="daily-pfc-box protein">
+                <span class="label">タンパク質 (P)</span>
+                <span class="val"><span id="daily-total-protein">0</span>g</span>
               </div>
-              <div class="daily-summary-pfc-item">
-                <span class="pfc-dot f"></span>
-                <span class="label">F: <span id="daily-total-fat">0</span>g</span>
+              <div class="daily-pfc-box fat">
+                <span class="label">脂質 (F)</span>
+                <span class="val"><span id="daily-total-fat">0</span>g</span>
               </div>
-              <div class="daily-summary-pfc-item">
-                <span class="pfc-dot c"></span>
-                <span class="label">C: <span id="daily-total-carbs">0</span>g</span>
+              <div class="daily-pfc-box carbs">
+                <span class="label">炭水化物 (C)</span>
+                <span class="val"><span id="daily-total-carbs">0</span>g</span>
               </div>
             </div>
           </div>

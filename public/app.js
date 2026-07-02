@@ -425,6 +425,32 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="history-comment-preview">${item.nutrition.comment}</div>
             </div>
           `;
+
+          // 削除ボタン (ゴミ箱) の生成と挿入
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-delete-history';
+          deleteBtn.innerHTML = '🗑️';
+          deleteBtn.title = '履歴を削除';
+          deleteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation(); // 詳細展開へのバブリングを防止
+            if (confirm('この食事履歴を削除しますか？\n画像ファイルもGoogleドライブ（またはローカル）から完全に削除されます。')) {
+              try {
+                const deleteRes = await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
+                if (deleteRes.ok) {
+                  // 履歴リストと今日のサマリーを再読込
+                  loadHistory();
+                  updateDailySummary();
+                } else {
+                  alert('削除に失敗しました。');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('削除処理中にエラーが発生しました。');
+              }
+            }
+          });
+          card.appendChild(deleteBtn);
+
           historyList.appendChild(card);
         });
       });

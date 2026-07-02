@@ -989,5 +989,122 @@ body {
   font-family: 'Outfit', sans-serif;
 }
 
+/* ==========================================================================
+   Daily Summary Grid & PFC Boxes V2
+   ========================================================================== */
+.daily-summary-grid-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.daily-summary-calorie-box-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.daily-summary-calorie-box-v2 .daily-summary-val {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  line-height: 1;
+}
+
+.daily-summary-calorie-box-v2 .daily-summary-unit {
+  font-size: 14px;
+}
+
+.daily-summary-calorie-box-v2 .daily-summary-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.daily-summary-pfc-boxes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.daily-pfc-box {
+  border-radius: 12px;
+  padding: 10px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.daily-pfc-box .label {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.daily-pfc-box .val {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Daily PFC backgrounds */
+.daily-pfc-box.protein {
+  background-color: rgba(154, 194, 244, 0.12);
+  color: #2b5585;
+}
+.daily-pfc-box.fat {
+  background-color: rgba(251, 216, 127, 0.16);
+  color: #8c701f;
+}
+.daily-pfc-box.carbs {
+  background-color: rgba(247, 168, 184, 0.12);
+  color: #a04859;
+}
+
+/* ==========================================================================
+   History Delete Button & Layout Adjustments
+   ========================================================================== */
+.btn-delete-history {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 13px;
+  color: #ba546a;
+  z-index: 10;
+  outline: none;
+}
+
+.btn-delete-history:hover {
+  background-color: #fce8eb;
+  border-color: #f7a8b8;
+  transform: scale(1.08);
+}
+
+.btn-delete-history:active {
+  transform: scale(0.95);
+}
+
+.history-card {
+  position: relative;
+}
+
+
 
 

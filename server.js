@@ -397,6 +397,51 @@ app.get('/api/image', async (req, res) => {
   }
 });
 
+// 5. 履歴削除 API
+app.delete('/api/history/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const history = await readHistory();
+    const recordIndex = history.findIndex(r => r.id === id);
+
+    if (recordIndex === -1) {
+      return res.status(404).json({ error: '指定された履歴が見つかりません。' });
+    }
+
+    const record = history[recordIndex];
+
+    // 画像ファイルの物理削除
+    if (record.imageId) {
+      if (record.imageSource === 'drive' && drive) {
+        try {
+          console.log(`Deleting image from Google Drive: ${record.imageId}`);
+          await drive.files.delete({ fileId: record.imageId });
+          console.log('Successfully deleted image from Google Drive.');
+        } catch (err) {
+          console.error(`Failed to delete Google Drive image ${record.imageId}:`, err.message);
+        }
+      } else {
+        const filePath = path.join(UPLOADS_DIR, record.imageId);
+        if (fs.existsSync(filePath)) {
+          console.log(`Deleting local image file: ${filePath}`);
+          fs.unlinkSync(filePath);
+          console.log('Successfully deleted local image file.');
+        }
+      }
+    }
+
+    // 履歴レコードの削除
+    history.splice(recordIndex, 1);
+    await writeHistory(history);
+
+    res.json({ message: '履歴を正常に削除しました。' });
+
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: '履歴の削除中にエラーが発生しました。: ' + error.message });
+  }
+});
+
 // サーバー起動処理 (非同期初期化後に起動)
 (async () => {
   if (drive && folderId) {
