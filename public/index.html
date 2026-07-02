@@ -35,7 +35,6 @@
           <div class="daily-summary-grid-v2">
             <div class="daily-summary-calorie-box-v2">
               <span class="daily-summary-val"><span id="daily-total-calories">0</span> <span class="daily-summary-unit">kcal</span></span>
-              <span class="daily-summary-label">今日</span>
             </div>
             <div class="daily-summary-pfc-boxes">
               <div class="daily-pfc-box protein">
@@ -68,20 +67,14 @@
             </div>
           </div>
           
-          <!-- 食事日時と区分の選択 -->
-          <div class="meal-meta-selectors">
-            <div class="selector-item">
-              <label for="meal-date-input" class="selector-label">📅 日付</label>
-              <input type="date" id="meal-date-input" class="date-input">
-            </div>
-            <div class="selector-item">
-              <span class="selector-label">⏰ 食事区分</span>
-              <div class="meal-type-chips">
-                <button type="button" class="chip" data-type="morning">朝食 🌅</button>
-                <button type="button" class="chip" data-type="noon">昼食 ☀️</button>
-                <button type="button" class="chip" data-type="night">夕食 🌙</button>
-                <button type="button" class="chip" data-type="snack">間食 🍰</button>
-              </div>
+          <!-- 食事日時と区分の選択 (見出し無しの横1行インライン構成) -->
+          <div class="selectors-inline-row">
+            <input type="date" id="meal-date-input" class="date-input">
+            <div class="meal-type-chips">
+              <button type="button" class="chip" data-type="morning">朝 🌅</button>
+              <button type="button" class="chip" data-type="noon">昼 ☀️</button>
+              <button type="button" class="chip" data-type="night">夕 🌙</button>
+              <button type="button" class="chip" data-type="snack">間 🍰</button>
             </div>
           </div>
 
