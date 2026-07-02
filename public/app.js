@@ -573,8 +573,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="history-info">
               <div class="history-date">
                 <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
+                <span class="history-meal-text">${displayMealName}</span>
               </div>
-              <div class="history-meal-text">${displayMealName}</div>
               <div class="history-info-row-v3">
                 <div class="history-calories-v3">${item.nutrition.calories}<span class="unit">kcal</span></div>
                 <div class="history-pfc-boxes-v3">

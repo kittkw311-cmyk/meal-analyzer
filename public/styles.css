@@ -523,9 +523,10 @@ body {
 }
 
 .history-date {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .history-info-row {
@@ -1315,7 +1316,7 @@ body {
 }
 
 .history-calories-v3 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   color: var(--text-main);
@@ -1326,7 +1327,7 @@ body {
 }
 
 .history-calories-v3 .unit {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
   margin-left: 2px;
@@ -1341,27 +1342,27 @@ body {
 
 .history-pfc-box-v3 {
   border-radius: 8px;
-  padding: 4px 6px;
+  padding: 5px 8px;
   display: flex;
   flex-direction: row;
   align-items: baseline;
   justify-content: center;
   gap: 2px;
   border: 1px solid rgba(0, 0, 0, 0.04);
-  width: 56px;
+  width: 62px;
   flex-shrink: 0;
   box-sizing: border-box;
 }
 
 .history-pfc-box-v3 .label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   color: inherit;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .history-pfc-box-v3 .val {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   display: flex;
@@ -1370,7 +1371,7 @@ body {
 }
 
 .history-pfc-box-v3 .val .unit {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 600;
   margin-left: 0.5px;
   opacity: 0.8;
@@ -1391,11 +1392,11 @@ body {
 }
 
 .history-meal-text {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main);
-  margin-top: 3px;
-  max-width: 170px;
+  margin-top: 0;
+  max-width: 175px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
