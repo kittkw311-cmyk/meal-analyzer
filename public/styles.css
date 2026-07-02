@@ -1507,11 +1507,12 @@ body {
 }
 
 .inference-text-v2 {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--text-main);
   white-space: pre-wrap;
   margin: 0;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 /* Modal Inference Card Styles */
@@ -1532,11 +1533,12 @@ body {
 }
 
 .modal-inference-text {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   color: var(--text-main);
   white-space: pre-wrap;
   margin: 0;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
 
 /* ==========================================================================
