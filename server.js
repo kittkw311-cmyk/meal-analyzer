@@ -49,21 +49,24 @@ if (geminiApiKey) {
 // Google Drive API初期化
 let drive = null;
 const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-if (credentialsPath && fs.existsSync(credentialsPath)) {
+if (clientId && clientSecret && refreshToken) {
   try {
-    const auth = new google.auth.GoogleAuth({
-      keyFile: credentialsPath,
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
-    });
-    drive = google.drive({ version: 'v3', auth });
-    console.log('Google Drive API initialized successfully.');
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret
+    );
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    drive = google.drive({ version: 'v3', auth: oauth2Client });
+    console.log('Google Drive API initialized successfully (OAuth2).');
   } catch (err) {
-    console.error('Failed to initialize Google Drive API:', err);
+    console.error('Failed to initialize Google Drive API (OAuth2):', err);
   }
 } else {
-  console.log('Google Drive credentials not found or invalid. Operating in local-only mode.');
+  console.log('Google Drive credentials (OAuth2) not found or incomplete. Operating in local-only mode.');
 }
 
 // ==========================================================================
