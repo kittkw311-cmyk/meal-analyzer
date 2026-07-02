@@ -5,14 +5,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const navItems = document.querySelectorAll('.nav-item');
   const tabContents = document.querySelectorAll('.tab-content');
   
-  // Upload Elements
-  const dropZone = document.getElementById('drop-zone');
-  const imageInput = document.getElementById('image-input');
-  const uploadPrompt = document.getElementById('upload-prompt');
+  // Upload Elements (Camera / Gallery Split)
+  const dropZone = document.getElementById('drop-zone'); // Keep drop zone reference for compatibility
+  const cameraInput = document.getElementById('camera-input');
+  const galleryInput = document.getElementById('gallery-input');
+  const btnCameraTrigger = document.getElementById('btn-camera-trigger');
+  const btnGalleryTrigger = document.getElementById('btn-gallery-trigger');
+  
   const previewContainer = document.getElementById('preview-container');
   const imagePreview = document.getElementById('image-preview');
   const btnRemoveImage = document.getElementById('btn-remove-image');
   const btnAnalyze = document.getElementById('btn-analyze');
+
+  // Text Input Element
+  const mealTextInput = document.getElementById('meal-text-input');
 
   // Selectors (Date & Meal Type)
   const mealDateInput = document.getElementById('meal-date-input');
@@ -117,40 +123,47 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // Image Upload & Preview Handling
+  // Image Upload / Camera Split Handling
   // ==========================================================================
-  dropZone.addEventListener('click', (e) => {
-    if (e.target !== btnRemoveImage) {
-      imageInput.click();
-    }
+  btnCameraTrigger.addEventListener('click', () => {
+    cameraInput.click();
   });
 
-  imageInput.addEventListener('change', (e) => {
+  btnGalleryTrigger.addEventListener('click', () => {
+    galleryInput.click();
+  });
+
+  cameraInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
       handleFile(e.target.files[0]);
     }
   });
 
-  // Drag and Drop
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.style.borderColor = 'var(--primary)';
-    dropZone.style.backgroundColor = 'rgba(156, 212, 176, 0.1)';
-  });
-
-  const resetDropZoneStyle = () => {
-    dropZone.style.borderColor = '#c3d9cc';
-    dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
-  };
-
-  dropZone.addEventListener('dragleave', resetDropZoneStyle);
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    resetDropZoneStyle();
-    if (e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
+  galleryInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
     }
   });
+
+  // Drag and Drop (Keep as fallback for gallery)
+  if (dropZone) {
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--primary)';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = 'var(--border-color)';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--border-color)';
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
 
   function handleFile(file) {
     if (!file.type.startsWith('image/')) {
@@ -162,40 +175,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       imagePreview.src = e.target.result;
-      uploadPrompt.style.display = 'none';
       previewContainer.style.display = 'flex';
-      btnAnalyze.disabled = false;
+      validateInputs();
     };
     reader.readAsDataURL(file);
   }
 
   btnRemoveImage.addEventListener('click', (e) => {
     e.stopPropagation();
-    clearUpload();
+    clearImage();
   });
 
-  function clearUpload() {
+  function clearImage() {
     selectedFile = null;
-    imageInput.value = '';
+    cameraInput.value = '';
+    galleryInput.value = '';
     imagePreview.src = '#';
-    uploadPrompt.style.display = 'block';
     previewContainer.style.display = 'none';
-    btnAnalyze.disabled = true;
+    validateInputs();
+  }
+
+  function clearUpload() {
+    clearImage();
+    mealTextInput.value = '';
+    validateInputs();
     initializeSelectors();
   }
+
+  // ==========================================================================
+  // Inputs Validation (Enable/Disable Analyze Button)
+  // ==========================================================================
+  function validateInputs() {
+    const hasImage = !!selectedFile;
+    const hasText = mealTextInput.value.trim().length > 0;
+    
+    // 画像があるか、またはテキストが入力されている場合ボタンを有効化
+    btnAnalyze.disabled = !(hasImage || hasText);
+  }
+
+  mealTextInput.addEventListener('input', validateInputs);
 
   // ==========================================================================
   // Analyze Meal Execution
   // ==========================================================================
   btnAnalyze.addEventListener('click', async () => {
-    if (!selectedFile) return;
+    const hasImage = !!selectedFile;
+    const hasText = mealTextInput.value.trim().length > 0;
+    if (!hasImage && !hasText) return;
 
     btnAnalyze.disabled = true;
     loadingOverlay.style.display = 'flex';
     resultContainer.style.display = 'none';
 
     const formData = new FormData();
-    formData.append('image', selectedFile);
+    if (hasImage) {
+      formData.append('image', selectedFile);
+    }
+    formData.append('textInput', mealTextInput.value.trim());
     formData.append('mealDate', mealDateInput.value);
     formData.append('mealType', activeMealType);
 
@@ -391,7 +427,14 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // 履歴カードクリックで単独モーダルを開く
           card.addEventListener('click', () => {
-            document.getElementById('modal-meal-image').src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
+            // 画像が無い場合のプレースホルダー対応
+            const modalImage = document.getElementById('modal-meal-image');
+            if (item.imageId) {
+              modalImage.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
+              modalImage.style.display = 'block';
+            } else {
+              modalImage.style.display = 'none'; // 画像がない場合は非表示
+            }
             
             const dateObj = new Date(item.mealDate || item.date);
             const formattedDate = dateObj.toLocaleDateString('ja-JP', {
@@ -425,10 +468,15 @@ document.addEventListener('DOMContentLoaded', () => {
             minute: '2-digit'
           });
 
+          // 画像が無い場合の履歴カードのプレースホルダー
+          const imageHtml = item.imageId
+            ? `<img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">`
+            : `<div class="history-no-img">✍️ テキスト入力</div>`;
+
           // カロリーの右側にPFCをインライン横並びで配置 (history-info-row)
           card.innerHTML = `
             <div class="history-img-wrapper">
-              <img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">
+              ${imageHtml}
             </div>
             <div class="history-info">
               <div class="history-date">
@@ -453,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
           deleteBtn.title = '履歴を削除';
           deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation(); // モーダル展開へのバブリングを防止
-            if (confirm('この食事履歴を削除しますか？\n画像ファイルもGoogleドライブ（またはローカル）から完全に削除されます。')) {
+            if (confirm('この食事履歴を削除しますか？\n登録されたデータ（および画像ファイル）が完全に削除されます。')) {
               try {
                 const deleteRes = await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
                 if (deleteRes.ok) {

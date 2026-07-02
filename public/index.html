@@ -39,32 +39,42 @@
             <div class="daily-summary-pfc-boxes">
               <div class="daily-pfc-box protein">
                 <span class="label">P</span>
-                <span class="val"><span id="daily-total-protein">0</span>g</span>
+                <span class="val"><span id="daily-total-protein">0</span><span class="unit">g</span></span>
               </div>
               <div class="daily-pfc-box fat">
                 <span class="label">F</span>
-                <span class="val"><span id="daily-total-fat">0</span>g</span>
+                <span class="val"><span id="daily-total-fat">0</span><span class="unit">g</span></span>
               </div>
               <div class="daily-pfc-box carbs">
                 <span class="label">C</span>
-                <span class="val"><span id="daily-total-carbs">0</span>g</span>
+                <span class="val"><span id="daily-total-carbs">0</span><span class="unit">g</span></span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="card upload-card">
-          <div class="upload-area" id="drop-zone">
-            <input type="file" id="image-input" accept="image/*" hidden>
-            <div class="upload-prompt" id="upload-prompt">
-              <div class="upload-icon">📸</div>
-              <p class="upload-text">タップしてカメラ起動・写真を選択</p>
-              <span class="upload-subtext">またはファイルをドラッグ＆ドロップ</span>
-            </div>
-            <div class="preview-container" id="preview-container" style="display: none;">
-              <img id="image-preview" src="#" alt="食事プレビュー">
-              <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を変更</button>
-            </div>
+          <!-- カメラ起動 / アルバム選択の2つのボタン -->
+          <div class="upload-action-buttons" id="drop-zone">
+            <button type="button" class="btn upload-action-btn" id="btn-camera-trigger">
+              <span class="btn-icon">📸</span>写真を撮る
+            </button>
+            <button type="button" class="btn upload-action-btn" id="btn-gallery-trigger">
+              <span class="btn-icon">📁</span>アルバムから選択
+            </button>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+            <input type="file" id="gallery-input" accept="image/*" hidden>
+          </div>
+          
+          <!-- プレビュー表示エリア -->
+          <div class="preview-container" id="preview-container" style="display: none;">
+            <img id="image-preview" src="#" alt="食事プレビュー">
+            <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を消去</button>
+          </div>
+          
+          <!-- 食事内容のテキスト入力エリア -->
+          <div class="text-input-area">
+            <textarea id="meal-text-input" class="meal-textarea" placeholder="または料理名、レシピのURL、商品のURLを入力..." rows="2"></textarea>
           </div>
           
           <!-- 食事日時と区分の選択 (見出し無しの横1行インライン構成) -->

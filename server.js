@@ -174,11 +174,14 @@ function bufferToStream(buffer) {
 // API エンドポイント
 // ==========================================================================
 
-// 1. 食事画像解析＆保存 API
+// 1. 食事画像・テキスト解析＆保存 API
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: '画像がアップロードされていません。' });
+    const textInput = req.body.textInput || '';
+    
+    // 画像もテキストもない場合はエラー
+    if (!req.file && !textInput.trim()) {
+      return res.status(400).json({ error: '画像がアップロードされていないか、または食事内容のテキストが入力されていません。' });
     }
 
     if (!ai) {
@@ -189,20 +192,31 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     const mealDate = req.body.mealDate ? new Date(req.body.mealDate).toISOString() : new Date().toISOString();
     const mealType = req.body.mealType || 'snack';
 
-    console.log(`Analyzing image with Gemini 2.5 Flash (${mealDate} - ${mealType})...`);
+    console.log(`Analyzing meal input with Gemini 2.5 Flash (${mealDate} - ${mealType})...`);
     
-    // Gemini 2.5 Flash で画像を解析（構造化JSON出力）
+    // プロンプトの設計 (使われているすべての食材と調味料を推測して栄養算出することを明示)
+    let promptInstruction = `
+入力された食事内容（添付された写真、または料理名・レシピURL・商品URLのテキスト: "${textInput}"）から、使われているすべての食材と調味料を丁寧に推測した上で、カロリー、たんぱく質（P）、脂質（F）、炭水化物（C）のグラム数を算出してください。
+
+アドバイス（comment）には、推測した主な食材と調味料のリストと、管理栄養士としての優しく丁寧な日本語での健康・栄養アドバイス（合計200文字程度）を含めてください。
+`;
+
+    // contents 配列の組み立て
+    const contents = [];
+    if (req.file) {
+      contents.push({
+        inlineData: {
+          mimeType: req.file.mimetype,
+          data: req.file.buffer.toString('base64'),
+        },
+      });
+    }
+    contents.push(promptInstruction);
+
+    // Gemini 2.5 Flash で解析（構造化JSON出力）
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: [
-        {
-          inlineData: {
-            mimeType: req.file.mimetype,
-            data: req.file.buffer.toString('base64'),
-          },
-        },
-        'Analyze the nutritional content of the food in this image. Provide the response strictly matching the schema in Japanese.',
-      ],
+      contents: contents,
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -212,7 +226,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
             protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
             fat: { type: Type.NUMBER, description: '脂質 (g)' },
             carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
-            comment: { type: Type.STRING, description: '管理栄養士風の優しく丁寧な日本語アドバイス（200文字程度）' }
+            comment: { type: Type.STRING, description: '食材・調味料の推測リストおよび管理栄養士風の優しく丁寧な日本語アドバイス' }
           },
           required: ['calories', 'protein', 'fat', 'carbohydrates', 'comment']
         }
@@ -223,48 +237,50 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     console.log('Gemini raw response:', resultText);
     const nutritionData = JSON.parse(resultText);
 
-    // 画像の保存処理
-    let imageSource = 'local';
+    // 画像の保存処理 (画像が提供されている場合のみ)
+    let imageSource = '';
     let imageId = '';
 
-    // ファイル名の設計: meal_YYYY-MM-DD_mealType_timestamp.jpg
-    const dateStr = mealDate.substring(0, 10);
-    const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
-
-    if (drive && folderId) {
-      try {
-        console.log('Uploading image to Google Drive...');
-        const fileMetadata = {
-          name: filename,
-          parents: [folderId],
-        };
-        const media = {
-          mimeType: req.file.mimetype,
-          body: bufferToStream(req.file.buffer),
-        };
-        const driveResponse = await drive.files.create({
-          requestBody: fileMetadata,
-          media: media,
-          fields: 'id',
-        });
-        imageSource = 'drive';
-        imageId = driveResponse.data.id;
-        console.log('Uploaded to Google Drive. File ID:', imageId);
-      } catch (driveErr) {
-        console.error('Google Drive upload failed, falling back to local storage:', driveErr);
-        // フォールバック: ローカル保存
-        const filePath = path.join(UPLOADS_DIR, filename);
-        fs.writeFileSync(filePath, req.file.buffer);
-        imageSource = 'local';
-        imageId = filename;
-      }
-    } else {
-      // ローカルモード
-      console.log('Google Drive not configured. Saving image locally...');
-      const filePath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filePath, req.file.buffer);
+    if (req.file) {
       imageSource = 'local';
-      imageId = filename;
+      // ファイル名の設計: meal_YYYY-MM-DD_mealType_timestamp.jpg
+      const dateStr = mealDate.substring(0, 10);
+      const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
+
+      if (drive && folderId) {
+        try {
+          console.log('Uploading image to Google Drive...');
+          const fileMetadata = {
+            name: filename,
+            parents: [folderId],
+          };
+          const media = {
+            mimeType: req.file.mimetype,
+            body: bufferToStream(req.file.buffer),
+          };
+          const driveResponse = await drive.files.create({
+            requestBody: fileMetadata,
+            media: media,
+            fields: 'id',
+          });
+          imageSource = 'drive';
+          imageId = driveResponse.data.id;
+          console.log('Successfully uploaded image to Google Drive. File ID:', imageId);
+        } catch (err) {
+          console.error('Failed to upload image to Google Drive, saving locally instead:', err.message);
+          // ドライブ保存失敗時はローカル保存へフォールバック
+          imageSource = 'local';
+          const localPath = path.join(UPLOADS_DIR, filename);
+          fs.writeFileSync(localPath, req.file.buffer);
+          imageId = filename;
+        }
+      } else {
+        // ローカルのみ保存
+        const localPath = path.join(UPLOADS_DIR, filename);
+        fs.writeFileSync(localPath, req.file.buffer);
+        imageId = filename;
+        console.log('Saved image locally:', filename);
+      }
     }
 
     // 履歴データへの登録
@@ -273,9 +289,16 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       date: new Date().toISOString(), // システム登録日時
       mealDate,                        // ユーザー指定の食事日
       mealType,                        // ユーザー指定の食事区分
+      textInput,                       // ユーザー入力の料理名やURLテキスト
       imageSource,
       imageId,
-      nutrition: nutritionData
+      nutrition: {
+        calories: Number(nutritionData.calories),
+        protein: Number(nutritionData.protein),
+        fat: Number(nutritionData.fat),
+        carbohydrates: Number(nutritionData.carbohydrates),
+        comment: nutritionData.comment
+      }
     };
 
     const history = await readHistory();
@@ -286,7 +309,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
   } catch (error) {
     console.error('Analysis error:', error);
-    res.status(500).json({ error: '画像の解析中にエラーが発生しました。: ' + error.message });
+    res.status(500).json({ error: '解析中にエラーが発生しました。: ' + error.message });
   }
 });
 

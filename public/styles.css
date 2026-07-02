@@ -214,75 +214,90 @@ body {
 }
 
 /* ==========================================================================
-   Upload Area
+   Upload Area (Action Buttons and Text Field)
    ========================================================================== */
 .upload-card {
-  padding: 16px;
+  padding: 12px;
 }
 
-.upload-area {
-  border: 2px dashed #c3d9cc;
-  border-radius: 16px;
-  min-height: 120px;
+.upload-action-buttons {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.upload-action-btn {
+  flex: 1;
+  display: inline-flex;
   align-items: center;
-  cursor: pointer;
-  background-color: rgba(255, 255, 255, 0.4);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.upload-area:hover {
-  background-color: rgba(255, 255, 255, 0.8);
-  border-color: var(--primary);
-}
-
-.upload-prompt {
-  text-align: center;
-  padding: 10px;
-}
-
-.upload-icon {
-  font-size: 28px;
-  margin-bottom: 4px;
-  transition: var(--transition);
-}
-
-.upload-area:hover .upload-icon {
-  transform: scale(1.1) rotate(-5deg);
-}
-
-.upload-text {
+  justify-content: center;
+  gap: 6px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 10px 4px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-main);
-  margin-bottom: 2px;
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
 }
 
-.upload-subtext {
-  font-size: 10px;
-  color: var(--text-muted);
+.upload-action-btn:hover {
+  background-color: var(--bg-color);
+  border-color: var(--primary);
+}
+
+.upload-action-btn:active {
+  transform: scale(0.97);
+}
+
+.upload-action-btn .btn-icon {
+  font-size: 16px;
+}
+
+.text-input-area {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.meal-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background-color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-main);
+  outline: none;
+  transition: var(--transition);
+  resize: none;
+}
+
+.meal-textarea:focus {
+  border-color: var(--primary);
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(156, 212, 176, 0.15);
 }
 
 .preview-container {
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px;
+  padding: 6px;
+  margin-bottom: 10px;
 }
 
 #image-preview {
   max-width: 100%;
-  max-height: 200px;
+  max-height: 140px;
   object-fit: cover;
   border-radius: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
@@ -980,24 +995,35 @@ body {
 
 .daily-pfc-box {
   border-radius: 8px;
-  padding: 6px 2px;
+  padding: 6px 4px;
   text-align: center;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .daily-pfc-box .label {
-  font-size: 8px;
-  font-weight: 700;
-  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 800;
+  color: inherit;
+  opacity: 0.8;
 }
 
 .daily-pfc-box .val {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: baseline;
+}
+
+.daily-pfc-box .val .unit {
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 1px;
 }
 
 /* Daily PFC backgrounds */
@@ -1239,6 +1265,21 @@ body {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+.history-no-img {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(220, 230, 224, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: center;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
 
