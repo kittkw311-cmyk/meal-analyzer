@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食事栄養素AIアナライザー</title>
+  <meta name="description" content="AIが食事の写真を解析して、カロリーや栄養バランスの計算と管理栄養士風のアドバイスを提供します。">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- CSS -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-emoji">🥗</span>
+        <h1>MealNutri AI</h1>
+      </div>
+      <p class="subtitle">食事写真から栄養バランスをスマートに解析</p>
+    </header>
+
+    <!-- メインコンテンツ領域（タブで切り替え） -->
+    <main class="app-main">
+      
+      <!-- 1. 解析タブ -->
+      <section id="tab-analyze" class="tab-content active">
+        <div class="card upload-card">
+          <div class="upload-area" id="drop-zone">
+            <input type="file" id="image-input" accept="image/*" capture="environment" hidden>
+            <div class="upload-prompt" id="upload-prompt">
+              <div class="upload-icon">📸</div>
+              <p class="upload-text">タップしてカメラ起動・写真を選択</p>
+              <span class="upload-subtext">またはファイルをドラッグ＆ドロップ</span>
+            </div>
+            <div class="preview-container" id="preview-container" style="display: none;">
+              <img id="image-preview" src="#" alt="食事プレビュー">
+              <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を変更</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
+        </div>
+
+        <!-- 解析中ローディング -->
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+          <div class="loader-content">
+            <div class="spinner"></div>
+            <p>AIが栄養素を解析しています...</p>
+            <span class="loading-subtext">カロリーやPFCバランスを計算中</span>
+          </div>
+        </div>
+
+        <!-- 解析結果表示 -->
+        <div class="result-container" id="result-container" style="display: none;">
+          <h2 class="section-title">✨ 解析結果</h2>
+          
+          <div class="card result-card">
+            <!-- カロリーサマリー -->
+            <div class="calorie-summary">
+              <span class="calorie-label">推定エネルギー</span>
+              <div class="calorie-value">
+                <span class="number" id="res-calories">0</span>
+                <span class="unit">kcal</span>
+              </div>
+            </div>
+
+            <!-- 三大栄養素 (PFC) -->
+            <div class="pfc-container">
+              <div class="pfc-item protein">
+                <div class="pfc-header">
+                  <span class="pfc-dot"></span>
+                  <span class="pfc-name">タンパク質 (P)</span>
+                  <span class="pfc-val"><span id="res-protein">0</span>g</span>
+                </div>
+                <div class="pfc-bar-bg">
+                  <div class="pfc-bar-fill" id="bar-protein" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="pfc-item fat">
+                <div class="pfc-header">
+                  <span class="pfc-dot"></span>
+                  <span class="pfc-name">脂質 (F)</span>
+                  <span class="pfc-val"><span id="res-fat">0</span>g</span>
+                </div>
+                <div class="pfc-bar-bg">
+                  <div class="pfc-bar-fill" id="bar-fat" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="pfc-item carbs">
+                <div class="pfc-header">
+                  <span class="pfc-dot"></span>
+                  <span class="pfc-name">炭水化物 (C)</span>
+                  <span class="pfc-val"><span id="res-carbs">0</span>g</span>
+                </div>
+                <div class="pfc-bar-bg">
+                  <div class="pfc-bar-fill" id="bar-carbs" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 管理栄養士コメント -->
+          <div class="card advisor-card">
+            <div class="advisor-header">
+              <span class="advisor-avatar">👩‍⚕️</span>
+              <div>
+                <span class="advisor-title">管理栄養士 AI</span>
+                <span class="advisor-subtitle">栄養アドバイス</span>
+              </div>
+            </div>
+            <p class="advisor-comment" id="res-comment">食事の写真を解析して、ここにアドバイスを表示します。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 履歴タブ -->
+      <section id="tab-history" class="tab-content">
+        <h2 class="section-title">🕒 食事履歴</h2>
+        <div id="history-list" class="history-list">
+          <!-- 履歴カードが動的に挿入されます -->
+          <div class="empty-state">
+            <p>まだ解析履歴がありません。</p>
+            <span>食事を解析するとここに保存されます。</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 統計タブ -->
+      <section id="tab-stats" class="tab-content">
+        <h2 class="section-title">📊 栄養統計</h2>
+        
+        <div class="stats-summary-grid">
+          <div class="card stats-summary-card">
+            <span class="summary-label">総解析数</span>
+            <span class="summary-value" id="stats-total-meals">0</span>
+          </div>
+          <div class="card stats-summary-card">
+            <span class="summary-label">1食平均</span>
+            <span class="summary-value"><span id="stats-avg-calories">0</span> <span class="unit">kcal</span></span>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <h3 class="chart-title">📅 カロリー推移 (直近7日間)</h3>
+          <div class="chart-container">
+            <canvas id="calories-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <h3 class="chart-title">⚖️ 平均PFCバランス</h3>
+          <div class="chart-container">
+            <canvas id="pfc-chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 下部ナビゲーションバー（スマホ向け） -->
+    <nav class="app-nav">
+      <button class="nav-item active" data-tab="tab-analyze">
+        <span class="nav-icon">📸</span>
+        <span class="nav-label">解析</span>
+      </button>
+      <button class="nav-item" data-tab="tab-history">
+        <span class="nav-icon">🕒</span>
+        <span class="nav-label">履歴</span>
+      </button>
+      <button class="nav-item" data-tab="tab-stats">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">統計</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,673 @@
+/* ==========================================================================
+   CSS Variables & Reset
+   ========================================================================== */
+:root {
+  --bg-color: #f7f9f6;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --text-main: #3a473e;
+  --text-muted: #708075;
+  --primary: #9cd4b0;        /* パステルグリーン */
+  --primary-hover: #80c498;
+  --secondary: #fbd87f;      /* パステルイエロー */
+  --accent: #f7a8b8;         /* パステルピンク */
+  --accent-blue: #9ac2f4;    /* パステルブルー */
+  --border-color: rgba(220, 230, 224, 0.8);
+  --shadow-color: rgba(150, 180, 160, 0.12);
+  
+  --font-sans: 'Noto Sans JP', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #e8efe9; /* アプリ外背景（デスクトップ表示用） */
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ==========================================================================
+   App Container (Mobile Frame on Desktop)
+   ========================================================================== */
+.app-container {
+  width: 100%;
+  max-width: 480px; /* スマホ幅に制限 */
+  height: 100vh;
+  background-color: var(--bg-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 481px) {
+  .app-container {
+    height: 90vh;
+    border-radius: 32px;
+    border: 8px solid #ffffff;
+  }
+}
+
+/* ==========================================================================
+   Header Style
+   ========================================================================== */
+.app-header {
+  padding: 20px 24px 16px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--bg-color) 100%);
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.logo-emoji {
+  font-size: 24px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.app-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(120deg, #6bb884, #8ebf73);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Outfit', sans-serif;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Main Content Area
+   ========================================================================== */
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 20px 90px; /* 下部ナビ分の余白を追加 */
+  scroll-behavior: smooth;
+}
+
+/* スクロールバーの非表示（モバイルライクに） */
+.app-main::-webkit-scrollbar {
+  width: 0px;
+}
+
+/* ==========================================================================
+   Tabs Layout & Animations
+   ========================================================================== */
+.tab-content {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   UI Components (Cards & Buttons)
+   ========================================================================== */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 16px var(--shadow-color);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: #2c4a35;
+  box-shadow: 0 4px 12px rgba(156, 212, 176, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.btn-danger {
+  background-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(247, 168, 184, 0.3);
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   Upload Area
+   ========================================================================== */
+.upload-card {
+  padding: 16px;
+}
+
+.upload-area {
+  border: 2px dashed #c3d9cc;
+  border-radius: 16px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.4);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.upload-area:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: var(--primary);
+}
+
+.upload-prompt {
+  text-align: center;
+  padding: 20px;
+}
+
+.upload-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+
+.upload-area:hover .upload-icon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.upload-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.upload-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.preview-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+}
+
+#image-preview {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* ==========================================================================
+   Loading Overlay
+   ========================================================================== */
+.loading-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(156, 212, 176, 0.2);
+  border-left-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.loader-content p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.loading-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Result Screen
+   ========================================================================== */
+.result-card {
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.calorie-summary {
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border-color);
+  margin-bottom: 20px;
+}
+
+.calorie-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.calorie-value {
+  margin-top: 4px;
+  color: var(--text-main);
+}
+
+.calorie-value .number {
+  font-size: 38px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -1px;
+}
+
+.calorie-value .unit {
+  font-size: 16px;
+  font-weight: 600;
+  margin-left: 2px;
+  color: var(--text-muted);
+}
+
+/* PFC Balance Bars */
+.pfc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pfc-item {
+  width: 100%;
+}
+
+.pfc-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pfc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.protein .pfc-dot { background-color: var(--accent-blue); }
+.fat .pfc-dot { background-color: var(--secondary); }
+.carbs .pfc-dot { background-color: var(--accent); }
+
+.pfc-name {
+  color: var(--text-main);
+  flex: 1;
+}
+
+.pfc-val {
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+
+.pfc-bar-bg {
+  height: 8px;
+  background-color: rgba(220, 230, 224, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pfc-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.protein .pfc-bar-fill { background-color: var(--accent-blue); }
+.fat .pfc-bar-fill { background-color: var(--secondary); }
+.carbs .pfc-bar-fill { background-color: var(--accent); }
+
+/* Advisor Card */
+.advisor-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f4fbf7 100%);
+  border-left: 4px solid var(--primary);
+}
+
+.advisor-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.advisor-avatar {
+  font-size: 28px;
+}
+
+.advisor-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.advisor-subtitle {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.advisor-comment {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   History Tab Layout
+   ========================================================================== */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-card {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+}
+
+.history-img-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.history-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.history-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.history-date {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.history-calories {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-main);
+}
+
+.history-calories span {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.history-pfc-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.history-pfc-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+}
+
+.history-pfc-tag.p { background-color: rgba(154, 194, 244, 0.2); color: #4378b8; }
+.history-pfc-tag.f { background-color: rgba(251, 216, 127, 0.2); color: #b08d27; }
+.history-pfc-tag.c { background-color: rgba(247, 168, 184, 0.2); color: #ba546a; }
+
+.history-comment-preview {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.empty-state span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Statistics Tab Layout
+   ========================================================================== */
+.stats-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stats-summary-card {
+  text-align: center;
+  padding: 16px 8px;
+  margin-bottom: 0;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+}
+
+.summary-value .unit {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.chart-card {
+  padding: 16px;
+}
+
+.chart-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 12px;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+/* ==========================================================================
+   Bottom Navigation Bar
+   ========================================================================== */
+.app-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-muted);
+  width: 60px;
+  height: 100%;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-icon {
+  font-size: 20px;
+  transition: var(--transition);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.nav-item.active {
+  color: #55986c;
+}
+
+.nav-item.active .nav-icon {
+  transform: translateY(-2px) scale(1.1);
+}
+
+/* ==========================================================================
+   Utility Animations
+   ========================================================================== */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
