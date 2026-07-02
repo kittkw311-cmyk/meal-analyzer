@@ -25,9 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resProtein = document.getElementById('res-protein');
   const resFat = document.getElementById('res-fat');
   const resCarbs = document.getElementById('res-carbs');
-  const barProtein = document.getElementById('bar-protein');
-  const barFat = document.getElementById('bar-fat');
-  const barCarbs = document.getElementById('bar-carbs');
+  const ratioProtein = document.getElementById('ratio-protein');
+  const ratioFat = document.getElementById('ratio-fat');
+  const ratioCarbs = document.getElementById('ratio-carbs');
   const resComment = document.getElementById('res-comment');
 
   // History & Stats Elements
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resCarbs.textContent = nutrition.carbohydrates;
     resComment.textContent = nutrition.comment;
 
-    // PFC割合バーのアニメーション
+    // PFC比率バー（1本統合型）のアニメーション
     const total = nutrition.protein + nutrition.fat + nutrition.carbohydrates;
     if (total > 0) {
       const pPercent = (nutrition.protein / total) * 100;
@@ -233,14 +233,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const cPercent = (nutrition.carbohydrates / total) * 100;
 
       setTimeout(() => {
-        barProtein.style.width = `${pPercent}%`;
-        barFat.style.width = `${fPercent}%`;
-        barCarbs.style.width = `${cPercent}%`;
+        ratioProtein.style.width = `${pPercent}%`;
+        ratioFat.style.width = `${fPercent}%`;
+        ratioCarbs.style.width = `${cPercent}%`;
       }, 100);
     } else {
-      barProtein.style.width = '0%';
-      barFat.style.width = '0%';
-      barCarbs.style.width = '0%';
+      ratioProtein.style.width = '0%';
+      ratioFat.style.width = '0%';
+      ratioCarbs.style.width = '0%';
     }
 
     resultContainer.style.display = 'block';
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // Load History Tab
+  // Load History Tab (With Daily Grouping)
   // ==========================================================================
   async function loadHistory() {
     try {
@@ -265,65 +265,123 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      historyList.innerHTML = '';
+      // 日付ごとにグループ化する (キー: YYYY-MM-DD)
+      const groups = {};
       history.forEach(item => {
-        // 表示用日付フォーマット (指定された食事日を優先)
         const dateObj = new Date(item.mealDate || item.date);
-        const formattedDate = dateObj.toLocaleDateString('ja-JP', {
-          month: '2-digit',
-          day: '2-digit',
-          weekday: 'short'
-        });
-
-        const mealTypeJa = {
-          morning: '朝食 🌅',
-          noon: '昼食 ☀️',
-          night: '夕食 🌙',
-          snack: '間食 🍰'
-        }[item.mealType || 'snack'];
-
-        const card = document.createElement('div');
-        card.className = 'card history-card';
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const dateKey = `${yyyy}-${mm}-${dd}`;
         
-        // クリックしたら詳細を復元して「解析」タブへ切り替え
-        card.addEventListener('click', () => {
-          imagePreview.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
-          uploadPrompt.style.display = 'none';
-          previewContainer.style.display = 'flex';
-          
-          // 日付と食事区分を復元
-          if (item.mealDate) {
-            mealDateInput.value = item.mealDate.substring(0, 10);
-          }
-          if (item.mealType) {
-            setMealTypeActive(item.mealType);
-          }
-          
-          navItems[0].click(); 
-          displayResult(item.nutrition);
-        });
+        if (!groups[dateKey]) {
+          groups[dateKey] = {
+            dateLabel: dateObj.toLocaleDateString('ja-JP', {
+              month: 'long',
+              day: 'numeric',
+              weekday: 'short'
+            }),
+            meals: [],
+            totalCalories: 0,
+            totalProtein: 0,
+            totalFat: 0,
+            totalCarbs: 0
+          };
+        }
+        
+        groups[dateKey].meals.push(item);
+        groups[dateKey].totalCalories += item.nutrition.calories;
+        groups[dateKey].totalProtein += item.nutrition.protein;
+        groups[dateKey].totalFat += item.nutrition.fat;
+        groups[dateKey].totalCarbs += item.nutrition.carbohydrates;
+      });
 
-        card.innerHTML = `
-          <div class="history-img-wrapper">
-            <img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">
-          </div>
-          <div class="history-info">
-            <div>
-              <div class="history-date">
-                ${formattedDate} 
-                <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
-              </div>
-              <div class="history-calories">${item.nutrition.calories} <span>kcal</span></div>
+      historyList.innerHTML = '';
+
+      // 日付の降順でソートして描画
+      const sortedKeys = Object.keys(groups).sort().reverse();
+      
+      sortedKeys.forEach(dateKey => {
+        const group = groups[dateKey];
+        
+        // 1. 日別合計ヘッダーの生成
+        const headerEl = document.createElement('div');
+        headerEl.className = 'history-date-header';
+        
+        const pTotal = Math.round(group.totalProtein * 10) / 10;
+        const fTotal = Math.round(group.totalFat * 10) / 10;
+        const cTotal = Math.round(group.totalCarbs * 10) / 10;
+
+        headerEl.innerHTML = `
+          <span class="history-date-title">${group.dateLabel}</span>
+          <div class="history-daily-total">
+            <div>本日合計: <span class="history-daily-calories">${group.totalCalories} kcal</span></div>
+            <div class="history-daily-pfc">
+              <span>P: ${pTotal}g</span>
+              <span>F: ${fTotal}g</span>
+              <span>C: ${cTotal}g</span>
             </div>
-            <div class="history-pfc-tags">
-              <span class="history-pfc-tag p">P: ${item.nutrition.protein}g</span>
-              <span class="history-pfc-tag f">F: ${item.nutrition.fat}g</span>
-              <span class="history-pfc-tag c">C: ${item.nutrition.carbohydrates}g</span>
-            </div>
-            <div class="history-comment-preview">${item.nutrition.comment}</div>
           </div>
         `;
-        historyList.appendChild(card);
+        historyList.appendChild(headerEl);
+
+        // 2. その日の食事カードの生成
+        group.meals.forEach(item => {
+          const mealTypeJa = {
+            morning: '朝食 🌅',
+            noon: '昼食 ☀️',
+            night: '夕食 🌙',
+            snack: '間食 🍰'
+          }[item.mealType || 'snack'];
+
+          const card = document.createElement('div');
+          card.className = 'card history-card';
+          
+          card.addEventListener('click', () => {
+            imagePreview.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
+            uploadPrompt.style.display = 'none';
+            previewContainer.style.display = 'flex';
+            
+            // 日付と食事区分をフォームに復元
+            if (item.mealDate) {
+              mealDateInput.value = item.mealDate.substring(0, 10);
+            }
+            if (item.mealType) {
+              setMealTypeActive(item.mealType);
+            }
+            
+            navItems[0].click(); 
+            displayResult(item.nutrition);
+          });
+
+          // 時刻部分を抽出
+          const timeStr = new Date(item.mealDate || item.date).toLocaleTimeString('ja-JP', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          card.innerHTML = `
+            <div class="history-img-wrapper">
+              <img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">
+            </div>
+            <div class="history-info">
+              <div>
+                <div class="history-date">
+                  ${timeStr} 
+                  <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
+                </div>
+                <div class="history-calories">${item.nutrition.calories} <span>kcal</span></div>
+              </div>
+              <div class="history-pfc-tags">
+                <span class="history-pfc-tag p">P: ${item.nutrition.protein}g</span>
+                <span class="history-pfc-tag f">F: ${item.nutrition.fat}g</span>
+                <span class="history-pfc-tag c">C: ${item.nutrition.carbohydrates}g</span>
+              </div>
+              <div class="history-comment-preview">${item.nutrition.comment}</div>
+            </div>
+          `;
+          historyList.appendChild(card);
+        });
       });
 
     } catch (err) {

@@ -782,3 +782,143 @@ body {
 .history-meal-badge.night { background-color: rgba(154, 194, 244, 0.2); color: #3368a8; }
 .history-meal-badge.snack { background-color: rgba(247, 168, 184, 0.2); color: #aa445a; }
 
+/* ==========================================================================
+   PFC Boxes (3 Columns Layout)
+   ========================================================================== */
+.pfc-boxes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.pfc-box {
+  border-radius: 16px;
+  padding: 12px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.pfc-box-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.pfc-box-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+
+.pfc-box-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 1px;
+}
+
+/* Pastel backgrounds for PFC boxes */
+.pfc-box.protein {
+  background-color: rgba(154, 194, 244, 0.15);
+  color: #2b5585;
+}
+.pfc-box.fat {
+  background-color: rgba(251, 216, 127, 0.2);
+  color: #8c701f;
+}
+.pfc-box.carbs {
+  background-color: rgba(247, 168, 184, 0.15);
+  color: #a04859;
+}
+
+/* ==========================================================================
+   PFC Ratio Bar (Single bar divided into 3 segments)
+   ========================================================================== */
+.pfc-ratio-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pfc-ratio-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.pfc-ratio-bar-bg {
+  height: 10px;
+  background-color: rgba(220, 230, 224, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  width: 100%;
+}
+
+.pfc-ratio-bar-fill {
+  height: 100%;
+  transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.pfc-ratio-bar-fill.p { background-color: var(--accent-blue); }
+.pfc-ratio-bar-fill.f { background-color: var(--secondary); }
+.pfc-ratio-bar-fill.c { background-color: var(--accent); }
+
+/* ==========================================================================
+   History Daily Grouping Header
+   ========================================================================== */
+.history-date-header {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.history-date-header:first-of-type {
+  margin-top: 8px;
+}
+
+.history-date-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.history-daily-total {
+  background-color: rgba(220, 230, 224, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.history-daily-calories {
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+}
+
+.history-daily-pfc {
+  display: flex;
+  gap: 8px;
+}
+
+.history-daily-pfc span {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+}
+
+

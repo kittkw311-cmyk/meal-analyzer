@@ -87,39 +87,29 @@
               </div>
             </div>
 
-            <!-- 三大栄養素 (PFC) -->
-            <div class="pfc-container">
-              <div class="pfc-item protein">
-                <div class="pfc-header">
-                  <span class="pfc-dot"></span>
-                  <span class="pfc-name">タンパク質 (P)</span>
-                  <span class="pfc-val"><span id="res-protein">0</span>g</span>
-                </div>
-                <div class="pfc-bar-bg">
-                  <div class="pfc-bar-fill" id="bar-protein" style="width: 0%;"></div>
-                </div>
+            <!-- 三大栄養素 (PFC) 横並びボックス -->
+            <div class="pfc-boxes">
+              <div class="pfc-box protein">
+                <span class="pfc-box-label">タンパク質 (P)</span>
+                <span class="pfc-box-value"><span id="res-protein">0</span><span class="pfc-box-unit">g</span></span>
               </div>
-
-              <div class="pfc-item fat">
-                <div class="pfc-header">
-                  <span class="pfc-dot"></span>
-                  <span class="pfc-name">脂質 (F)</span>
-                  <span class="pfc-val"><span id="res-fat">0</span>g</span>
-                </div>
-                <div class="pfc-bar-bg">
-                  <div class="pfc-bar-fill" id="bar-fat" style="width: 0%;"></div>
-                </div>
+              <div class="pfc-box fat">
+                <span class="pfc-box-label">脂質 (F)</span>
+                <span class="pfc-box-value"><span id="res-fat">0</span><span class="pfc-box-unit">g</span></span>
               </div>
+              <div class="pfc-box carbs">
+                <span class="pfc-box-label">炭水化物 (C)</span>
+                <span class="pfc-box-value"><span id="res-carbs">0</span><span class="pfc-box-unit">g</span></span>
+              </div>
+            </div>
 
-              <div class="pfc-item carbs">
-                <div class="pfc-header">
-                  <span class="pfc-dot"></span>
-                  <span class="pfc-name">炭水化物 (C)</span>
-                  <span class="pfc-val"><span id="res-carbs">0</span>g</span>
-                </div>
-                <div class="pfc-bar-bg">
-                  <div class="pfc-bar-fill" id="bar-carbs" style="width: 0%;"></div>
-                </div>
+            <!-- 1本統合型のPFC比率メーター -->
+            <div class="pfc-ratio-container">
+              <div class="pfc-ratio-label">PFCバランス（比率）</div>
+              <div class="pfc-ratio-bar-bg">
+                <div class="pfc-ratio-bar-fill p" id="ratio-protein" style="width: 0%;"></div>
+                <div class="pfc-ratio-bar-fill f" id="ratio-fat" style="width: 0%;"></div>
+                <div class="pfc-ratio-bar-fill c" id="ratio-carbs" style="width: 0%;"></div>
               </div>
             </div>
           </div>
