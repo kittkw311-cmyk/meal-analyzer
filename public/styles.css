@@ -476,13 +476,27 @@ body {
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 5px;
 }
 
 .history-card {
   display: flex;
-  gap: 16px;
-  padding: 12px;
+  gap: 12px;
+  padding: 6px 10px;
+  margin-bottom: 0 !important;
+}
+
+.history-date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.history-list > .history-date-header:first-child {
+  margin-top: 2px;
 }
 
 .history-img-wrapper {
