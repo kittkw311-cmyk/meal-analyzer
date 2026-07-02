@@ -35,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const statsTotalMeals = document.getElementById('stats-total-meals');
   const statsAvgCalories = document.getElementById('stats-avg-calories');
 
+  // History Detail Modal Elements
+  const historyDetailModal = document.getElementById('history-detail-modal');
+  const btnCloseModal = document.getElementById('btn-close-modal');
+
   // Chart instances
   let caloriesChart = null;
   let pfcChart = null;
@@ -382,21 +386,35 @@ document.addEventListener('DOMContentLoaded', () => {
           const card = document.createElement('div');
           card.className = 'card history-card';
           
+          // 履歴カードクリックで単独モーダルを開く
           card.addEventListener('click', () => {
-            imagePreview.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
-            uploadPrompt.style.display = 'none';
-            previewContainer.style.display = 'flex';
+            // モーダルの各DOMに値をセット
+            document.getElementById('modal-meal-image').src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
             
-            // 日付と食事区分をフォームに復元
-            if (item.mealDate) {
-              mealDateInput.value = item.mealDate.substring(0, 10);
-            }
-            if (item.mealType) {
-              setMealTypeActive(item.mealType);
-            }
+            const dateObj = new Date(item.mealDate || item.date);
+            const formattedDate = dateObj.toLocaleDateString('ja-JP', {
+              month: 'long',
+              day: 'numeric',
+              weekday: 'short'
+            });
+            const timeStr = dateObj.toLocaleTimeString('ja-JP', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            document.getElementById('modal-meal-date').textContent = `${formattedDate} ${timeStr}`;
             
-            navItems[0].click(); 
-            displayResult(item.nutrition);
+            const typeBadge = document.getElementById('modal-meal-type');
+            typeBadge.className = `history-meal-badge ${item.mealType || 'snack'}`;
+            typeBadge.textContent = mealTypeJa;
+
+            document.getElementById('modal-calories').textContent = item.nutrition.calories;
+            document.getElementById('modal-protein').textContent = item.nutrition.protein;
+            document.getElementById('modal-fat').textContent = item.nutrition.fat;
+            document.getElementById('modal-carbs').textContent = item.nutrition.carbohydrates;
+            document.getElementById('modal-comment').textContent = item.nutrition.comment;
+
+            // モーダルを表示
+            historyDetailModal.style.display = 'flex';
           });
 
           // 時刻部分を抽出
@@ -432,12 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
           deleteBtn.innerHTML = '🗑️';
           deleteBtn.title = '履歴を削除';
           deleteBtn.addEventListener('click', async (e) => {
-            e.stopPropagation(); // 詳細展開へのバブリングを防止
+            e.stopPropagation(); // モーダル展開へのバブリングを防止
             if (confirm('この食事履歴を削除しますか？\n画像ファイルもGoogleドライブ（またはローカル）から完全に削除されます。')) {
               try {
                 const deleteRes = await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
                 if (deleteRes.ok) {
-                  // 履歴リストと今日のサマリーを再読込
                   loadHistory();
                   updateDailySummary();
                 } else {
@@ -460,6 +477,22 @@ document.addEventListener('DOMContentLoaded', () => {
       historyList.innerHTML = `<p class="error-text">履歴の読み込みに失敗しました。</p>`;
     }
   }
+
+  // ==========================================================================
+  // History Detail Modal Control
+  // ==========================================================================
+  const closeModal = () => {
+    historyDetailModal.style.display = 'none';
+  };
+
+  btnCloseModal.addEventListener('click', closeModal);
+  
+  // モーダルの背景（黒枠）をクリックした際も閉じる
+  historyDetailModal.addEventListener('click', (e) => {
+    if (e.target === historyDetailModal) {
+      closeModal();
+    }
+  });
 
   // ==========================================================================
   // Load Stats Tab (Chart.js Integration)

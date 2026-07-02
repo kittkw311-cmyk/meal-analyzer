@@ -30,6 +30,30 @@
       
       <!-- 1. 解析タブ -->
       <section id="tab-analyze" class="tab-content active">
+        <!-- 本日の合計栄養素サマリー (最上部・見出し無しのスリム型) -->
+        <div class="card daily-summary-card" id="daily-summary-card">
+          <div class="daily-summary-grid-v2">
+            <div class="daily-summary-calorie-box-v2">
+              <span class="daily-summary-val"><span id="daily-total-calories">0</span> <span class="daily-summary-unit">kcal</span></span>
+              <span class="daily-summary-label">今日</span>
+            </div>
+            <div class="daily-summary-pfc-boxes">
+              <div class="daily-pfc-box protein">
+                <span class="label">P</span>
+                <span class="val"><span id="daily-total-protein">0</span>g</span>
+              </div>
+              <div class="daily-pfc-box fat">
+                <span class="label">F</span>
+                <span class="val"><span id="daily-total-fat">0</span>g</span>
+              </div>
+              <div class="daily-pfc-box carbs">
+                <span class="label">C</span>
+                <span class="val"><span id="daily-total-carbs">0</span>g</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card upload-card">
           <div class="upload-area" id="drop-zone">
             <input type="file" id="image-input" accept="image/*" hidden>
@@ -112,42 +136,17 @@
                 <div class="pfc-ratio-bar-fill c" id="ratio-carbs" style="width: 0%;"></div>
               </div>
             </div>
-          </div>
-
-          <!-- 管理栄養士コメント -->
-          <div class="card advisor-card">
-            <div class="advisor-header">
-              <span class="advisor-avatar">👩‍⚕️</span>
-              <div>
-                <span class="advisor-title">管理栄養士 AI</span>
-                <span class="advisor-subtitle">栄養アドバイス</span>
+            
+            <!-- 管理栄養士コメント -->
+            <div class="card advisor-card">
+              <div class="advisor-header">
+                <span class="advisor-avatar">👩‍⚕️</span>
+                <div>
+                  <span class="advisor-title">管理栄養士 AI</span>
+                  <span class="advisor-subtitle">栄養アドバイス</span>
+                </div>
               </div>
-            </div>
-            <p class="advisor-comment" id="res-comment">食事の写真を解析して、ここにアドバイスを表示します。</p>
-          </div>
-        </div>
-
-        <!-- 本日の合計栄養素サマリー (常に表示) -->
-        <div class="card daily-summary-card" id="daily-summary-card">
-          <h3 class="daily-summary-title">📅 本日の合計摂取量</h3>
-          <div class="daily-summary-grid-v2">
-            <div class="daily-summary-calorie-box-v2">
-              <span class="daily-summary-val"><span id="daily-total-calories">0</span> <span class="daily-summary-unit">kcal</span></span>
-              <span class="daily-summary-label">総エネルギー</span>
-            </div>
-            <div class="daily-summary-pfc-boxes">
-              <div class="daily-pfc-box protein">
-                <span class="label">タンパク質 (P)</span>
-                <span class="val"><span id="daily-total-protein">0</span>g</span>
-              </div>
-              <div class="daily-pfc-box fat">
-                <span class="label">脂質 (F)</span>
-                <span class="val"><span id="daily-total-fat">0</span>g</span>
-              </div>
-              <div class="daily-pfc-box carbs">
-                <span class="label">炭水化物 (C)</span>
-                <span class="val"><span id="daily-total-carbs">0</span>g</span>
-              </div>
+              <p class="advisor-comment" id="res-comment">食事の写真を解析して、ここにアドバイスを表示します。</p>
             </div>
           </div>
         </div>
@@ -212,6 +211,46 @@
         <span class="nav-label">統計</span>
       </button>
     </nav>
+  </div>
+
+  <!-- 履歴詳細モーダル -->
+  <div class="modal-overlay" id="history-detail-modal" style="display: none;">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="btn-close-modal">✕</button>
+      <div class="modal-body">
+        <h3 class="modal-title" id="modal-meal-title">食事詳細</h3>
+        <div class="modal-meta">
+          <span id="modal-meal-date"></span>
+          <span id="modal-meal-type" class="history-meal-badge"></span>
+        </div>
+        <div class="modal-image-container">
+          <img id="modal-meal-image" src="" alt="食事画像">
+        </div>
+        <div class="modal-nutrition-summary">
+          <div class="modal-calories-box">
+            <span class="val" id="modal-calories">0</span> <span class="unit">kcal</span>
+          </div>
+          <div class="modal-pfc-boxes">
+            <div class="modal-pfc-box protein">
+              <span class="label">P</span>
+              <span class="val" id="modal-protein">0</span>g
+            </div>
+            <div class="modal-pfc-box fat">
+              <span class="label">F</span>
+              <span class="val" id="modal-fat">0</span>g
+            </div>
+            <div class="modal-pfc-box carbs">
+              <span class="label">C</span>
+              <span class="val" id="modal-carbs">0</span>g
+            </div>
+          </div>
+        </div>
+        <div class="modal-comment-card">
+          <div class="comment-header">👩‍⚕️ 管理栄養士 AI のアドバイス</div>
+          <p class="comment-text" id="modal-comment"></p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- JavaScript -->
