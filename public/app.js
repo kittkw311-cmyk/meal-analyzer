@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
         
-        // 1. 日別合計ヘッダーの生成 (PFCに着色用クラスを追加)
+        // 1. 日別合計ヘッダーの生成 (日付の右側にインラインで並べる)
         const headerEl = document.createElement('div');
         headerEl.className = 'history-date-header';
         
@@ -366,12 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         headerEl.innerHTML = `
           <span class="history-date-title">${group.dateLabel}</span>
-          <div class="history-daily-total">
-            <div>合計: <span class="history-daily-calories">${group.totalCalories} kcal</span></div>
+          <div class="history-daily-total-inline">
+            <span class="history-daily-calories">${group.totalCalories} kcal</span>
             <div class="history-daily-pfc">
-              <span class="p">P: ${pTotal}g</span>
-              <span class="f">F: ${fTotal}g</span>
-              <span class="c">C: ${cTotal}g</span>
+              <span class="p">P:${pTotal}</span>
+              <span class="f">F:${fTotal}</span>
+              <span class="c">C:${cTotal}</span>
             </div>
           </div>
         `;
@@ -425,23 +425,23 @@ document.addEventListener('DOMContentLoaded', () => {
             minute: '2-digit'
           });
 
-          // 解説文のプレビュー（history-comment-preview）を一覧カードから削除
+          // カロリーの右側にPFCをインライン横並びで配置 (history-info-row)
           card.innerHTML = `
             <div class="history-img-wrapper">
               <img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">
             </div>
             <div class="history-info">
-              <div>
-                <div class="history-date">
-                  ${timeStr} 
-                  <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
-                </div>
-                <div class="history-calories">${item.nutrition.calories} <span>kcal</span></div>
+              <div class="history-date">
+                ${timeStr} 
+                <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
-              <div class="history-pfc-tags">
-                <span class="history-pfc-tag p">P: ${item.nutrition.protein}g</span>
-                <span class="history-pfc-tag f">F: ${item.nutrition.fat}g</span>
-                <span class="history-pfc-tag c">C: ${item.nutrition.carbohydrates}g</span>
+              <div class="history-info-row">
+                <div class="history-calories">${item.nutrition.calories} <span>kcal</span></div>
+                <div class="history-pfc-tags">
+                  <span class="history-pfc-tag p">P: ${item.nutrition.protein}g</span>
+                  <span class="history-pfc-tag f">F: ${item.nutrition.fat}g</span>
+                  <span class="history-pfc-tag c">C: ${item.nutrition.carbohydrates}g</span>
+                </div>
               </div>
             </div>
           `;
