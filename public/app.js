@@ -653,7 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!response.ok) {
-        throw new Error('更新に失敗しました。');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'サーバーとの通信に失敗しました。');
       }
 
       closeModal();
@@ -662,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error(err);
-      alert('変更の保存に失敗しました: ' + err.message);
+      alert('変更の保存に失敗しました。\n詳細: ' + err.message);
     } finally {
       loadingOverlay.style.display = 'none';
       btnSaveModal.disabled = false;
@@ -711,7 +712,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!response.ok) {
-        throw new Error('再計算に失敗しました。');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'サーバーとの通信に失敗しました。');
       }
 
       const updatedRecord = await response.json();
@@ -730,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error(err);
-      alert('再計算に失敗しました: ' + err.message);
+      alert('再計算に失敗しました。\n詳細: ' + err.message);
     } finally {
       loadingOverlay.style.display = 'none';
       btnReanalyzeModal.disabled = false;
