@@ -294,7 +294,17 @@ document.addEventListener('DOMContentLoaded', () => {
     resProtein.textContent = nutrition.protein;
     resFat.textContent = nutrition.fat;
     resCarbs.textContent = nutrition.carbohydrates;
-    resComment.textContent = nutrition.comment;
+
+    const resInference = document.getElementById('res-inference');
+    const resInferenceCard = document.getElementById('res-inference-card');
+    if (nutrition.inference) {
+      resInference.textContent = nutrition.inference;
+      resInferenceCard.style.display = 'block';
+      resComment.textContent = nutrition.advice || nutrition.comment;
+    } else {
+      resInferenceCard.style.display = 'none';
+      resComment.textContent = nutrition.comment;
+    }
 
     // PFC比率バー（1本統合型）のアニメーション
     const total = nutrition.protein + nutrition.fat + nutrition.carbohydrates;
@@ -502,7 +512,17 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('modal-protein').textContent = item.nutrition.protein;
             document.getElementById('modal-fat').textContent = item.nutrition.fat;
             document.getElementById('modal-carbs').textContent = item.nutrition.carbohydrates;
-            document.getElementById('modal-comment').textContent = item.nutrition.comment;
+            
+            const modalInference = document.getElementById('modal-inference');
+            const modalInferenceCard = document.getElementById('modal-inference-card');
+            if (item.nutrition.inference) {
+              modalInference.textContent = item.nutrition.inference;
+              modalInferenceCard.style.display = 'block';
+              document.getElementById('modal-comment').textContent = item.nutrition.advice || item.nutrition.comment;
+            } else {
+              modalInferenceCard.style.display = 'none';
+              document.getElementById('modal-comment').textContent = item.nutrition.comment;
+            }
 
             // モーダルを表示
             historyDetailModal.style.display = 'flex';
@@ -724,7 +744,17 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('modal-protein').textContent = updatedRecord.nutrition.protein;
       document.getElementById('modal-fat').textContent = updatedRecord.nutrition.fat;
       document.getElementById('modal-carbs').textContent = updatedRecord.nutrition.carbohydrates;
-      document.getElementById('modal-comment').textContent = updatedRecord.nutrition.comment;
+      
+      const modalInference = document.getElementById('modal-inference');
+      const modalInferenceCard = document.getElementById('modal-inference-card');
+      if (updatedRecord.nutrition.inference) {
+        modalInference.textContent = updatedRecord.nutrition.inference;
+        modalInferenceCard.style.display = 'block';
+        document.getElementById('modal-comment').textContent = updatedRecord.nutrition.advice || updatedRecord.nutrition.comment;
+      } else {
+        modalInferenceCard.style.display = 'none';
+        document.getElementById('modal-comment').textContent = updatedRecord.nutrition.comment;
+      }
 
       // 履歴一覧と今日の合計を非同期でリロード
       await loadHistory();

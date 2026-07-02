@@ -208,9 +208,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
    - 逆に、ポン酢やレモン汁、塩などの低カロリー調味料も正確に反映させてください。
    - 調理法（揚げる、炒める、蒸す、ゆでるなど）による油の吸収量（吸油率）も考慮して加算してください。
 
-アドバイス（comment）には、以下の2点を含めてください：
-- 【食材・調味料の推測と計算根拠】：想定グラム数、肉の部位や皮の有無、豆腐の種類、使用調味料と調理法による油の推測根拠などを箇条書きで必ず明記してください。
-- 【栄養アドバイス】：管理栄養士としての優しく丁寧な日本語アドバイスを記述してください。
+出力JSONには、読み取った/推測した食材リストや計算根拠を箇条書き（改行付き）にした「inference」と、管理栄養士としての優しく丁寧な日本語アドバイス「advice」をそれぞれ分離して出力してください。
 `;
 
     // contents 配列の組み立て
@@ -239,9 +237,10 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
             protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
             fat: { type: Type.NUMBER, description: '脂質 (g)' },
             carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
-            comment: { type: Type.STRING, description: '食材・調味料の推測リストおよび管理栄養士風の優しく丁寧な日本語アドバイス' }
+            inference: { type: Type.STRING, description: '食材・調味料の推測リストおよび想定グラム数、計算根拠（改行を含む丁寧な箇条書き）' },
+            advice: { type: Type.STRING, description: '管理栄養士風の優しく丁寧な日本語による食事アドバイス・提案（箇条書きは使わず、自然な文章で改行を適度に入れたもの）' }
           },
-          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'comment']
+          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
         }
       }
     });
@@ -311,7 +310,9 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
         protein: Number(nutritionData.protein),
         fat: Number(nutritionData.fat),
         carbohydrates: Number(nutritionData.carbohydrates),
-        comment: nutritionData.comment
+        comment: nutritionData.advice, // 既存データとの互換性のために残す
+        inference: nutritionData.inference,
+        advice: nutritionData.advice
       }
     };
 
@@ -376,7 +377,7 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 
     // プロンプトの設計 (食材・調味料の厳密な推測と計算根拠の明記を強制)
     let promptInstruction = `
-入力された食事内容（添付された写真、または料理名・レシピURL・商品URLのテキスト: "${textInput || ''}"）から、使われているすべての食材と調味料を推測した上で、カロリー、たんぱく質（P）、脂質（F）、炭水化物（C）のグラム数を算出してください。
+入力された食事内容（添付された写真、または料理名・レシピURL・商品URL of テキスト: "${textInput || ''}"）から、使われているすべての食材と調味料を推測した上で、カロリー、たんぱく質（P）、脂質（F）、炭水化物（C）のグラム数を算出してください。
 
 【厳格な計算・推測ガイドライン】
 1. 食材の重量が不明な場合は、一般的な1食分の目安量（例：ご飯1膳150g、オートミール1食30g、卵1個50gなど）を想定し、計算の根拠とした想定グラム数を必ず明記してください。
@@ -388,9 +389,7 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
    - 逆に、ポン酢やレモン汁、塩などの低カロリー調味料も正確に反映させてください。
    - 調理法（揚げる、炒める、蒸す、ゆでるなど）による油の吸収量（吸油率）も考慮して加算してください。
 
-アドバイス（comment）には、以下の2点を含めてください：
-- 【食材・調味料の推測と計算根拠】：想定グラム数、肉の部位や皮の有無、豆腐の種類、使用調味料と調理法による油の推測根拠などを箇条書きで必ず明記してください。
-- 【栄養アドバイス】：管理栄養士としての優しく丁寧な日本語アドバイスを記述してください。
+出力JSONには、読み取った/推測した食材リストや計算根拠を箇条書き（改行付き）にした「inference」と、管理栄養士としての優しく丁寧な日本語アドバイス「advice」をそれぞれ分離して出力してください。
 `;
 
     const contents = [];
@@ -455,9 +454,10 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
             protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
             fat: { type: Type.NUMBER, description: '脂質 (g)' },
             carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
-            comment: { type: Type.STRING, description: '食材・調味料の推測リストおよび管理栄養士風の優しく丁寧な日本語アドバイス' }
+            inference: { type: Type.STRING, description: '食材・調味料の推測リストおよび想定グラム数、計算根拠（改行を含む丁寧な箇条書き）' },
+            advice: { type: Type.STRING, description: '管理栄養士風の優しく丁寧な日本語による食事アドバイス・提案（箇条書きは使わず、自然な文章で改行を適度に入れたもの）' }
           },
-          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'comment']
+          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
         }
       }
     });
@@ -476,7 +476,9 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
       protein: Number(nutritionData.protein),
       fat: Number(nutritionData.fat),
       carbohydrates: Number(nutritionData.carbohydrates),
-      comment: nutritionData.comment
+      comment: nutritionData.advice, // 既存データとの互換性のために残す
+      inference: nutritionData.inference,
+      advice: nutritionData.advice
     };
 
     history[recordIndex] = record;

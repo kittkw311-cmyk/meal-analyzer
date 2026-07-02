@@ -468,6 +468,7 @@ body {
   font-size: 13px;
   line-height: 1.6;
   color: var(--text-main);
+  white-space: pre-wrap;
 }
 
 /* ==========================================================================
@@ -1268,6 +1269,7 @@ body {
   line-height: 1.55;
   color: var(--text-main);
   margin: 0;
+  white-space: pre-wrap;
 }
 
 @keyframes slideUp {
@@ -1521,6 +1523,77 @@ body {
   font-size: 13px !important;
   border-radius: 12px !important;
 }
+
+/* ==========================================================================
+   Inference Card Styles
+   ========================================================================== */
+.inference-card {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-top: 15px;
+  box-shadow: 0 4px 15px var(--shadow-color);
+  transition: var(--transition);
+}
+
+.inference-header-v2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.inference-icon-v2 {
+  font-size: 24px;
+}
+
+.inference-title-v2 {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.inference-subtitle-v2 {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.inference-text-v2 {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-main);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Modal Inference Card Styles */
+.modal-inference-card {
+  background-color: #f4f8fb;
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(154, 194, 244, 0.05);
+}
+
+.modal-inference-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2b5585;
+  margin-bottom: 6px;
+}
+
+.modal-inference-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-main);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
 
 
 

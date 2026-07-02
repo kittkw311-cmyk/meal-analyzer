@@ -140,6 +140,18 @@
               </div>
             </div>
             
+            <!-- 食材・調味料の推測と計算根拠 -->
+            <div class="card inference-card" id="res-inference-card" style="display: none;">
+              <div class="inference-header-v2">
+                <span class="inference-icon-v2">📝</span>
+                <div>
+                  <span class="inference-title-v2">食材・調味料の推測</span>
+                  <span class="inference-subtitle-v2">AIが推測した計算根拠</span>
+                </div>
+              </div>
+              <p class="inference-text-v2" id="res-inference"></p>
+            </div>
+
             <!-- 管理栄養士コメント -->
             <div class="card advisor-card">
               <div class="advisor-header">
@@ -271,6 +283,12 @@
             </div>
           </div>
         </div>
+        <!-- 食材・調味料の推測と計算根拠 -->
+        <div class="modal-inference-card" id="modal-inference-card" style="display: none;">
+          <div class="modal-inference-header">📝 食材・調味料の推測と計算根拠</div>
+          <p class="modal-inference-text" id="modal-inference"></p>
+        </div>
+
         <div class="modal-comment-card">
           <div class="comment-header">👩‍⚕️ 管理栄養士 AI のアドバイス</div>
           <p class="comment-text" id="modal-comment"></p>
