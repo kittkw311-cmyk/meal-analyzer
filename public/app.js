@@ -457,6 +457,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const fTotal = Math.round(group.totalFat * 10) / 10;
         const cTotal = Math.round(group.totalCarbs * 10) / 10;
 
+        // 理想PFC比率 (P:15%, F:25%, C:60% カロリーベース) との乖離の計算
+        const pCal = group.totalProtein * 4;
+        const fCal = group.totalFat * 9;
+        const cCal = group.totalCarbs * 4;
+        const totalPfcCal = pCal + fCal + cCal;
+        
+        let pfcDiffText = '';
+        if (totalPfcCal > 0) {
+          const pPct = Math.round((pCal / totalPfcCal) * 100);
+          const fPct = Math.round((fCal / totalPfcCal) * 100);
+          const cPct = 100 - pPct - fPct; // 合計が100%になるよう調整
+          
+          const pDiff = pPct - 15;
+          const fDiff = fPct - 25;
+          const cDiff = cPct - 60;
+          
+          const formatDiff = (val) => (val >= 0 ? `+${val}%` : `${val}%`);
+          pfcDiffText = `理想差 P:${formatDiff(pDiff)} F:${formatDiff(fDiff)} C:${formatDiff(cDiff)}`;
+        }
+
         headerEl.innerHTML = `
           <span class="history-date-title">${group.dateLabel}</span>
           <div class="history-daily-total-inline">
@@ -465,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="p">P:${pTotal}</span>
               <span class="f">F:${fTotal}</span>
               <span class="c">C:${cTotal}</span>
+              ${pfcDiffText ? `<span class="history-pfc-diff">${pfcDiffText}</span>` : ''}
             </div>
           </div>
         `;
@@ -506,9 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = String(dateObj.getMinutes()).padStart(2, '0');
             modalTimeInput.value = `${hours}:${minutes}`;
 
-            // 同日のトータルカロリーを表示
-            updateModalDayTotalCalories(`${yyyy}-${mm}-${dd}`);
-            
             modalTypeSelect.value = item.mealType || 'snack';
             modalTextInput.value = item.textInput || '';
 
@@ -623,33 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
       historyList.innerHTML = `<p class="error-text">履歴の読み込みに失敗しました。</p>`;
     }
   }
-
-  // 同日のトータルカロリーを計算してモーダルに表示する共通関数
-  async function updateModalDayTotalCalories(targetDateString) {
-    try {
-      const response = await fetch('/api/history');
-      const history = await response.json();
-      
-      let dayTotalCal = 0;
-      history.forEach(item => {
-        const itemDate = new Date(item.mealDate || item.date);
-        const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
-        if (itemDateStr === targetDateString) {
-          dayTotalCal += item.nutrition.calories;
-        }
-      });
-      
-      const el = document.getElementById('modal-day-total-calories');
-      if (el) el.textContent = dayTotalCal;
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // モーダルの日付変更時にトータルカロリーを再計算
-  modalDateInput.addEventListener('change', () => {
-    updateModalDayTotalCalories(modalDateInput.value);
-  });
 
   // ==========================================================================
   // History Detail Modal Control & Inline Save/Reanalyze Handlers
@@ -795,8 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadHistory();
       await updateDailySummary();
 
-      // モーダルの同日合計カロリーを更新
-      await updateModalDayTotalCalories(modalDateInput.value);
+
 
     } catch (err) {
       console.error(err);
