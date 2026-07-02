@@ -1192,64 +1192,7 @@ body {
   object-fit: cover;
 }
 
-.modal-nutrition-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-  background: rgba(220, 230, 224, 0.2);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 14px 18px;
-}
 
-.modal-calories-box {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-}
-
-.modal-calories-box .val {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--text-main);
-  font-family: 'Outfit', sans-serif;
-  line-height: 1;
-}
-
-.modal-calories-box .unit {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.modal-pfc-boxes {
-  display: flex;
-  gap: 6px;
-}
-
-.modal-pfc-box {
-  border-radius: 10px;
-  padding: 6px 10px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.modal-pfc-box .label {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.modal-pfc-box.protein { background-color: rgba(154, 194, 244, 0.12); color: #2b5585; }
-.modal-pfc-box.fat { background-color: rgba(251, 216, 127, 0.16); color: #8c701f; }
-.modal-pfc-box.carbs { background-color: rgba(247, 168, 184, 0.12); color: #a04859; }
 
 .modal-comment-card {
   background-color: #f7faf8;
@@ -1641,6 +1584,13 @@ body {
   margin-left: 6px;
   display: inline-block;
   vertical-align: middle;
+}
+
+/* 固定ヘッダー内のサマリーカード間隔調整 */
+.modal-header-fixed #modal-nutrition-summary-card {
+  margin-top: 6px;
+  margin-bottom: 0px;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 

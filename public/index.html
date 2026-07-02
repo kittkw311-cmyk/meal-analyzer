@@ -262,23 +262,25 @@
           </div>
         </div>
 
-        <!-- 基本栄養素 (PFC) サマリー (固定ヘッダー内に移動) -->
-        <div class="modal-nutrition-summary">
-          <div class="modal-calories-box">
-            <span class="val" id="modal-calories">0</span> <span class="unit">kcal</span>
-          </div>
-          <div class="modal-pfc-boxes">
-            <div class="modal-pfc-box protein">
-              <span class="label">P</span>
-              <span class="val" id="modal-protein">0</span>g
+        <!-- 基本栄養素 (PFC) サマリー (添付UIと同じ細長いカード) -->
+        <div class="card daily-summary-card" id="modal-nutrition-summary-card">
+          <div class="daily-summary-grid-v2">
+            <div class="daily-summary-calorie-box-v2">
+              <span class="daily-summary-val"><span id="modal-calories">0</span> <span class="daily-summary-unit">kcal</span></span>
             </div>
-            <div class="modal-pfc-box fat">
-              <span class="label">F</span>
-              <span class="val" id="modal-fat">0</span>g
-            </div>
-            <div class="modal-pfc-box carbs">
-              <span class="label">C</span>
-              <span class="val" id="modal-carbs">0</span>g
+            <div class="daily-summary-pfc-boxes">
+              <div class="daily-pfc-box protein">
+                <span class="label">P</span>
+                <span class="val"><span id="modal-protein">0</span><span class="unit">g</span></span>
+              </div>
+              <div class="daily-pfc-box fat">
+                <span class="label">F</span>
+                <span class="val"><span id="modal-fat">0</span><span class="unit">g</span></span>
+              </div>
+              <div class="daily-pfc-box carbs">
+                <span class="label">C</span>
+                <span class="val"><span id="modal-carbs">0</span><span class="unit">g</span></span>
+              </div>
             </div>
           </div>
         </div>
