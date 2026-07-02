@@ -500,16 +500,15 @@ document.addEventListener('DOMContentLoaded', () => {
             historyDetailModal.style.display = 'flex';
           });
 
-          // 時刻部分を抽出
-          const timeStr = new Date(item.mealDate || item.date).toLocaleTimeString('ja-JP', {
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-
           // 画像が無い場合の履歴カードのプレースホルダー
           const imageHtml = item.imageId
             ? `<img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">`
             : `<div class="history-no-img">✍️ テキスト入力</div>`;
+
+          // 表示用の料理名・テキスト（無い場合は画像解析プレースホルダー）
+          const displayText = item.textInput && item.textInput.trim() 
+            ? item.textInput.trim() 
+            : (item.imageId ? '📸 画像から解析' : '🍽️ 食事データ');
 
           // カロリーの右側にPFCをインライン横並びで配置 (history-info-row-v3) - 添付画像と同等スタイル
           card.innerHTML = `
@@ -520,6 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="history-date">
                 <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
+              <div class="history-meal-text">${displayText}</div>
               <div class="history-info-row-v3">
                 <div class="history-calories-v3">${item.nutrition.calories}<span class="unit">kcal</span></div>
                 <div class="history-pfc-boxes-v3">

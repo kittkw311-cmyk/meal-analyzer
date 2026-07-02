@@ -1387,7 +1387,8 @@ body {
   justify-content: center;
   gap: 2px;
   border: 1px solid rgba(0, 0, 0, 0.04);
-  min-width: 48px;
+  width: 56px;
+  flex-shrink: 0;
   box-sizing: border-box;
 }
 
@@ -1426,6 +1427,18 @@ body {
 .history-pfc-box-v3.carbs {
   background-color: rgba(247, 168, 184, 0.15);
   color: #a04859;
+}
+
+.history-meal-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 3px;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 
