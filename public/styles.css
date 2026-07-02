@@ -1341,6 +1341,93 @@ body {
   box-shadow: 0 4px 12px rgba(156, 212, 176, 0.25);
 }
 
+/* ==========================================================================
+   History V3 (Image-style Inline PFC and Calorie Box Layout)
+   ========================================================================== */
+.history-info-row-v3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.history-calories-v3 {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-main);
+  line-height: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+}
+
+.history-calories-v3 .unit {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.history-pfc-boxes-v3 {
+  display: flex;
+  gap: 5px;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+.history-pfc-box-v3 {
+  border-radius: 8px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  min-width: 48px;
+  box-sizing: border-box;
+}
+
+.history-pfc-box-v3 .label {
+  font-size: 10px;
+  font-weight: 800;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.history-pfc-box-v3 .val {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+}
+
+.history-pfc-box-v3 .val .unit {
+  font-size: 8px;
+  font-weight: 600;
+  margin-left: 0.5px;
+  opacity: 0.8;
+}
+
+/* 履歴PFC各色設定 (サマリーカードと同様に) */
+.history-pfc-box-v3.protein {
+  background-color: rgba(154, 194, 244, 0.15);
+  color: #2b5585;
+}
+.history-pfc-box-v3.fat {
+  background-color: rgba(251, 216, 127, 0.2);
+  color: #8c701f;
+}
+.history-pfc-box-v3.carbs {
+  background-color: rgba(247, 168, 184, 0.15);
+  color: #a04859;
+}
+
 
 
 

@@ -245,7 +245,16 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('image', selectedFile);
     }
     formData.append('textInput', mealTextInput.value.trim());
-    formData.append('mealDate', mealDateInput.value);
+    // 日付 (YYYY-MM-DD) にアップロードした瞬間の現在時刻 (HH:MM:SS) をマージして送信
+    const selectedDate = mealDateInput.value;
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
+    const mealDateToSend = new Date(fullDateTimeStr).toISOString();
+
+    formData.append('mealDate', mealDateToSend);
     formData.append('mealType', activeMealType);
 
     try {
@@ -502,22 +511,30 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">`
             : `<div class="history-no-img">✍️ テキスト入力</div>`;
 
-          // カロリーの右側にPFCをインライン横並びで配置 (history-info-row)
+          // カロリーの右側にPFCをインライン横並びで配置 (history-info-row-v3) - 添付画像と同等スタイル
           card.innerHTML = `
             <div class="history-img-wrapper">
               ${imageHtml}
             </div>
             <div class="history-info">
               <div class="history-date">
-                ${timeStr} 
                 <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
-              <div class="history-info-row">
-                <div class="history-calories">${item.nutrition.calories} <span>kcal</span></div>
-                <div class="history-pfc-tags">
-                  <span class="history-pfc-tag p">P: ${item.nutrition.protein}g</span>
-                  <span class="history-pfc-tag f">F: ${item.nutrition.fat}g</span>
-                  <span class="history-pfc-tag c">C: ${item.nutrition.carbohydrates}g</span>
+              <div class="history-info-row-v3">
+                <div class="history-calories-v3">${item.nutrition.calories}<span class="unit">kcal</span></div>
+                <div class="history-pfc-boxes-v3">
+                  <div class="history-pfc-box-v3 protein">
+                    <span class="label">P</span>
+                    <span class="val">${item.nutrition.protein}<span class="unit">g</span></span>
+                  </div>
+                  <div class="history-pfc-box-v3 fat">
+                    <span class="label">F</span>
+                    <span class="val">${item.nutrition.fat}<span class="unit">g</span></span>
+                  </div>
+                  <div class="history-pfc-box-v3 carbs">
+                    <span class="label">C</span>
+                    <span class="val">${item.nutrition.carbohydrates}<span class="unit">g</span></span>
+                  </div>
                 </div>
               </div>
             </div>
