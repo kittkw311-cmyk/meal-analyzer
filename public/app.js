@@ -107,6 +107,74 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // 詳細モーダルを開いてデータをバインドする共通関数
+  function openDetailModal(item) {
+    currentEditingHistoryId = item.id;
+    
+    // 画像が無い場合のプレースホルダー対応
+    const modalImage = document.getElementById('modal-meal-image');
+    if (item.imageId) {
+      modalImage.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
+      modalImage.style.display = 'block';
+    } else {
+      modalImage.style.display = 'none';
+    }
+    
+    // モーダル編集インプットのバインド処理
+    const dateObj = new Date(item.mealDate || item.date);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    modalDateInput.value = `${yyyy}-${mm}-${dd}`;
+    
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    modalTimeInput.value = `${hours}:${minutes}`;
+
+    modalTypeSelect.value = item.mealType || 'snack';
+    modalTextInput.value = item.textInput || '';
+
+    // モーダル表示用料理名タイトル
+    const displayTitle = item.mealName || item.nutrition.mealName || (item.textInput && item.textInput.trim() ? item.textInput.trim() : '食事詳細');
+    document.getElementById('modal-meal-title').textContent = displayTitle;
+
+    document.getElementById('modal-calories').textContent = item.nutrition.calories;
+    document.getElementById('modal-protein').textContent = item.nutrition.protein;
+    document.getElementById('modal-fat').textContent = item.nutrition.fat;
+    document.getElementById('modal-carbs').textContent = item.nutrition.carbohydrates;
+    
+    const modalInference = document.getElementById('modal-inference');
+    const modalInferenceCard = document.getElementById('modal-inference-card');
+    if (item.nutrition.inference) {
+      modalInference.textContent = item.nutrition.inference;
+      modalInferenceCard.style.display = 'block';
+      document.getElementById('modal-comment').textContent = item.nutrition.advice || item.nutrition.comment;
+    } else {
+      modalInferenceCard.style.display = 'none';
+      document.getElementById('modal-comment').textContent = item.nutrition.comment;
+    }
+
+    // モーダルを表示
+    historyDetailModal.style.display = 'flex';
+  }
+
+  // 解析画面のフォームをリセットする関数
+  function resetAnalyzeForm() {
+    selectedFile = null;
+    cameraInput.value = '';
+    galleryInput.value = '';
+    
+    // プレビューコンテナの非表示化
+    previewContainer.style.display = 'none';
+    imagePreview.src = '';
+    
+    // 食事テキスト入力欄をクリア
+    mealTextInput.value = '';
+    
+    // 日付・食事区分セレクタを現在時刻で初期化
+    initializeSelectors();
+  }
+
   // 初期実行
   initializeSelectors();
 
@@ -276,6 +344,15 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // 今日の合計表示をリアルタイム更新
       updateDailySummary();
+
+      // 履歴一覧も同期してリロード
+      await loadHistory();
+
+      // 作成された履歴の詳細モーダルを表示
+      openDetailModal(record);
+
+      // 解析画面の入力値を初期化
+      resetAnalyzeForm();
 
     } catch (err) {
       console.error(err);
@@ -503,55 +580,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const card = document.createElement('div');
           card.className = 'card history-card';
           
-          // 履歴カードクリックで単独モーダルを開く ＆ 編集用の値バインド
+          // 履歴カードクリックで単独モーダルを開く
           card.addEventListener('click', () => {
-            currentEditingHistoryId = item.id;
-            
-            // 画像が無い場合のプレースホルダー対応
-            const modalImage = document.getElementById('modal-meal-image');
-            if (item.imageId) {
-              modalImage.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
-              modalImage.style.display = 'block';
-            } else {
-              modalImage.style.display = 'none';
-            }
-            
-            // モーダル編集インプットのバインド処理
-            const dateObj = new Date(item.mealDate || item.date);
-            const yyyy = dateObj.getFullYear();
-            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const dd = String(dateObj.getDate()).padStart(2, '0');
-            modalDateInput.value = `${yyyy}-${mm}-${dd}`;
-            
-            const hours = String(dateObj.getHours()).padStart(2, '0');
-            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-            modalTimeInput.value = `${hours}:${minutes}`;
-
-            modalTypeSelect.value = item.mealType || 'snack';
-            modalTextInput.value = item.textInput || '';
-
-            // モーダル表示用料理名タイトル
-            const displayTitle = item.mealName || item.nutrition.mealName || (item.textInput && item.textInput.trim() ? item.textInput.trim() : '食事詳細');
-            document.getElementById('modal-meal-title').textContent = displayTitle;
-
-            document.getElementById('modal-calories').textContent = item.nutrition.calories;
-            document.getElementById('modal-protein').textContent = item.nutrition.protein;
-            document.getElementById('modal-fat').textContent = item.nutrition.fat;
-            document.getElementById('modal-carbs').textContent = item.nutrition.carbohydrates;
-            
-            const modalInference = document.getElementById('modal-inference');
-            const modalInferenceCard = document.getElementById('modal-inference-card');
-            if (item.nutrition.inference) {
-              modalInference.textContent = item.nutrition.inference;
-              modalInferenceCard.style.display = 'block';
-              document.getElementById('modal-comment').textContent = item.nutrition.advice || item.nutrition.comment;
-            } else {
-              modalInferenceCard.style.display = 'none';
-              document.getElementById('modal-comment').textContent = item.nutrition.comment;
-            }
-
-            // モーダルを表示
-            historyDetailModal.style.display = 'flex';
+            openDetailModal(item);
           });
 
           // 画像が無い場合の履歴カードのプレースホルダー
