@@ -505,6 +505,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const hours = String(dateObj.getHours()).padStart(2, '0');
             const minutes = String(dateObj.getMinutes()).padStart(2, '0');
             modalTimeInput.value = `${hours}:${minutes}`;
+
+            // 同日のトータルカロリーを表示
+            updateModalDayTotalCalories(`${yyyy}-${mm}-${dd}`);
             
             modalTypeSelect.value = item.mealType || 'snack';
             modalTextInput.value = item.textInput || '';
@@ -620,6 +623,33 @@ document.addEventListener('DOMContentLoaded', () => {
       historyList.innerHTML = `<p class="error-text">履歴の読み込みに失敗しました。</p>`;
     }
   }
+
+  // 同日のトータルカロリーを計算してモーダルに表示する共通関数
+  async function updateModalDayTotalCalories(targetDateString) {
+    try {
+      const response = await fetch('/api/history');
+      const history = await response.json();
+      
+      let dayTotalCal = 0;
+      history.forEach(item => {
+        const itemDate = new Date(item.mealDate || item.date);
+        const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
+        if (itemDateStr === targetDateString) {
+          dayTotalCal += item.nutrition.calories;
+        }
+      });
+      
+      const el = document.getElementById('modal-day-total-calories');
+      if (el) el.textContent = dayTotalCal;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // モーダルの日付変更時にトータルカロリーを再計算
+  modalDateInput.addEventListener('change', () => {
+    updateModalDayTotalCalories(modalDateInput.value);
+  });
 
   // ==========================================================================
   // History Detail Modal Control & Inline Save/Reanalyze Handlers
@@ -764,6 +794,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // 履歴一覧と今日の合計を非同期でリロード
       await loadHistory();
       await updateDailySummary();
+
+      // モーダルの同日合計カロリーを更新
+      await updateModalDayTotalCalories(modalDateInput.value);
 
     } catch (err) {
       console.error(err);

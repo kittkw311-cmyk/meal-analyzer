@@ -231,12 +231,13 @@
   <div class="modal-overlay" id="history-detail-modal" style="display: none;">
     <div class="modal-content">
       <button class="modal-close-btn" id="btn-close-modal">✕</button>
-      <div class="modal-body">
+      
+      <!-- 固定ヘッダー部 -->
+      <div class="modal-header-fixed">
         <h3 class="modal-title" id="modal-meal-title">食事詳細</h3>
         
-        <!-- 編集用の食事内容テキストエリア -->
+        <!-- 編集用の食事内容テキストエリア (見出しラベルは非表示/削除) -->
         <div class="modal-text-edit-block">
-          <span class="edit-label">📝 食事内容（料理名、レシピURLなど）</span>
           <textarea id="modal-text-input" class="modal-textarea" rows="2" placeholder="食事内容を入力または修正..."></textarea>
         </div>
 
@@ -261,6 +262,15 @@
           </div>
         </div>
 
+        <!-- 同日の合計摂取エネルギー表示欄 (日付入力欄の下) -->
+        <div class="modal-day-total-calories-box">
+          <span class="label">📅 同日の合計エネルギー</span>
+          <span class="val"><span id="modal-day-total-calories">0</span> kcal</span>
+        </div>
+      </div>
+      
+      <!-- スクロール可能なコンテンツ部 -->
+      <div class="modal-body-scrollable">
         <div class="modal-image-container">
           <img id="modal-meal-image" src="" alt="食事画像">
         </div>
@@ -283,6 +293,7 @@
             </div>
           </div>
         </div>
+        
         <!-- 食材・調味料の推測と計算根拠 -->
         <div class="modal-inference-card" id="modal-inference-card" style="display: none;">
           <div class="modal-inference-header">📝 食材・調味料の推測と計算根拠</div>
