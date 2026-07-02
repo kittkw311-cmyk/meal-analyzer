@@ -279,7 +279,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error(err);
-      alert('解析に失敗しました: ' + err.message);
+      const msg = err.message || '';
+      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('limit') || msg.includes('RESOURCE_EXHAUSTED')) {
+        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。');
+      } else {
+        alert('解析に失敗しました。\n詳細: ' + msg);
+      }
     } finally {
       loadingOverlay.style.display = 'none';
       btnAnalyze.disabled = false;
@@ -762,7 +767,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error(err);
-      alert('再計算に失敗しました。\n詳細: ' + err.message);
+      const msg = err.message || '';
+      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('limit') || msg.includes('RESOURCE_EXHAUSTED')) {
+        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「再計算する」ボタンを押してください。');
+      } else {
+        alert('再計算に失敗しました。\n詳細: ' + msg);
+      }
     } finally {
       loadingOverlay.style.display = 'none';
       btnReanalyzeModal.disabled = false;
