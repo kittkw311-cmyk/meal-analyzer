@@ -185,7 +185,11 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: 'Gemini APIキーが設定されていません。サーバー管理者にお問い合わせください。' });
     }
 
-    console.log('Analyzing image with Gemini 2.5 Flash...');
+    // クライアントから送信された食事日時と区分を取得
+    const mealDate = req.body.mealDate ? new Date(req.body.mealDate).toISOString() : new Date().toISOString();
+    const mealType = req.body.mealType || 'snack';
+
+    console.log(`Analyzing image with Gemini 2.5 Flash (${mealDate} - ${mealType})...`);
     
     // Gemini 2.5 Flash で画像を解析（構造化JSON出力）
     const response = await ai.models.generateContent({
@@ -223,11 +227,15 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     let imageSource = 'local';
     let imageId = '';
 
+    // ファイル名の設計: meal_YYYY-MM-DD_mealType_timestamp.jpg
+    const dateStr = mealDate.substring(0, 10);
+    const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
+
     if (drive && folderId) {
       try {
         console.log('Uploading image to Google Drive...');
         const fileMetadata = {
-          name: `meal_${Date.now()}_${req.file.originalname || 'upload.jpg'}`,
+          name: filename,
           parents: [folderId],
         };
         const media = {
@@ -245,7 +253,6 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       } catch (driveErr) {
         console.error('Google Drive upload failed, falling back to local storage:', driveErr);
         // フォールバック: ローカル保存
-        const filename = `meal_${Date.now()}_${req.file.originalname || 'upload.jpg'}`;
         const filePath = path.join(UPLOADS_DIR, filename);
         fs.writeFileSync(filePath, req.file.buffer);
         imageSource = 'local';
@@ -254,7 +261,6 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     } else {
       // ローカルモード
       console.log('Google Drive not configured. Saving image locally...');
-      const filename = `meal_${Date.now()}_${req.file.originalname || 'upload.jpg'}`;
       const filePath = path.join(UPLOADS_DIR, filename);
       fs.writeFileSync(filePath, req.file.buffer);
       imageSource = 'local';
@@ -264,7 +270,9 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     // 履歴データへの登録
     const newRecord = {
       id: `rec_${Date.now()}`,
-      date: new Date().toISOString(),
+      date: new Date().toISOString(), // システム登録日時
+      mealDate,                        // ユーザー指定の食事日
+      mealType,                        // ユーザー指定の食事区分
       imageSource,
       imageId,
       nutrition: nutritionData
@@ -292,7 +300,7 @@ app.get('/api/history', async (req, res) => {
 app.get('/api/stats', async (req, res) => {
   const history = await readHistory();
   
-  // 直近7日間のデータを集計
+  // 直近7日間のデータを集計 (ユーザーが指定した食事日 mealDate または登録日 date を基準とする)
   const last7Days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -313,7 +321,8 @@ app.get('/api/stats', async (req, res) => {
   let mealCount = 0;
 
   history.forEach(record => {
-    const recordDate = new Date(record.date);
+    // ユーザー指定の食事日を優先
+    const recordDate = new Date(record.mealDate || record.date);
     const recordDateKey = recordDate.toDateString();
     
     // 直近7日間のカロリー集計

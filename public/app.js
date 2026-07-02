@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const imagePreview = document.getElementById('image-preview');
   const btnRemoveImage = document.getElementById('btn-remove-image');
   const btnAnalyze = document.getElementById('btn-analyze');
+
+  // Selectors (Date & Meal Type)
+  const mealDateInput = document.getElementById('meal-date-input');
+  const mealTypeChips = document.querySelectorAll('.meal-type-chips .chip');
   
   // Loading & Result Elements
   const loadingOverlay = document.getElementById('loading-overlay');
@@ -37,6 +41,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Selected file reference
   let selectedFile = null;
+  let activeMealType = 'snack';
+
+  // ==========================================================================
+  // Selector Initializer
+  // ==========================================================================
+  const initializeSelectors = () => {
+    // 日付 (YYYY-MM-DD 形式)
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    mealDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    // 時間帯による食事区分の初期値自動設定
+    const hour = today.getHours();
+    let defaultType = 'snack';
+    if (hour >= 5 && hour < 11) {
+      defaultType = 'morning';
+    } else if (hour >= 11 && hour < 16) {
+      defaultType = 'noon';
+    } else if (hour >= 16 && hour < 22) {
+      defaultType = 'night';
+    }
+    
+    setMealTypeActive(defaultType);
+  };
+
+  function setMealTypeActive(type) {
+    activeMealType = type;
+    mealTypeChips.forEach(chip => {
+      if (chip.getAttribute('data-type') === type) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+
+  // チップクリック時のイベント
+  mealTypeChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      setMealTypeActive(chip.getAttribute('data-type'));
+    });
+  });
+
+  // 初期実行
+  initializeSelectors();
 
   // ==========================================================================
   // Navigation (Tab Switch)
@@ -65,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Image Upload & Preview Handling
   // ==========================================================================
   dropZone.addEventListener('click', (e) => {
-    // ボタンのクリックでイベントが2重に発生しないようにする
     if (e.target !== btnRemoveImage) {
       imageInput.click();
     }
@@ -116,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnRemoveImage.addEventListener('click', (e) => {
-    e.stopPropagation(); // 親要素（dropZone）のクリックイベントを防止
+    e.stopPropagation();
     clearUpload();
   });
 
@@ -127,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadPrompt.style.display = 'block';
     previewContainer.style.display = 'none';
     btnAnalyze.disabled = true;
+    initializeSelectors();
   }
 
   // ==========================================================================
@@ -135,13 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAnalyze.addEventListener('click', async () => {
     if (!selectedFile) return;
 
-    // UI初期化
     btnAnalyze.disabled = true;
     loadingOverlay.style.display = 'flex';
     resultContainer.style.display = 'none';
 
     const formData = new FormData();
     formData.append('image', selectedFile);
+    formData.append('mealDate', mealDateInput.value);
+    formData.append('mealType', activeMealType);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -180,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const fPercent = (nutrition.fat / total) * 100;
       const cPercent = (nutrition.carbohydrates / total) * 100;
 
-      // わずかな遅延を入れてアニメーション効果を高める
       setTimeout(() => {
         barProtein.style.width = `${pPercent}%`;
         barFat.style.width = `${fPercent}%`;
@@ -216,26 +267,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
       historyList.innerHTML = '';
       history.forEach(item => {
-        const date = new Date(item.date).toLocaleString('ja-JP', {
+        // 表示用日付フォーマット (指定された食事日を優先)
+        const dateObj = new Date(item.mealDate || item.date);
+        const formattedDate = dateObj.toLocaleDateString('ja-JP', {
           month: '2-digit',
           day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
+          weekday: 'short'
         });
+
+        const mealTypeJa = {
+          morning: '朝食 🌅',
+          noon: '昼食 ☀️',
+          night: '夕食 🌙',
+          snack: '間食 🍰'
+        }[item.mealType || 'snack'];
 
         const card = document.createElement('div');
         card.className = 'card history-card';
-        // クリックしたら「解析」タブに戻って詳細を表示する
+        
+        // クリックしたら詳細を復元して「解析」タブへ切り替え
         card.addEventListener('click', () => {
-          // 画像ソースを設定
           imagePreview.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
           uploadPrompt.style.display = 'none';
           previewContainer.style.display = 'flex';
           
-          // タブ切り替え
-          navItems[0].click(); 
+          // 日付と食事区分を復元
+          if (item.mealDate) {
+            mealDateInput.value = item.mealDate.substring(0, 10);
+          }
+          if (item.mealType) {
+            setMealTypeActive(item.mealType);
+          }
           
-          // 結果表示
+          navItems[0].click(); 
           displayResult(item.nutrition);
         });
 
@@ -245,7 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="history-info">
             <div>
-              <div class="history-date">${date}</div>
+              <div class="history-date">
+                ${formattedDate} 
+                <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
+              </div>
               <div class="history-calories">${item.nutrition.calories} <span>kcal</span></div>
             </div>
             <div class="history-pfc-tags">
