@@ -86,7 +86,6 @@ server = app.listen(PORT, () => {
   console.log(`ブラウザが開かない場合は、以下のURLに直接アクセスしてください：\n`);
   console.log(`\x1b[34m${authUrl}\x1b[0m\n`);
 
-  // 自動的にブラウザを開く
-  const startCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-  exec(`${startCmd} "${authUrl.replace(/"/g, '\\"')}"`);
+  // 自動起動はOSによって失敗することがあるため、手動でのアクセスを案内します
+  console.log('上記の青いURLをコピーして、ブラウザ（Chromeなど）に貼り付けて開いてください。');
 });
