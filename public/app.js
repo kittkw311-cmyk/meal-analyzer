@@ -225,6 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ==========================================================================
+  // Display Result on Analysis Tab
+  // ==========================================================================
   function displayResult(nutrition) {
     resCalories.textContent = nutrition.calories;
     resProtein.textContent = nutrition.protein;
@@ -353,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
         
-        // 1. 日別合計ヘッダーの生成
+        // 1. 日別合計ヘッダーの生成 (PFCに着色用クラスを追加)
         const headerEl = document.createElement('div');
         headerEl.className = 'history-date-header';
         
@@ -364,11 +367,11 @@ document.addEventListener('DOMContentLoaded', () => {
         headerEl.innerHTML = `
           <span class="history-date-title">${group.dateLabel}</span>
           <div class="history-daily-total">
-            <div>本日合計: <span class="history-daily-calories">${group.totalCalories} kcal</span></div>
+            <div>合計: <span class="history-daily-calories">${group.totalCalories} kcal</span></div>
             <div class="history-daily-pfc">
-              <span>P: ${pTotal}g</span>
-              <span>F: ${fTotal}g</span>
-              <span>C: ${cTotal}g</span>
+              <span class="p">P: ${pTotal}g</span>
+              <span class="f">F: ${fTotal}g</span>
+              <span class="c">C: ${cTotal}g</span>
             </div>
           </div>
         `;
@@ -388,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // 履歴カードクリックで単独モーダルを開く
           card.addEventListener('click', () => {
-            // モーダルの各DOMに値をセット
             document.getElementById('modal-meal-image').src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
             
             const dateObj = new Date(item.mealDate || item.date);
@@ -423,6 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minute: '2-digit'
           });
 
+          // 解説文のプレビュー（history-comment-preview）を一覧カードから削除
           card.innerHTML = `
             <div class="history-img-wrapper">
               <img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">
@@ -440,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="history-pfc-tag f">F: ${item.nutrition.fat}g</span>
                 <span class="history-pfc-tag c">C: ${item.nutrition.carbohydrates}g</span>
               </div>
-              <div class="history-comment-preview">${item.nutrition.comment}</div>
             </div>
           `;
 

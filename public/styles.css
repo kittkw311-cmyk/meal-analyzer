@@ -223,7 +223,7 @@ body {
 .upload-area {
   border: 2px dashed #c3d9cc;
   border-radius: 16px;
-  min-height: 180px;
+  min-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -243,12 +243,12 @@ body {
 
 .upload-prompt {
   text-align: center;
-  padding: 20px;
+  padding: 10px;
 }
 
 .upload-icon {
-  font-size: 40px;
-  margin-bottom: 8px;
+  font-size: 28px;
+  margin-bottom: 4px;
   transition: var(--transition);
 }
 
@@ -257,14 +257,14 @@ body {
 }
 
 .upload-text {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-main);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .upload-subtext {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
 }
 
@@ -499,35 +499,35 @@ body {
 }
 
 .history-calories {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   font-family: 'Outfit', sans-serif;
   color: var(--text-main);
 }
 
 .history-calories span {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 .history-pfc-tags {
   display: flex;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .history-pfc-tag {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 6px;
   font-family: 'Outfit', sans-serif;
 }
 
-.history-pfc-tag.p { background-color: rgba(154, 194, 244, 0.2); color: #4378b8; }
-.history-pfc-tag.f { background-color: rgba(251, 216, 127, 0.2); color: #b08d27; }
-.history-pfc-tag.c { background-color: rgba(247, 168, 184, 0.2); color: #ba546a; }
+.history-pfc-tag.p { background-color: rgba(154, 194, 244, 0.2); color: #2b5585; }
+.history-pfc-tag.f { background-color: rgba(251, 216, 127, 0.25); color: #8c701f; }
+.history-pfc-tag.c { background-color: rgba(247, 168, 184, 0.2); color: #a04859; }
 
 .history-comment-preview {
   font-size: 11px;
@@ -895,31 +895,35 @@ body {
   background-color: rgba(220, 230, 224, 0.25);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-main);
+  font-weight: 600;
 }
 
 .history-daily-calories {
-  font-weight: 700;
-  color: var(--text-main);
+  font-weight: 800;
+  color: var(--primary-dark);
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .history-daily-pfc {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  font-size: 13px;
 }
 
 .history-daily-pfc span {
   font-family: 'Outfit', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
 }
+.history-daily-pfc span.p { color: #2b5585; }
+.history-daily-pfc span.f { color: #8c701f; }
+.history-daily-pfc span.c { color: #a04859; }
 
 /* ==========================================================================
    Daily Summary Card (Always Visible on Analyze Tab - スリム版)
