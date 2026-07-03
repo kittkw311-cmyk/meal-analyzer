@@ -675,15 +675,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         headerEl.innerHTML = `
           <span class="history-date-title">${group.dateLabel}</span>
-          <div class="history-daily-total-inline">
-            <span class="history-daily-calories">${group.totalCalories} kcal</span>
-            <div class="history-daily-pfc">
-              <span class="p">P:${pTotal}</span>
-              <span class="f">F:${fTotal}</span>
-              <span class="c">C:${cTotal}</span>
-              ${pfcDiffText ? `<span class="history-pfc-diff">${pfcDiffText}</span>` : ''}
-            </div>
+          <span class="history-daily-calories">${group.totalCalories} kcal</span>
+          <div class="history-daily-pfc">
+            <span class="p">P:${pTotal}</span>
+            <span class="f">F:${fTotal}</span>
+            <span class="c">C:${cTotal}</span>
           </div>
+          ${pfcDiffText ? `<span class="history-pfc-diff">${pfcDiffText}</span>` : '<span class="history-pfc-diff" style="visibility: hidden; pointer-events: none;">--</span>'}
         `;
         historyList.appendChild(headerEl);
 

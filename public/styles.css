@@ -905,50 +905,49 @@ body {
    History Daily Grouping Header
    ========================================================================== */
 .history-date-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 100px 90px 155px 1fr;
   align-items: center;
-  margin-top: 16px;
-  margin-bottom: 8px;
-  padding: 0 4px;
+  margin-top: 14px;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .history-date-header:first-of-type {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .history-date-title {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 800;
   color: var(--text-main);
-  display: block;
-}
-
-.history-daily-total-inline {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 600;
+  text-align: left;
 }
 
 .history-daily-calories {
   font-weight: 800;
   color: var(--primary-dark);
   font-family: 'Outfit', sans-serif;
-  font-size: 14px;
+  font-size: 13.5px;
+  text-align: right;
+  padding-right: 10px;
+  box-sizing: border-box;
 }
 
 .history-daily-pfc {
   display: flex;
-  gap: 6px;
+  flex-direction: row;
+  gap: 8px;
   font-size: 12px;
+  box-sizing: border-box;
+  padding-left: 5px;
 }
 
 .history-daily-pfc span {
   font-family: 'Outfit', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
 }
 .history-daily-pfc span.p { color: #2b5585; }
 .history-daily-pfc span.f { color: #8c701f; }
@@ -1613,18 +1612,19 @@ body {
   border-radius: 3px;
 }
 
-/* 理想PFCとの比率乖離表示 */
+/* 理想PFCとの比率乖離表示 (見やすく強調) */
 .history-pfc-diff {
-  font-size: 9px;
-  font-weight: 500;
-  color: #709a80;
-  background-color: rgba(156, 212, 176, 0.12);
-  border: 1px solid rgba(156, 212, 176, 0.2);
-  padding: 1px 6px;
-  border-radius: 6px;
-  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #1e5a36; /* 濃い緑にしてコントラスト比を高め視認性向上 */
+  background-color: rgba(107, 184, 132, 0.16);
+  border: 1px solid rgba(107, 184, 132, 0.45);
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-left: 4px;
   display: inline-block;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 /* 固定ヘッダー内のサマリーカード間隔調整 */
@@ -2085,6 +2085,31 @@ body {
   }
   .daily-weight-large-box #summary-weight-val {
     font-size: 17px !important;
+  }
+
+  /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
+  .history-date-header {
+    grid-template-columns: 80px 75px 125px 1fr !important;
+    gap: 4px !important;
+    padding: 4px 6px !important;
+  }
+  .history-date-title {
+    font-size: 12px !important;
+  }
+  .history-daily-calories {
+    font-size: 12px !important;
+    padding-right: 4px !important;
+  }
+  .history-daily-pfc {
+    font-size: 10px !important;
+    gap: 4px !important;
+    padding-left: 2px !important;
+  }
+  .history-pfc-diff {
+    font-size: 9px !important;
+    padding: 2px 4px !important;
+    border-radius: 8px !important;
+    margin-left: 2px !important;
   }
 }
 
