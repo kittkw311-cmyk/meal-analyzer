@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Chart instances
   let caloriesChart = null;
   let pfcChart = null;
+  let weightTrendChart = null;
 
   // Selected file reference
   let selectedFile = null;
@@ -1468,6 +1469,68 @@ document.addEventListener('DOMContentLoaded', () => {
           cutout: '65%'
         }
       });
+
+      // 3. 体重推移グラフの描画
+      const weightCtx = document.getElementById('weight-trend-chart').getContext('2d');
+      if (weightTrendChart) {
+        weightTrendChart.destroy();
+      }
+
+      try {
+        const weightRes = await fetch('/api/body-composition');
+        if (weightRes.ok) {
+          const weightHistory = await weightRes.json();
+          // 古い順にソート (時系列)
+          const validHistory = [...weightHistory]
+            .filter(d => d.weight !== null && d.weight > 0)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          // 直近30件のみ
+          const slicedHistory = validHistory.slice(-30);
+          
+          const weightLabels = slicedHistory.map(d => {
+            const dateObj = new Date(d.date);
+            return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+          });
+          const weightValues = slicedHistory.map(d => d.weight);
+
+          weightTrendChart = new Chart(weightCtx, {
+            type: 'line',
+            data: {
+              labels: weightLabels,
+              datasets: [{
+                label: '体重 (kg)',
+                data: weightValues,
+                borderColor: '#4a90e2',
+                backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.2,
+                pointBackgroundColor: '#4a90e2',
+                pointRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false }
+              },
+              scales: {
+                y: {
+                  grace: '5%',
+                  grid: { color: 'rgba(200, 220, 210, 0.3)' }
+                },
+                x: {
+                  grid: { display: false }
+                }
+              }
+            }
+          });
+        }
+      } catch (weightErr) {
+        console.error('Failed to load weight trend chart:', weightErr);
+      }
 
     } catch (err) {
       console.error('Failed to load stats:', err);
