@@ -484,6 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('carbohydrates', carbVal);
       formData.append('mealDate', mealDateToSend);
       formData.append('mealType', activeMealType);
+      formData.append('presetId', selectedPresetId);
       if (selectedFile) {
         formData.append('image', selectedFile);
       }
@@ -977,7 +978,9 @@ document.addEventListener('DOMContentLoaded', () => {
             calories: cVal,
             protein: pVal,
             fat: fVal,
-            carbohydrates: carbVal
+            carbohydrates: carbVal,
+            imageSource: activeDetailMeal.imageSource || '',
+            imageId: activeDetailMeal.imageId || ''
           })
         });
 

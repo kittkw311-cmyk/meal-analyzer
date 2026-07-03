@@ -723,7 +723,7 @@ app.get('/api/presets', async (req, res) => {
 // 2. 定番メニュー手動登録 API
 app.post('/api/presets', async (req, res) => {
   try {
-    const { name, calories, protein, fat, carbohydrates } = req.body;
+    const { name, calories, protein, fat, carbohydrates, imageSource, imageId } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '必須項目が不足しています。' });
     }
@@ -734,7 +734,9 @@ app.post('/api/presets', async (req, res) => {
       calories: Math.round(Number(calories)),
       protein: Math.round(Number(protein) * 10) / 10,
       fat: Math.round(Number(fat) * 10) / 10,
-      carbohydrates: Math.round(Number(carbohydrates) * 10) / 10
+      carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
+      imageSource: imageSource || '',
+      imageId: imageId || ''
     };
     presets.push(newPreset);
     await writePresets(presets);
@@ -799,6 +801,49 @@ app.post('/api/presets/analyze', upload.single('image'), async (req, res) => {
     console.log('Gemini preset raw response:', resultText);
     const nutritionData = JSON.parse(resultText);
 
+    // 画像の保存処理 (画像が提供されている場合のみ)
+    let imageSource = '';
+    let imageId = '';
+
+    if (req.file) {
+      imageSource = 'local';
+      const dateStr = new Date().toISOString().substring(0, 10);
+      const filename = `preset_${dateStr}_${Date.now()}.jpg`;
+
+      if (drive && folderId) {
+        try {
+          console.log('Uploading preset image to Google Drive...');
+          const fileMetadata = {
+            name: filename,
+            parents: [folderId],
+          };
+          const media = {
+            mimeType: req.file.mimetype,
+            body: bufferToStream(req.file.buffer),
+          };
+          const driveResponse = await drive.files.create({
+            requestBody: fileMetadata,
+            media: media,
+            fields: 'id',
+          });
+          imageSource = 'drive';
+          imageId = driveResponse.data.id;
+          console.log('Successfully uploaded preset image to Google Drive. File ID:', imageId);
+        } catch (err) {
+          console.error('Failed to upload preset image to Google Drive, saving locally instead:', err.message);
+          imageSource = 'local';
+          const localPath = path.join(UPLOADS_DIR, filename);
+          fs.writeFileSync(localPath, req.file.buffer);
+          imageId = filename;
+        }
+      } else {
+        const localPath = path.join(UPLOADS_DIR, filename);
+        fs.writeFileSync(localPath, req.file.buffer);
+        imageId = filename;
+        console.log('Saved preset image locally:', filename);
+      }
+    }
+
     // 定番メニューとして保存
     const presets = await readPresets();
     
@@ -811,7 +856,9 @@ app.post('/api/presets/analyze', upload.single('image'), async (req, res) => {
       calories: Math.round(Number(nutritionData.calories)),
       protein: Math.round(Number(nutritionData.protein) * 10) / 10,
       fat: Math.round(Number(nutritionData.fat) * 10) / 10,
-      carbohydrates: Math.round(Number(nutritionData.carbohydrates) * 10) / 10
+      carbohydrates: Math.round(Number(nutritionData.carbohydrates) * 10) / 10,
+      imageSource,
+      imageId
     };
 
     presets.push(newPreset);
@@ -868,7 +915,7 @@ app.patch('/api/presets/:id', async (req, res) => {
 // 5. 定番メニューからの食事履歴登録 API
 app.post('/api/history/preset', upload.single('image'), async (req, res) => {
   try {
-    const { name, calories, protein, fat, carbohydrates, mealDate, mealType } = req.body;
+    const { name, calories, protein, fat, carbohydrates, mealDate, mealType, presetId } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '食事データの作成に失敗しました。値が正しくありません。' });
     }
@@ -917,6 +964,15 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
         fs.writeFileSync(localPath, req.file.buffer);
         imageId = filename;
         console.log('Saved preset record image locally:', filename);
+      }
+    } else if (presetId) {
+      // 今回新しい画像がアップロードされていない場合、定番マスタから登録済みの画像を引き継ぐ
+      const presets = await readPresets();
+      const preset = presets.find(p => p.id === presetId);
+      if (preset && preset.imageId) {
+        imageSource = preset.imageSource || 'local';
+        imageId = preset.imageId;
+        console.log(`Inherited image from preset master: ${imageId} (${imageSource})`);
       }
     }
 
