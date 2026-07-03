@@ -1070,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sameDayRecords.length > 0) {
         // ソート順（夜 -> 朝 -> 他）なので、最初の要素が最新（最も優先度が高い時間帯または最新）
         const latest = sameDayRecords[0];
-        summaryWeightVal.textContent = latest.weight !== null ? latest.weight.toFixed(2) : '--.--';
+        summaryWeightVal.textContent = latest.weight !== null ? latest.weight.toFixed(1) : '--.-';
         
         // 基礎代謝を食事カロリー表示の横にマージする
         if (latest.bmr !== null) {
