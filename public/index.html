@@ -491,7 +491,6 @@
         <div class="weight-details-fixed-header">
           <span class="col-label">項目</span>
           <span class="col-input-val">測定値</span>
-          <span class="col-unit">単位</span>
           <span class="col-diff-val">前回比</span>
         </div>
       </div>
@@ -506,99 +505,83 @@
             <table class="weight-details-list-table">
               <tbody>
                 <tr>
-                  <td class="col-label">体重</td>
-                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-weight" class="weight-modal-input" placeholder="--.--"></td>
-                  <td class="col-unit">kg</td>
+                  <td class="col-label">体重 (kg)</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-weight" class="weight-modal-input" placeholder="--.-"></td>
                   <td class="col-diff-val" id="w-modal-diff-weight">--</td>
                 </tr>
                 <tr>
                   <td class="col-label">BMI</td>
                   <td class="col-input-val"><input type="number" step="0.1" id="w-modal-bmi" class="weight-modal-input" placeholder="--.-"></td>
-                  <td class="col-unit"></td>
                   <td class="col-diff-val" id="w-modal-diff-bmi">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">体脂肪率</td>
+                  <td class="col-label">体脂肪率 (%)</td>
                   <td class="col-input-val"><input type="number" step="0.1" id="w-modal-fat" class="weight-modal-input" placeholder="--.-"></td>
-                  <td class="col-unit">%</td>
                   <td class="col-diff-val" id="w-modal-diff-fat">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">心拍数</td>
+                  <td class="col-label">心拍数 (bpm)</td>
                   <td class="col-input-val"><input type="number" step="1" id="w-modal-heart" class="weight-modal-input" placeholder="--"></td>
-                  <td class="col-unit">bpm</td>
                   <td class="col-diff-val" id="w-modal-diff-heart">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">筋肉量</td>
-                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-muscle" class="weight-modal-input" placeholder="--.--"></td>
-                  <td class="col-unit">kg</td>
+                  <td class="col-label">筋肉量 (kg)</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-muscle" class="weight-modal-input" placeholder="--.-"></td>
                   <td class="col-diff-val" id="w-modal-diff-muscle">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">基礎代謝量</td>
+                  <td class="col-label">基礎代謝量 (kcal)</td>
                   <td class="col-input-val"><input type="number" step="1" id="w-modal-bmr" class="weight-modal-input" placeholder="----"></td>
-                  <td class="col-unit">kcal</td>
                   <td class="col-diff-val" id="w-modal-diff-bmr">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">水分量</td>
+                  <td class="col-label">水分量 (%)</td>
                   <td class="col-input-val"><input type="number" step="0.1" id="w-modal-water" class="weight-modal-input" placeholder="--.-"></td>
-                  <td class="col-unit">%</td>
                   <td class="col-diff-val" id="w-modal-diff-water">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">体脂肪量</td>
-                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-fatmass" class="weight-modal-input" placeholder="--.--"></td>
-                  <td class="col-unit">kg</td>
+                  <td class="col-label">体脂肪量 (kg)</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-fatmass" class="weight-modal-input" placeholder="--.-"></td>
                   <td class="col-diff-val" id="w-modal-diff-fatmass">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">除脂肪体重</td>
-                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-leanbody" class="weight-modal-input" placeholder="--.--"></td>
-                  <td class="col-unit">kg</td>
+                  <td class="col-label">除脂肪体重 (kg)</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-leanbody" class="weight-modal-input" placeholder="--.-"></td>
                   <td class="col-diff-val" id="w-modal-diff-leanbody">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">骨量</td>
-                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-bone" class="weight-modal-input" placeholder="--.--"></td>
-                  <td class="col-unit">kg</td>
+                  <td class="col-label">骨量 (kg)</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-bone" class="weight-modal-input" placeholder="--.-"></td>
                   <td class="col-diff-val" id="w-modal-diff-bone">--</td>
                 </tr>
                 <tr>
                   <td class="col-label">内臓脂肪レベル</td>
                   <td class="col-input-val"><input type="number" step="0.5" id="w-modal-visceralfat" class="weight-modal-input" placeholder="--.-"></td>
-                  <td class="col-unit"></td>
                   <td class="col-diff-val" id="w-modal-diff-visceralfat">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">タンパク質</td>
+                  <td class="col-label">タンパク質 (%)</td>
                   <td class="col-input-val"><input type="number" step="0.1" id="w-modal-proteinrate" class="weight-modal-input" placeholder="--.-"></td>
-                  <td class="col-unit">%</td>
                   <td class="col-diff-val" id="w-modal-diff-proteinrate">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">骨格筋量</td>
-                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-skeletalmuscle" class="weight-modal-input" placeholder="--.--"></td>
-                  <td class="col-unit">kg</td>
+                  <td class="col-label">骨格筋量 (kg)</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-skeletalmuscle" class="weight-modal-input" placeholder="--.-"></td>
                   <td class="col-diff-val" id="w-modal-diff-skeletalmuscle">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">皮下脂肪</td>
+                  <td class="col-label">皮下脂肪 (%)</td>
                   <td class="col-input-val"><input type="number" step="0.1" id="w-modal-subcutaneous" class="weight-modal-input" placeholder="--.-"></td>
-                  <td class="col-unit">%</td>
                   <td class="col-diff-val" id="w-modal-diff-subcutaneous">--</td>
                 </tr>
                 <tr>
-                  <td class="col-label">体内年齢</td>
+                  <td class="col-label">体内年齢 (歳)</td>
                   <td class="col-input-val"><input type="number" step="1" id="w-modal-bodyage" class="weight-modal-input" placeholder="--"></td>
-                  <td class="col-unit">歳</td>
                   <td class="col-diff-val" id="w-modal-diff-bodyage">--</td>
                 </tr>
                 <tr>
                   <td class="col-label">ボディタイプ</td>
                   <td class="col-input-val"><input type="text" id="w-modal-bodytype" class="weight-modal-input" style="font-family: inherit; font-size: 13px;" placeholder="----"></td>
-                  <td class="col-unit"></td>
                   <td class="col-diff-val" id="w-modal-diff-bodytype">--</td>
                 </tr>
               </tbody>

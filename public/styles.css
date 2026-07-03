@@ -2115,22 +2115,19 @@ body {
 }
 
 .weight-details-fixed-header .col-label {
-  width: 120px;
+  width: 150px;
   text-align: left;
 }
 
 .weight-details-fixed-header .col-input-val {
-  width: 110px;
-  text-align: center;
-}
-
-.weight-details-fixed-header .col-unit {
-  width: 50px;
-  text-align: left;
+  width: 120px;
+  text-align: right;
+  padding-right: 15px; /* 右寄せ時の見た目の微調整 */
+  box-sizing: border-box;
 }
 
 .weight-details-fixed-header .col-diff-val {
-  width: 80px;
+  width: 90px;
   text-align: right;
 }
 
@@ -2152,12 +2149,12 @@ body {
   font-weight: 700;
   color: var(--text-main);
   font-size: 13px;
-  width: 120px;
+  width: 150px;
 }
 
 .weight-details-list-table td.col-input-val {
-  text-align: center;
-  width: 110px;
+  text-align: right; /* 入力欄を右寄せにする */
+  width: 120px;
 }
 
 .weight-details-list-table .weight-modal-input {
@@ -2167,8 +2164,8 @@ body {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 800;
-  font-family: 'Outfit', sans-serif;
-  text-align: right;
+  font-family: 'Outfit', 'Courier New', monospace; /* 小数点位置が揃うように等幅を考慮 */
+  text-align: right; /* 数値の中身を右寄せ */
   outline: none;
   background: var(--card-bg);
   color: var(--text-main);
@@ -2180,18 +2177,12 @@ body {
   box-shadow: 0 0 0 2px rgba(107, 184, 132, 0.15);
 }
 
-.weight-details-list-table td.col-unit {
-  font-size: 11px;
-  color: var(--text-muted);
-  width: 50px;
-}
-
 .weight-details-list-table td.col-diff-val {
   text-align: right;
   font-weight: 800;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Outfit', 'Courier New', monospace; /* 小数点位置が揃うように等幅を考慮 */
   font-size: 13px;
-  width: 80px;
+  width: 90px;
 }
 
 /* 前回比のカラースタイル */

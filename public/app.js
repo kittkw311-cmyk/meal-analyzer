@@ -1496,21 +1496,22 @@ document.addEventListener('DOMContentLoaded', () => {
     weightModalTypeSelect.value = item.measurementType || 'other';
 
     // 各インプットに数値をバインド
-    wModalWeight.value = item.weight !== null ? item.weight : '';
-    wModalBmi.value = item.bmi !== null ? item.bmi : '';
-    wModalFat.value = item.fatRate !== null ? item.fatRate : '';
-    wModalHeart.value = item.heartRate !== null ? item.heartRate : '';
-    wModalMuscle.value = item.muscleMass !== null ? item.muscleMass : '';
-    wModalBmr.value = item.bmr !== null ? item.bmr : '';
-    wModalWater.value = item.waterRate !== null ? item.waterRate : '';
-    wModalFatMass.value = item.fatMass !== null ? item.fatMass : '';
-    wModalLeanBody.value = item.leanBodyMass !== null ? item.leanBodyMass : '';
-    wModalBone.value = item.boneMass !== null ? item.boneMass : '';
-    wModalVisceralFat.value = item.visceralFat !== null ? item.visceralFat : '';
-    wModalProteinRate.value = item.proteinRate !== null ? item.proteinRate : '';
-    wModalSkeletalMuscle.value = item.skeletalMuscleMass !== null ? item.skeletalMuscleMass : '';
-    wModalSubcutaneous.value = item.subcutaneousFat !== null ? item.subcutaneousFat : '';
-    wModalBodyAge.value = item.bodyAge !== null ? item.bodyAge : '';
+    // 各インプットに数値をバインド (小数点1桁に統一して小数点を揃える)
+    wModalWeight.value = item.weight !== null ? item.weight.toFixed(1) : '';
+    wModalBmi.value = item.bmi !== null ? item.bmi.toFixed(1) : '';
+    wModalFat.value = item.fatRate !== null ? item.fatRate.toFixed(1) : '';
+    wModalHeart.value = item.heartRate !== null ? item.heartRate.toFixed(1) : '';
+    wModalMuscle.value = item.muscleMass !== null ? item.muscleMass.toFixed(1) : '';
+    wModalBmr.value = item.bmr !== null ? item.bmr.toFixed(1) : '';
+    wModalWater.value = item.waterRate !== null ? item.waterRate.toFixed(1) : '';
+    wModalFatMass.value = item.fatMass !== null ? item.fatMass.toFixed(1) : '';
+    wModalLeanBody.value = item.leanBodyMass !== null ? item.leanBodyMass.toFixed(1) : '';
+    wModalBone.value = item.boneMass !== null ? item.boneMass.toFixed(1) : '';
+    wModalVisceralFat.value = item.visceralFat !== null ? item.visceralFat.toFixed(1) : '';
+    wModalProteinRate.value = item.proteinRate !== null ? item.proteinRate.toFixed(1) : '';
+    wModalSkeletalMuscle.value = item.skeletalMuscleMass !== null ? item.skeletalMuscleMass.toFixed(1) : '';
+    wModalSubcutaneous.value = item.subcutaneousFat !== null ? item.subcutaneousFat.toFixed(1) : '';
+    wModalBodyAge.value = item.bodyAge !== null ? item.bodyAge.toFixed(1) : '';
     wModalBodyType.value = item.bodyType || '';
 
     // 画像があれば表示
@@ -1565,21 +1566,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    setDiffVal('w-modal-diff-weight', item.weight, prevRecord ? prevRecord.weight : null, 2);
+    setDiffVal('w-modal-diff-weight', item.weight, prevRecord ? prevRecord.weight : null, 1);
     setDiffVal('w-modal-diff-bmi', item.bmi, prevRecord ? prevRecord.bmi : null, 1);
     setDiffVal('w-modal-diff-fat', item.fatRate, prevRecord ? prevRecord.fatRate : null, 1);
-    setDiffVal('w-modal-diff-heart', item.heartRate, prevRecord ? prevRecord.heartRate : null, 0);
-    setDiffVal('w-modal-diff-muscle', item.muscleMass, prevRecord ? prevRecord.muscleMass : null, 2);
-    setDiffVal('w-modal-diff-bmr', item.bmr, prevRecord ? prevRecord.bmr : null, 0);
+    setDiffVal('w-modal-diff-heart', item.heartRate, prevRecord ? prevRecord.heartRate : null, 1);
+    setDiffVal('w-modal-diff-muscle', item.muscleMass, prevRecord ? prevRecord.muscleMass : null, 1);
+    setDiffVal('w-modal-diff-bmr', item.bmr, prevRecord ? prevRecord.bmr : null, 1);
     setDiffVal('w-modal-diff-water', item.waterRate, prevRecord ? prevRecord.waterRate : null, 1);
-    setDiffVal('w-modal-diff-fatmass', item.fatMass, prevRecord ? prevRecord.fatMass : null, 2);
-    setDiffVal('w-modal-diff-leanbody', item.leanBodyMass, prevRecord ? prevRecord.leanBodyMass : null, 2);
-    setDiffVal('w-modal-diff-bone', item.boneMass, prevRecord ? prevRecord.boneMass : null, 2);
+    setDiffVal('w-modal-diff-fatmass', item.fatMass, prevRecord ? prevRecord.fatMass : null, 1);
+    setDiffVal('w-modal-diff-leanbody', item.leanBodyMass, prevRecord ? prevRecord.leanBodyMass : null, 1);
+    setDiffVal('w-modal-diff-bone', item.boneMass, prevRecord ? prevRecord.boneMass : null, 1);
     setDiffVal('w-modal-diff-visceralfat', item.visceralFat, prevRecord ? prevRecord.visceralFat : null, 1);
     setDiffVal('w-modal-diff-proteinrate', item.proteinRate, prevRecord ? prevRecord.proteinRate : null, 1);
-    setDiffVal('w-modal-diff-skeletalmuscle', item.skeletalMuscleMass, prevRecord ? prevRecord.skeletalMuscleMass : null, 2);
+    setDiffVal('w-modal-diff-skeletalmuscle', item.skeletalMuscleMass, prevRecord ? prevRecord.skeletalMuscleMass : null, 1);
     setDiffVal('w-modal-diff-subcutaneous', item.subcutaneousFat, prevRecord ? prevRecord.subcutaneousFat : null, 1);
-    setDiffVal('w-modal-diff-bodyage', item.bodyAge, prevRecord ? prevRecord.bodyAge : null, 0);
+    setDiffVal('w-modal-diff-bodyage', item.bodyAge, prevRecord ? prevRecord.bodyAge : null, 1);
 
     const diffBodyTypeEl = document.getElementById('w-modal-diff-bodytype');
     if (diffBodyTypeEl) {
