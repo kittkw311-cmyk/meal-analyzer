@@ -1,7 +1,7 @@
 {
-  "name": "diet-nutrition-analyzer",
+  "name": "physilog",
   "version": "1.0.0",
-  "description": "AI-powered meal nutrition analyzer with Google Drive integration and statistics",
+  "description": "PhysiLog - AI-powered meal nutrition & body composition analyzer with Google Drive integration and statistics",
   "type": "module",
   "main": "server.js",
   "scripts": {
