@@ -1142,6 +1142,51 @@ body {
   position: relative;
 }
 
+/* 詳細モーダルの栄養素チップスラッパー */
+.modal-nutrition-chips-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.modal-nutrition-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+}
+
+.modal-nutrition-chip.calorie {
+  background-color: #f2f4f3;
+  color: var(--text-main);
+}
+
+.modal-nutrition-chip.protein {
+  background-color: rgba(154, 194, 244, 0.12);
+  color: #2b5585;
+}
+
+.modal-nutrition-chip.fat {
+  background-color: rgba(251, 216, 127, 0.16);
+  color: #8c701f;
+}
+
+.modal-nutrition-chip.carbs {
+  background-color: rgba(247, 168, 184, 0.12);
+  color: #a04859;
+}
+
 /* ==========================================================================
    History Detail Modal (Popup UI)
    ========================================================================== */
@@ -2117,6 +2162,18 @@ body {
     width: 24px !important;
     height: 24px !important;
     font-size: 11px !important;
+  }
+
+  /* スマホ幅での詳細モーダル栄養素チップス調整 */
+  .modal-nutrition-chips-wrapper {
+    gap: 5px !important;
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+  }
+  .modal-nutrition-chip {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
   }
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
