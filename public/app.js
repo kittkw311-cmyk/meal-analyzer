@@ -1380,11 +1380,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const diff = item.weight - prevItem.weight;
             const sign = diff > 0 ? '+' : '';
             const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
-            diffStr = `<span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(2)} kg)</span>`;
+            diffStr = `<span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(2)})</span>`;
           }
         }
 
-        const tdWeightHTML = `${item.weight !== null ? `${item.weight.toFixed(2)} kg` : '--.-'} ${diffStr}`;
+        const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(2) : '--.--'}</span> ${diffStr}`;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1393,7 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="badge ${item.measurementType || 'other'}" style="margin-left: 6px;">${typeJa}</span>
           </td>
           <td class="td-weight">${tdWeightHTML}</td>
-          <td class="td-bmr-only">${item.bmr !== null ? `${item.bmr} kcal` : '----'}</td>
+          <td class="td-bmr-only"><span class="bmr-num">${item.bmr !== null ? item.bmr : '----'}</span></td>
           <td class="td-action">
             <button class="btn-delete-weight" data-id="${item.id}">🗑️</button>
           </td>

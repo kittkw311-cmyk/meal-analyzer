@@ -1628,6 +1628,15 @@ body {
   color: #888888; /* 維持 */
 }
 
+/* 履歴テーブル内の数値の強調表示 */
+.weight-history-table td .weight-num,
+.weight-history-table td .bmr-num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
 /* .body-comp-card の旧レイアウト用スタイルは共通 upload-card に統合されたため削除 */
 
 /* 記録結果編集カード */
