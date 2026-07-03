@@ -359,7 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || 'サーバーエラーが発生しました。');
+        const error = new Error(errData.error || 'サーバーエラーが発生しました。');
+        error.status = response.status;
+        throw error;
       }
 
       const record = await response.json();
@@ -380,8 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       const msg = err.message || '';
-      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('limit') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。');
+      if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。\n\n詳細: ' + msg);
       } else {
         alert('解析に失敗しました。\n詳細: ' + msg);
       }
@@ -813,7 +815,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'サーバーとの通信に失敗しました。');
+        const error = new Error(errData.error || 'サーバーとの通信に失敗しました。');
+        error.status = response.status;
+        throw error;
       }
 
       const updatedRecord = await response.json();
@@ -845,8 +849,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       const msg = err.message || '';
-      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('limit') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「再計算する」ボタンを押してください。');
+      if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「再計算する」ボタンを押してください。\n\n詳細: ' + msg);
       } else {
         alert('再計算に失敗しました。\n詳細: ' + msg);
       }
@@ -1030,7 +1034,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || '解析に失敗しました。');
+        const error = new Error(errData.error || '解析に失敗しました。');
+        error.status = response.status;
+        throw error;
       }
 
       const result = await response.json();
@@ -1064,8 +1070,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       const msg = err.message || '';
-      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('limit') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\n体組成解析が一時的に混み合っています。\n10秒〜20秒ほど待ってからもう一度お試しください。');
+      if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+        alert('【AIアクセス制限】\n体組成解析が一時的に混み合っています。\n10秒〜20秒ほど待ってからもう一度お試しください。\n\n詳細: ' + msg);
       } else {
         alert('解析に失敗しました。\n詳細: ' + msg);
       }

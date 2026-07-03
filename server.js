@@ -428,7 +428,8 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
   } catch (error) {
     console.error('Analysis error:', error);
-    res.status(500).json({ error: '解析中にエラーが発生しました。: ' + error.message });
+    const statusCode = error.status || error.statusCode || 500;
+    res.status(statusCode).json({ error: '解析中にエラーが発生しました。: ' + error.message, status: statusCode });
   }
 });
 
@@ -602,7 +603,8 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 
   } catch (error) {
     console.error('Reanalyze history error:', error);
-    res.status(500).json({ error: '履歴の再分析中にエラーが発生しました。: ' + error.message });
+    const statusCode = error.status || error.statusCode || 500;
+    res.status(statusCode).json({ error: '履歴の再分析中にエラーが発生しました。: ' + error.message, status: statusCode });
   }
 });
 
@@ -857,7 +859,8 @@ app.post('/api/body-composition/analyze', upload.single('image'), async (req, re
     
   } catch (error) {
     console.error('Body composition analysis error:', error);
-    res.status(500).json({ error: '体組成データの解析中にエラーが発生しました。: ' + error.message });
+    const statusCode = error.status || error.statusCode || 500;
+    res.status(statusCode).json({ error: '体組成データの解析中にエラーが発生しました。: ' + error.message, status: statusCode });
   }
 });
 
