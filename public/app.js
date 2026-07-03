@@ -255,9 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-meal-title').textContent = displayTitle;
 
     document.getElementById('modal-calories').textContent = item.nutrition.calories;
-    document.getElementById('modal-protein').textContent = item.nutrition.protein;
-    document.getElementById('modal-fat').textContent = item.nutrition.fat;
-    document.getElementById('modal-carbs').textContent = item.nutrition.carbohydrates;
+    document.getElementById('modal-protein').textContent = Number(item.nutrition.protein).toFixed(1);
+    document.getElementById('modal-fat').textContent = Number(item.nutrition.fat).toFixed(1);
+    document.getElementById('modal-carbs').textContent = Number(item.nutrition.carbohydrates).toFixed(1);
     
     const modalInference = document.getElementById('modal-inference');
     const modalInferenceCard = document.getElementById('modal-inference-card');
@@ -1130,9 +1130,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="history-info-row-top">
                 <div class="history-left-group">
                   <div class="history-calories">${item.nutrition.calories} <span class="unit">kcal</span></div>
-                    <div class="history-pfc-chip protein"><span class="label">P</span><span class="val">${item.nutrition.protein}</span></div>
-                    <div class="history-pfc-chip fat"><span class="label">F</span><span class="val">${item.nutrition.fat}</span></div>
-                    <div class="history-pfc-chip carbs"><span class="label">C</span><span class="val">${item.nutrition.carbohydrates}</span></div>
+                    <div class="history-pfc-chip protein"><span class="label">P</span><span class="val">${Number(item.nutrition.protein).toFixed(1)}</span></div>
+                    <div class="history-pfc-chip fat"><span class="label">F</span><span class="val">${Number(item.nutrition.fat).toFixed(1)}</span></div>
+                    <div class="history-pfc-chip carbs"><span class="label">C</span><span class="val">${Number(item.nutrition.carbohydrates).toFixed(1)}</span></div>
                 </div>
                 <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
@@ -1317,9 +1317,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // モーダル内の表示値をリアルタイムで上書き（アニメーション反映）
       document.getElementById('modal-meal-title').textContent = updatedRecord.mealName || updatedRecord.textInput || '食事詳細';
       document.getElementById('modal-calories').textContent = updatedRecord.nutrition.calories;
-      document.getElementById('modal-protein').textContent = updatedRecord.nutrition.protein;
-      document.getElementById('modal-fat').textContent = updatedRecord.nutrition.fat;
-      document.getElementById('modal-carbs').textContent = updatedRecord.nutrition.carbohydrates;
+      document.getElementById('modal-protein').textContent = Number(updatedRecord.nutrition.protein).toFixed(1);
+      document.getElementById('modal-fat').textContent = Number(updatedRecord.nutrition.fat).toFixed(1);
+      document.getElementById('modal-carbs').textContent = Number(updatedRecord.nutrition.carbohydrates).toFixed(1);
       
       const modalInference = document.getElementById('modal-inference');
       const modalInferenceCard = document.getElementById('modal-inference-card');
