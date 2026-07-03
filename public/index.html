@@ -165,6 +165,105 @@
             </div>
           </div>
         </div>
+
+        <!-- 体組成データの記録セクション (食事解析の下に追加) -->
+        <div class="body-composition-section-divider"></div>
+        
+        <div class="body-composition-section">
+          <h2 class="section-title">⚖️ 体組成の記録 (体重・体脂肪・筋肉量)</h2>
+          <div class="card body-comp-card">
+            <!-- 入力フォームエリア -->
+            <div class="body-comp-form-layout">
+              <div class="body-comp-upload-zone">
+                <div class="body-comp-drop-zone" id="weight-drop-zone">
+                  <span class="emoji">⚖️</span>
+                  <p>体組成計の画面写真をアップロード</p>
+                  <div class="upload-buttons-row">
+                    <button class="btn btn-secondary btn-sm" id="btn-weight-camera-trigger">📸 カメラ</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-weight-gallery-trigger">🖼️ ギャラリー</button>
+                  </div>
+                  <input type="file" id="weight-camera-input" accept="image/*" capture="environment" style="display: none;">
+                  <input type="file" id="weight-gallery-input" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="preview-container-v2" id="weight-preview-container" style="display: none;">
+                  <img id="weight-image-preview" src="" alt="体組成プレビュー">
+                  <button class="btn-remove-image-v2" id="btn-remove-weight-image">✕</button>
+                </div>
+              </div>
+
+              <div class="body-comp-inputs">
+                <!-- テキスト直接入力エリア -->
+                <textarea id="weight-text-input" class="textarea-v2" rows="2" placeholder="または体組成計の数値テキストなどを貼り付け..."></textarea>
+                
+                <!-- 日付・区分選択 -->
+                <div class="body-comp-meta-edit">
+                  <div class="edit-field">
+                    <span class="edit-label">📅 測定日</span>
+                    <input type="date" id="weight-date-input" class="date-input-v2">
+                  </div>
+                  <div class="edit-field">
+                    <span class="edit-label">🍟 測定区分</span>
+                    <select id="weight-type-select" class="select-v2">
+                      <option value="morning">朝 🌅</option>
+                      <option value="night">夜 🌙</option>
+                      <option value="other" selected>その他 ⚙️</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary w-full" id="btn-analyze-weight">体組成データを解析・読取</button>
+              </div>
+            </div>
+
+            <!-- 解析結果確認・編集フォーム (最初は非表示) -->
+            <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
+              <h3 class="results-edit-title">🔍 解析結果の確認・修正</h3>
+              <div class="body-comp-results-grid">
+                <div class="result-edit-field">
+                  <span class="label">体重 (kg)</span>
+                  <input type="number" step="0.1" id="input-weight-val" class="input-number-v2" placeholder="--.-">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">体脂肪率 (%)</span>
+                  <input type="number" step="0.1" id="input-fat-val" class="input-number-v2" placeholder="--.-">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">筋肉量 (kg)</span>
+                  <input type="number" step="0.1" id="input-muscle-val" class="input-number-v2" placeholder="--.-">
+                </div>
+              </div>
+              
+              <div class="result-action-row">
+                <button class="btn btn-success w-full" id="btn-save-weight">この内容でDriveに保存する</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 体組成の簡易履歴リスト -->
+          <div class="card body-comp-history-card">
+            <h3 class="history-card-title">🕒 直近の測定履歴</h3>
+            <div class="table-wrapper">
+              <table class="weight-history-table">
+                <thead>
+                  <tr>
+                    <th>日時 / 区分</th>
+                    <th>体重 (kg)</th>
+                    <th>体脂肪 (%)</th>
+                    <th>筋肉量 (kg)</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="weight-history-tbody">
+                  <!-- ここに体組成履歴行が動的に挿入されます -->
+                  <tr>
+                    <td colspan="5" class="empty-row">測定データがありません。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 2. 履歴タブ -->

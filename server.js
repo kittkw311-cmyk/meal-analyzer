@@ -18,6 +18,7 @@ app.use(express.static('public'));
 const DATA_DIR = path.join(process.cwd(), 'data');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
+const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
@@ -27,6 +28,9 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 }
 if (!fs.existsSync(HISTORY_FILE)) {
   fs.writeFileSync(HISTORY_FILE, JSON.stringify([], null, 2));
+}
+if (!fs.existsSync(WEIGHT_FILE)) {
+  fs.writeFileSync(WEIGHT_FILE, JSON.stringify([], null, 2));
 }
 
 // Multer設定（メモリ上にバッファとして保存）
@@ -73,6 +77,96 @@ if (clientId && clientSecret && refreshToken) {
 // Google Drive 履歴ファイル管理ロジック
 // ==========================================================================
 let driveHistoryFileId = null;
+let driveWeightFileId = null;
+
+// 体組成ファイルを検索または新規作成してファイルIDを設定する
+async function initDriveWeight() {
+  if (!drive || !folderId) return;
+  try {
+    console.log('Searching for weight_history.json in Google Drive...');
+    const res = await drive.files.list({
+      q: `name = 'weight_history.json' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    
+    if (res.data.files && res.data.files.length > 0) {
+      driveWeightFileId = res.data.files[0].id;
+      console.log(`Found weight_history.json in Google Drive. File ID: ${driveWeightFileId}`);
+    } else {
+      console.log('weight_history.json not found in Google Drive. Creating a new one...');
+      const fileMetadata = {
+        name: 'weight_history.json',
+        parents: [folderId],
+        mimeType: 'application/json',
+      };
+      const media = {
+        mimeType: 'application/json',
+        body: Readable.from(JSON.stringify([], null, 2)),
+      };
+      const driveResponse = await drive.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: 'id',
+      });
+      driveWeightFileId = driveResponse.data.id;
+      console.log(`Created new weight_history.json in Google Drive. File ID: ${driveWeightFileId}`);
+    }
+  } catch (err) {
+    console.error('Failed to initialize Google Drive weight file:', err.message);
+  }
+}
+
+// 体組成データをロードする関数
+async function readWeight() {
+  if (drive && driveWeightFileId) {
+    try {
+      const res = await drive.files.get(
+        { fileId: driveWeightFileId, alt: 'media' },
+        { responseType: 'text' }
+      );
+      const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      return JSON.parse(dataText);
+    } catch (err) {
+      console.error('Error reading weight history from Google Drive, trying to re-initialize:', err.message);
+      await initDriveWeight();
+      return [];
+    }
+  } else {
+    try {
+      const data = fs.readFileSync(WEIGHT_FILE, 'utf8');
+      return JSON.parse(data);
+    } catch (err) {
+      console.error('Error reading local weight history file:', err);
+      return [];
+    }
+  }
+}
+
+// 体組成データを書き込む関数
+async function writeWeight(weightHistory) {
+  if (drive && driveWeightFileId) {
+    try {
+      const media = {
+        mimeType: 'application/json',
+        body: Readable.from(JSON.stringify(weightHistory, null, 2)),
+      };
+      await drive.files.update({
+        fileId: driveWeightFileId,
+        media: media,
+      });
+      console.log('Successfully updated weight_history.json in Google Drive.');
+    } catch (err) {
+      console.error('Error writing weight history to Google Drive:', err.message);
+    }
+  } else {
+    try {
+      fs.writeFileSync(WEIGHT_FILE, JSON.stringify(weightHistory, null, 2));
+    } catch (err) {
+      console.error('Error writing local weight history file:', err);
+    }
+  }
+}
 
 // 履歴ファイルを検索または新規作成してファイルIDを設定する
 async function initDriveHistory() {
@@ -664,10 +758,226 @@ app.delete('/api/history/:id', async (req, res) => {
   }
 });
 
+// ==========================================================================
+// 体組成データ (体重・体脂肪・筋肉量) 管理 API
+// ==========================================================================
+
+// 1. 体組成の履歴取得
+app.get('/api/body-composition', async (req, res) => {
+  try {
+    const weightHistory = await readWeight();
+    // 計測日時の降順（最新が上）でソート
+    weightHistory.sort((a, b) => new Date(b.measuredAt || b.date) - new Date(a.measuredAt || a.date));
+    res.json(weightHistory);
+  } catch (err) {
+    console.error('Failed to load weight history:', err);
+    res.status(500).json({ error: '体組成履歴の読み込みに失敗しました。' });
+  }
+});
+
+// 2. 体組成の画像(OCR)・テキスト解析
+app.post('/api/body-composition/analyze', upload.single('image'), async (req, res) => {
+  try {
+    const textInput = req.body.textInput || '';
+    
+    if (!req.file && !textInput.trim()) {
+      return res.status(400).json({ error: '画像がアップロードされていないか、またはテキストが入力されていません。' });
+    }
+    
+    if (!ai) {
+      return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
+    }
+    
+    console.log('Analyzing body composition data with Gemini...');
+    
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    let promptInstruction = `
+アップロードされた体組成計（体重計）の画面画像（OCR）、または貼り付けられたテキスト（"${textInput}"）を読み取り、以下の4つの項目を抽出してください。
+1. 体重 (kg) - 数値
+2. 体脂肪率 (%) - 数値
+3. 筋肉量 (kg) - 数値
+4. 計測日時（形式は YYYY-MM-DDTHH:MM:SS。画像やテキストから計測された年月日や時刻が読み取れない場合、日時は本日 ${todayStr} の現在時刻 ${timeStr} 付近として推計してください）
+
+【注意事項】
+- 体重、体脂肪率、筋肉量のうち、どうしても画像やテキストから読み取れない項目がある場合は、その項目を null としてください。
+`;
+    
+    const contents = [];
+    if (req.file) {
+      contents.push({
+        inlineData: {
+          mimeType: req.file.mimetype,
+          data: req.file.buffer.toString('base64'),
+        }
+      });
+    }
+    contents.push(promptInstruction);
+    
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: contents,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            weight: {
+              type: Type.NUMBER,
+              description: "体重 (kg) の数値。読み取れなかった場合は null"
+            },
+            fatRate: {
+              type: Type.NUMBER,
+              description: "体脂肪率 (%) の数値。読み取れなかった場合は null"
+            },
+            muscleMass: {
+              type: Type.NUMBER,
+              description: "筋肉量 (kg) の数値。読み取れなかった場合は null"
+            },
+            measuredAt: {
+              type: Type.STRING,
+              description: "計測日時。形式は YYYY-MM-DDTHH:MM:SS"
+            }
+          },
+          required: ["weight", "fatRate", "muscleMass", "measuredAt"]
+        }
+      }
+    });
+    
+    const responseText = result.response.text;
+    console.log('Gemini raw response for weight OCR:', responseText);
+    
+    const analysisResult = JSON.parse(responseText);
+    res.json(analysisResult);
+    
+  } catch (error) {
+    console.error('Body composition analysis error:', error);
+    res.status(500).json({ error: '体組成データの解析中にエラーが発生しました。: ' + error.message });
+  }
+});
+
+// 3. 体組成データの保存
+app.post('/api/body-composition', upload.single('image'), async (req, res) => {
+  try {
+    const weight = req.body.weight ? parseFloat(req.body.weight) : null;
+    const fatRate = req.body.fatRate ? parseFloat(req.body.fatRate) : null;
+    const muscleMass = req.body.muscleMass ? parseFloat(req.body.muscleMass) : null;
+    
+    // 日時と区分
+    const measuredAt = req.body.measuredAt ? new Date(req.body.measuredAt).toISOString() : new Date().toISOString();
+    const measurementType = req.body.measurementType || 'other'; // morning, night, other
+    const textInput = req.body.textInput || '';
+    
+    let imageId = null;
+    
+    // 画像ファイルが送信されていれば保存
+    if (req.file) {
+      if (drive && folderId) {
+        console.log('Uploading body composition image to Google Drive...');
+        const fileMetadata = {
+          name: `weight_${Date.now()}.jpg`,
+          parents: [folderId],
+        };
+        const media = {
+          mimeType: req.file.mimetype,
+          body: bufferToStream(req.file.buffer),
+        };
+        const driveResponse = await drive.files.create({
+          requestBody: fileMetadata,
+          media: media,
+          fields: 'id',
+        });
+        imageId = driveResponse.data.id;
+        console.log(`Uploaded body composition image to Google Drive. File ID: ${imageId}`);
+      } else {
+        const fileName = `weight_${Date.now()}.jpg`;
+        const localPath = path.join(UPLOADS_DIR, fileName);
+        fs.writeFileSync(localPath, req.file.buffer);
+        imageId = fileName;
+        console.log(`Saved body composition image locally: ${fileName}`);
+      }
+    }
+    
+    const weightHistory = await readWeight();
+    
+    const newRecord = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      measuredAt: measuredAt,
+      measurementType: measurementType,
+      weight: weight,
+      fatRate: fatRate,
+      muscleMass: muscleMass,
+      textInput: textInput,
+      imageId: imageId,
+      imageSource: imageId ? (drive ? 'drive' : 'local') : null
+    };
+    
+    weightHistory.push(newRecord);
+    await writeWeight(weightHistory);
+    
+    res.json(newRecord);
+  } catch (err) {
+    console.error('Save weight record error:', err);
+    res.status(500).json({ error: '体組成データの保存中にエラーが発生しました。: ' + err.message });
+  }
+});
+
+// 4. 体組成データの削除
+app.delete('/api/body-composition/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const weightHistory = await readWeight();
+    const recordIndex = weightHistory.findIndex(item => item.id === id);
+    
+    if (recordIndex === -1) {
+      return res.status(404).json({ error: '対象の体組成データが見つかりません。' });
+    }
+    
+    const record = weightHistory[recordIndex];
+    
+    // 画像がある場合は削除
+    if (record.imageId) {
+      if (record.imageSource === 'drive' && drive) {
+        try {
+          console.log(`Deleting weight image from Google Drive: ${record.imageId}`);
+          await drive.files.delete({ fileId: record.imageId });
+        } catch (err) {
+          console.error('Failed to delete weight image from Google Drive:', err.message);
+        }
+      } else if (record.imageSource === 'local') {
+        const localPath = path.join(UPLOADS_DIR, record.imageId);
+        if (fs.existsSync(localPath)) {
+          try {
+            fs.unlinkSync(localPath);
+            console.log('Successfully deleted local weight image file.');
+          } catch (err) {
+            console.error('Failed to delete local weight image file:', err);
+          }
+        }
+      }
+    }
+    
+    weightHistory.splice(recordIndex, 1);
+    await writeWeight(weightHistory);
+    
+    res.json({ message: '体組成データを正常に削除しました。' });
+  } catch (err) {
+    console.error('Delete weight error:', err);
+    res.status(500).json({ error: '体組成データの削除中にエラーが発生しました。: ' + err.message });
+  }
+});
+
 // サーバー起動処理 (非同期初期化後に起動)
 (async () => {
   if (drive && folderId) {
     await initDriveHistory();
+    await initDriveWeight();
   }
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);

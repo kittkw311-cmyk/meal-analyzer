@@ -64,6 +64,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
 
+  // 体組成 (Weight / Body Comp) Elements
+  const weightDropZone = document.getElementById('weight-drop-zone');
+  const weightCameraInput = document.getElementById('weight-camera-input');
+  const weightGalleryInput = document.getElementById('weight-gallery-input');
+  const btnWeightCameraTrigger = document.getElementById('btn-weight-camera-trigger');
+  const btnWeightGalleryTrigger = document.getElementById('btn-weight-gallery-trigger');
+  const weightPreviewContainer = document.getElementById('weight-preview-container');
+  const weightImagePreview = document.getElementById('weight-image-preview');
+  const btnRemoveWeightImage = document.getElementById('btn-remove-weight-image');
+  const weightTextInput = document.getElementById('weight-text-input');
+  const weightDateInput = document.getElementById('weight-date-input');
+  const weightTypeSelect = document.getElementById('weight-type-select');
+  const btnAnalyzeWeight = document.getElementById('btn-analyze-weight');
+  const weightResultEditContainer = document.getElementById('weight-result-edit-container');
+  const inputWeightVal = document.getElementById('input-weight-val');
+  const inputFatVal = document.getElementById('input-fat-val');
+  const inputMuscleVal = document.getElementById('input-muscle-val');
+  const btnSaveWeight = document.getElementById('btn-save-weight');
+  const weightHistoryTbody = document.getElementById('weight-history-tbody');
+
+  let selectedWeightFile = null;
+
   // ==========================================================================
   // Selector Initializer
   // ==========================================================================
@@ -74,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     mealDateInput.value = `${yyyy}-${mm}-${dd}`;
+    weightDateInput.value = `${yyyy}-${mm}-${dd}`;
 
     // 時間帯による食事区分の初期値自動設定
     const hour = today.getHours();
@@ -930,4 +953,274 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to load stats:', err);
     }
   }
+
+  // ==========================================================================
+  // 体組成 (Weight / Body Composition) OCR & 記録ロジック
+  // ==========================================================================
+
+  // 1. 画像アップロードイベント
+  btnWeightCameraTrigger.addEventListener('click', () => weightCameraInput.click());
+  btnWeightGalleryTrigger.addEventListener('click', () => weightGalleryInput.click());
+
+  const handleWeightFileSelect = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください。');
+      return;
+    }
+    selectedWeightFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      weightImagePreview.src = e.target.result;
+      weightPreviewContainer.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  weightCameraInput.addEventListener('change', (e) => handleWeightFileSelect(e.target.files[0]));
+  weightGalleryInput.addEventListener('change', (e) => handleWeightFileSelect(e.target.files[0]));
+
+  btnRemoveWeightImage.addEventListener('click', (e) => {
+    e.stopPropagation();
+    selectedWeightFile = null;
+    weightCameraInput.value = '';
+    weightGalleryInput.value = '';
+    weightPreviewContainer.style.display = 'none';
+    weightImagePreview.src = '';
+  });
+
+  // ドラッグ＆ドロップイベント (体組成用)
+  weightDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    weightDropZone.classList.add('dragover');
+  });
+
+  weightDropZone.addEventListener('dragleave', () => {
+    weightDropZone.classList.remove('dragover');
+  });
+
+  weightDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    weightDropZone.classList.remove('dragover');
+    handleWeightFileSelect(e.dataTransfer.files[0]);
+  });
+
+  // 2. 体組成データのOCR解析
+  btnAnalyzeWeight.addEventListener('click', async () => {
+    if (!selectedWeightFile && !weightTextInput.value.trim()) {
+      alert('画像を選択するか、または数値を入力してください。');
+      return;
+    }
+
+    loadingOverlay.style.display = 'flex';
+    btnAnalyzeWeight.disabled = true;
+
+    const formData = new FormData();
+    if (selectedWeightFile) {
+      formData.append('image', selectedWeightFile);
+    }
+    formData.append('textInput', weightTextInput.value);
+
+    try {
+      const response = await fetch('/api/body-composition/analyze', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || '解析に失敗しました。');
+      }
+
+      const result = await response.json();
+
+      // 数値を結果編集フォームにバインド
+      inputWeightVal.value = result.weight !== null ? result.weight : '';
+      inputFatVal.value = result.fatRate !== null ? result.fatRate : '';
+      inputMuscleVal.value = result.muscleMass !== null ? result.muscleMass : '';
+
+      // 解析された計測日時に基づいて日付と区分を自動バインド
+      if (result.measuredAt) {
+        const dateObj = new Date(result.measuredAt);
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        weightDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+        const hour = dateObj.getHours();
+        if (hour >= 5 && hour < 12) {
+          weightTypeSelect.value = 'morning';
+        } else if (hour >= 18 && hour < 24) {
+          weightTypeSelect.value = 'night';
+        } else {
+          weightTypeSelect.value = 'other';
+        }
+      }
+
+      // 結果編集コンテナを表示
+      weightResultEditContainer.style.display = 'block';
+
+    } catch (err) {
+      console.error(err);
+      const msg = err.message || '';
+      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('limit') || msg.includes('RESOURCE_EXHAUSTED')) {
+        alert('【AIアクセス制限】\n体組成解析が一時的に混み合っています。\n10秒〜20秒ほど待ってからもう一度お試しください。');
+      } else {
+        alert('解析に失敗しました。\n詳細: ' + msg);
+      }
+    } finally {
+      loadingOverlay.style.display = 'none';
+      btnAnalyzeWeight.disabled = false;
+    }
+  });
+
+  // 3. 解析結果の保存処理
+  btnSaveWeight.addEventListener('click', async () => {
+    const weight = inputWeightVal.value ? parseFloat(inputWeightVal.value) : null;
+    const fatRate = inputFatVal.value ? parseFloat(inputFatVal.value) : null;
+    const muscleMass = inputMuscleVal.value ? parseFloat(inputMuscleVal.value) : null;
+
+    if (weight === null && fatRate === null && muscleMass === null) {
+      alert('体重、体脂肪率、筋肉量のいずれかを入力してください。');
+      return;
+    }
+
+    loadingOverlay.style.display = 'flex';
+    btnSaveWeight.disabled = true;
+
+    // 選択された日付に現在の時間を補正して送信
+    const selectedDate = weightDateInput.value;
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
+    const measuredAtToSend = new Date(fullDateTimeStr).toISOString();
+
+    const formData = new FormData();
+    formData.append('weight', weight || '');
+    formData.append('fatRate', fatRate || '');
+    formData.append('muscleMass', muscleMass || '');
+    formData.append('measuredAt', measuredAtToSend);
+    formData.append('measurementType', weightTypeSelect.value);
+    formData.append('textInput', weightTextInput.value);
+    if (selectedWeightFile) {
+      formData.append('image', selectedWeightFile);
+    }
+
+    try {
+      const response = await fetch('/api/body-composition', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('データの保存に失敗しました。');
+      }
+
+      // 入力フォームおよびプレビューを初期化
+      selectedWeightFile = null;
+      weightCameraInput.value = '';
+      weightGalleryInput.value = '';
+      weightPreviewContainer.style.display = 'none';
+      weightImagePreview.src = '';
+      weightTextInput.value = '';
+      weightResultEditContainer.style.display = 'none';
+      
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      weightDateInput.value = `${yyyy}-${mm}-${dd}`;
+      weightTypeSelect.value = 'other';
+
+      // 履歴テーブルの更新
+      await loadWeightHistory();
+      alert('体組成データを保存しました。');
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      loadingOverlay.style.display = 'none';
+      btnSaveWeight.disabled = false;
+    }
+  });
+
+  // 4. 体組成履歴のロードと描画
+  async function loadWeightHistory() {
+    try {
+      const response = await fetch('/api/body-composition');
+      if (!response.ok) throw new Error('履歴の読み込みに失敗しました。');
+      
+      const weightHistory = await response.json();
+      weightHistoryTbody.innerHTML = '';
+
+      if (weightHistory.length === 0) {
+        weightHistoryTbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-row">測定データがありません。</td>
+          </tr>
+        `;
+        return;
+      }
+
+      weightHistory.forEach(item => {
+        const dateObj = new Date(item.measuredAt || item.date);
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const hh = String(dateObj.getHours()).padStart(2, '0');
+        const min = String(dateObj.getMinutes()).padStart(2, '0');
+        const typeJa = {
+          morning: '朝 🌅',
+          night: '夜 🌙',
+          other: '他 ⚙️'
+        }[item.measurementType || 'other'];
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="td-datetime">
+            <span class="date">${mm}/${dd} ${hh}:${min}</span>
+            <span class="badge ${item.measurementType || 'other'}">${typeJa}</span>
+          </td>
+          <td class="td-weight">${item.weight !== null ? `${item.weight} kg` : '--.-'}</td>
+          <td class="td-fat">${item.fatRate !== null ? `${item.fatRate} %` : '--.-'}</td>
+          <td class="td-muscle">${item.muscleMass !== null ? `${item.muscleMass} kg` : '--.-'}</td>
+          <td class="td-action">
+            <button class="btn-delete-weight" data-id="${item.id}">🗑️</button>
+          </td>
+        `;
+
+        // 削除ボタンイベント
+        tr.querySelector('.btn-delete-weight').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('この測定データを削除しますか？')) return;
+
+          try {
+            const delRes = await fetch(`/api/body-composition/${item.id}`, { method: 'DELETE' });
+            if (!delRes.ok) throw new Error('削除に失敗しました。');
+            
+            await loadWeightHistory();
+          } catch (err) {
+            console.error(err);
+            alert(err.message);
+          }
+        });
+
+        weightHistoryTbody.appendChild(tr);
+      });
+
+    } catch (err) {
+      console.error(err);
+      weightHistoryTbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="error-row">履歴の読み込みに失敗しました。</td>
+        </tr>
+      `;
+    }
+  }
+
+  // 初期ロードに体組成履歴のロードを追加
+  loadWeightHistory();
 });
