@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const weightModalImage = document.getElementById('weight-modal-image');
 
   // 解析タブのサマリー要素
-  const dailyWeightSummaryBar = document.getElementById('daily-weight-summary-bar');
+  const dailyWeightSummaryBar = document.getElementById('daily-weight-box');
   const summaryWeightVal = document.getElementById('summary-weight-val');
   const dailyBmrDivider = document.getElementById('daily-bmr-divider');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
