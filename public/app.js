@@ -1117,36 +1117,30 @@ document.addEventListener('DOMContentLoaded', () => {
             openDetailModal(item);
           });
 
-          // 画像が無い場合の履歴カードのプレースホルダー
-          const imageHtml = item.imageId
-            ? `<img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">`
-            : `<div class="history-no-img-text">写真</div>`;
-
           // 表示用の料理名・テキスト（Geminiが解析した具体的な料理名 mealName を優先表示）
           const displayText = item.textInput && item.textInput.trim() 
             ? item.textInput.trim() 
             : (item.imageId ? '📸 画像から解析' : '🍽️ 食事データ');
           const displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
 
-          // カロリー・PFCを上段、料理名・食事区分を下段に配した2行構成
+          // 写真なし：カロリー+PFCと食事区分が1行目、料理名とゴミ箱ボタンが2行目
           card.innerHTML = `
-            <div class="history-img-wrapper">
-              ${imageHtml}
-            </div>
             <div class="history-info">
-              <!-- 1行目: カロリーとPFCチップス -->
+              <!-- 1行目: カロリーとPFCチップス、食事区分チップ -->
               <div class="history-info-row-top">
-                <div class="history-calories">${item.nutrition.calories} kcal</div>
-                <div class="history-pfc-chips">
-                  <div class="history-pfc-chip protein">P ${item.nutrition.protein}</div>
-                  <div class="history-pfc-chip fat">F ${item.nutrition.fat}</div>
-                  <div class="history-pfc-chip carbs">C ${item.nutrition.carbohydrates}</div>
+                <div class="history-left-group">
+                  <div class="history-calories">${item.nutrition.calories} kcal</div>
+                  <div class="history-pfc-chips">
+                    <div class="history-pfc-chip protein">P ${item.nutrition.protein}</div>
+                    <div class="history-pfc-chip fat">F ${item.nutrition.fat}</div>
+                    <div class="history-pfc-chip carbs">C ${item.nutrition.carbohydrates}</div>
+                  </div>
                 </div>
+                <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
-              <!-- 2行目: 料理名と食事区分チップ -->
+              <!-- 2行目: 料理名とゴミ箱ボタン (動的挿入) -->
               <div class="history-info-row-bottom">
                 <span class="history-meal-text">${displayMealName}</span>
-                <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
             </div>
           `;
@@ -1186,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           });
-          card.appendChild(deleteBtn);
+          card.querySelector('.history-info-row-bottom').appendChild(deleteBtn);
 
           historyList.appendChild(card);
         });
