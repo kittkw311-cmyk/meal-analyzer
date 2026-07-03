@@ -494,116 +494,115 @@
         </div>
         
         <div class="weight-modal-details-card">
-          <div class="weight-details-grid">
-            <div class="weight-detail-item">
-              <span class="label">体重</span>
-              <span class="val">
-                <input type="number" step="0.01" id="w-modal-weight" class="weight-modal-input" placeholder="--.--">
-                <span class="unit">kg</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">BMI</span>
-              <span class="val">
-                <input type="number" step="0.1" id="w-modal-bmi" class="weight-modal-input" placeholder="--.-">
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">体脂肪率</span>
-              <span class="val">
-                <input type="number" step="0.1" id="w-modal-fat" class="weight-modal-input" placeholder="--.-">
-                <span class="unit">%</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">心拍数</span>
-              <span class="val">
-                <input type="number" step="1" id="w-modal-heart" class="weight-modal-input" placeholder="--">
-                <span class="unit">bpm</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">筋肉量</span>
-              <span class="val">
-                <input type="number" step="0.01" id="w-modal-muscle" class="weight-modal-input" placeholder="--.--">
-                <span class="unit">kg</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">基礎代謝量</span>
-              <span class="val">
-                <input type="number" step="1" id="w-modal-bmr" class="weight-modal-input" placeholder="----">
-                <span class="unit">kcal</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">水分量</span>
-              <span class="val">
-                <input type="number" step="0.1" id="w-modal-water" class="weight-modal-input" placeholder="--.-">
-                <span class="unit">%</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">体脂肪量</span>
-              <span class="val">
-                <input type="number" step="0.01" id="w-modal-fatmass" class="weight-modal-input" placeholder="--.--">
-                <span class="unit">kg</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">除脂肪体重</span>
-              <span class="val">
-                <input type="number" step="0.01" id="w-modal-leanbody" class="weight-modal-input" placeholder="--.--">
-                <span class="unit">kg</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">骨量</span>
-              <span class="val">
-                <input type="number" step="0.01" id="w-modal-bone" class="weight-modal-input" placeholder="--.--">
-                <span class="unit">kg</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">内臓脂肪レベル</span>
-              <span class="val">
-                <input type="number" step="0.5" id="w-modal-visceralfat" class="weight-modal-input" placeholder="--.-">
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">タンパク質</span>
-              <span class="val">
-                <input type="number" step="0.1" id="w-modal-proteinrate" class="weight-modal-input" placeholder="--.-">
-                <span class="unit">%</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">骨格筋量</span>
-              <span class="val">
-                <input type="number" step="0.01" id="w-modal-skeletalmuscle" class="weight-modal-input" placeholder="--.--">
-                <span class="unit">kg</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">皮下脂肪</span>
-              <span class="val">
-                <input type="number" step="0.1" id="w-modal-subcutaneous" class="weight-modal-input" placeholder="--.-">
-                <span class="unit">%</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">体内年齢</span>
-              <span class="val">
-                <input type="number" step="1" id="w-modal-bodyage" class="weight-modal-input" placeholder="--">
-                <span class="unit">歳</span>
-              </span>
-            </div>
-            <div class="weight-detail-item">
-              <span class="label">ボディタイプ</span>
-              <span class="val">
-                <input type="text" id="w-modal-bodytype" class="weight-modal-input" style="font-family: inherit; font-size: 13px; width: 80px;" placeholder="----">
-              </span>
-            </div>
+          <div class="table-wrapper weight-details-table-wrapper" style="border: none; margin-top: 0; box-shadow: none;">
+            <table class="weight-details-list-table">
+              <thead>
+                <tr>
+                  <th class="col-label" style="text-align: left; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">項目</th>
+                  <th class="col-input-val" style="text-align: center; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">測定値</th>
+                  <th class="col-unit" style="text-align: left; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">単位</th>
+                  <th class="col-diff-val" style="text-align: right; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">前回比</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-label">体重</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-weight" class="weight-modal-input" placeholder="--.--"></td>
+                  <td class="col-unit">kg</td>
+                  <td class="col-diff-val" id="w-modal-diff-weight">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">BMI</td>
+                  <td class="col-input-val"><input type="number" step="0.1" id="w-modal-bmi" class="weight-modal-input" placeholder="--.-"></td>
+                  <td class="col-unit"></td>
+                  <td class="col-diff-val" id="w-modal-diff-bmi">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">体脂肪率</td>
+                  <td class="col-input-val"><input type="number" step="0.1" id="w-modal-fat" class="weight-modal-input" placeholder="--.-"></td>
+                  <td class="col-unit">%</td>
+                  <td class="col-diff-val" id="w-modal-diff-fat">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">心拍数</td>
+                  <td class="col-input-val"><input type="number" step="1" id="w-modal-heart" class="weight-modal-input" placeholder="--"></td>
+                  <td class="col-unit">bpm</td>
+                  <td class="col-diff-val" id="w-modal-diff-heart">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">筋肉量</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-muscle" class="weight-modal-input" placeholder="--.--"></td>
+                  <td class="col-unit">kg</td>
+                  <td class="col-diff-val" id="w-modal-diff-muscle">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">基礎代謝量</td>
+                  <td class="col-input-val"><input type="number" step="1" id="w-modal-bmr" class="weight-modal-input" placeholder="----"></td>
+                  <td class="col-unit">kcal</td>
+                  <td class="col-diff-val" id="w-modal-diff-bmr">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">水分量</td>
+                  <td class="col-input-val"><input type="number" step="0.1" id="w-modal-water" class="weight-modal-input" placeholder="--.-"></td>
+                  <td class="col-unit">%</td>
+                  <td class="col-diff-val" id="w-modal-diff-water">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">体脂肪量</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-fatmass" class="weight-modal-input" placeholder="--.--"></td>
+                  <td class="col-unit">kg</td>
+                  <td class="col-diff-val" id="w-modal-diff-fatmass">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">除脂肪体重</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-leanbody" class="weight-modal-input" placeholder="--.--"></td>
+                  <td class="col-unit">kg</td>
+                  <td class="col-diff-val" id="w-modal-diff-leanbody">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">骨量</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-bone" class="weight-modal-input" placeholder="--.--"></td>
+                  <td class="col-unit">kg</td>
+                  <td class="col-diff-val" id="w-modal-diff-bone">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">内臓脂肪レベル</td>
+                  <td class="col-input-val"><input type="number" step="0.5" id="w-modal-visceralfat" class="weight-modal-input" placeholder="--.-"></td>
+                  <td class="col-unit"></td>
+                  <td class="col-diff-val" id="w-modal-diff-visceralfat">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">タンパク質</td>
+                  <td class="col-input-val"><input type="number" step="0.1" id="w-modal-proteinrate" class="weight-modal-input" placeholder="--.-"></td>
+                  <td class="col-unit">%</td>
+                  <td class="col-diff-val" id="w-modal-diff-proteinrate">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">骨格筋量</td>
+                  <td class="col-input-val"><input type="number" step="0.01" id="w-modal-skeletalmuscle" class="weight-modal-input" placeholder="--.--"></td>
+                  <td class="col-unit">kg</td>
+                  <td class="col-diff-val" id="w-modal-diff-skeletalmuscle">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">皮下脂肪</td>
+                  <td class="col-input-val"><input type="number" step="0.1" id="w-modal-subcutaneous" class="weight-modal-input" placeholder="--.-"></td>
+                  <td class="col-unit">%</td>
+                  <td class="col-diff-val" id="w-modal-diff-subcutaneous">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">体内年齢</td>
+                  <td class="col-input-val"><input type="number" step="1" id="w-modal-bodyage" class="weight-modal-input" placeholder="--"></td>
+                  <td class="col-unit">歳</td>
+                  <td class="col-diff-val" id="w-modal-diff-bodyage">--</td>
+                </tr>
+                <tr>
+                  <td class="col-label">ボディタイプ</td>
+                  <td class="col-input-val"><input type="text" id="w-modal-bodytype" class="weight-modal-input" style="font-family: inherit; font-size: 13px;" placeholder="----"></td>
+                  <td class="col-unit"></td>
+                  <td class="col-diff-val" id="w-modal-diff-bodytype">--</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           
           <div class="modal-action-row" style="margin-top: 20px;">

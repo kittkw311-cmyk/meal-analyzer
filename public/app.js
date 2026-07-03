@@ -1487,7 +1487,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentEditingWeightId = null;
 
   // 体組成詳細モーダルの開閉とバインド (スパンからインプット要素への変更に伴う調整)
-  const openWeightDetailModal = (item) => {
+  // 体組成詳細モーダルの開閉とバインド (スパンからインプット要素への変更に伴う調整)
+  const openWeightDetailModal = async (item) => {
     currentEditingWeightId = item.id;
 
     // 測定日と区分をモーダル上部フォームにセット
@@ -1522,6 +1523,68 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       weightModalImage.src = '';
       weightModalImageContainer.style.display = 'none';
+    }
+
+    // 前回との比較比の計算
+    let prevRecord = null;
+    try {
+      const response = await fetch('/api/body-composition');
+      if (response.ok) {
+        const weightHistory = await response.json();
+        // 日付順 (新しい順) にソート
+        const sortedHistory = [...weightHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+        // 今回のレコードの位置を探す
+        const currentIdx = sortedHistory.findIndex(r => r.id === item.id);
+        if (currentIdx !== -1 && currentIdx < sortedHistory.length - 1) {
+          prevRecord = sortedHistory[currentIdx + 1]; // 過去の直近データ
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch weight history for modal diff', e);
+    }
+
+    // 前回比をセットするヘルパー関数
+    function setDiffVal(elId, currentVal, prevVal, decimals = 1) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      if (currentVal === null || currentVal === undefined || prevVal === null || prevVal === undefined) {
+        el.textContent = '--';
+        el.className = 'col-diff-val val-neutral';
+        return;
+      }
+      const diff = currentVal - prevVal;
+      if (diff > 0) {
+        el.textContent = `+${diff.toFixed(decimals)}`;
+        el.className = 'col-diff-val val-up';
+      } else if (diff < 0) {
+        el.textContent = `${diff.toFixed(decimals)}`;
+        el.className = 'col-diff-val val-down';
+      } else {
+        el.textContent = `±0`;
+        el.className = 'col-diff-val val-equal';
+      }
+    }
+
+    setDiffVal('w-modal-diff-weight', item.weight, prevRecord ? prevRecord.weight : null, 2);
+    setDiffVal('w-modal-diff-bmi', item.bmi, prevRecord ? prevRecord.bmi : null, 1);
+    setDiffVal('w-modal-diff-fat', item.fatRate, prevRecord ? prevRecord.fatRate : null, 1);
+    setDiffVal('w-modal-diff-heart', item.heartRate, prevRecord ? prevRecord.heartRate : null, 0);
+    setDiffVal('w-modal-diff-muscle', item.muscleMass, prevRecord ? prevRecord.muscleMass : null, 2);
+    setDiffVal('w-modal-diff-bmr', item.bmr, prevRecord ? prevRecord.bmr : null, 0);
+    setDiffVal('w-modal-diff-water', item.waterRate, prevRecord ? prevRecord.waterRate : null, 1);
+    setDiffVal('w-modal-diff-fatmass', item.fatMass, prevRecord ? prevRecord.fatMass : null, 2);
+    setDiffVal('w-modal-diff-leanbody', item.leanBodyMass, prevRecord ? prevRecord.leanBodyMass : null, 2);
+    setDiffVal('w-modal-diff-bone', item.boneMass, prevRecord ? prevRecord.boneMass : null, 2);
+    setDiffVal('w-modal-diff-visceralfat', item.visceralFat, prevRecord ? prevRecord.visceralFat : null, 1);
+    setDiffVal('w-modal-diff-proteinrate', item.proteinRate, prevRecord ? prevRecord.proteinRate : null, 1);
+    setDiffVal('w-modal-diff-skeletalmuscle', item.skeletalMuscleMass, prevRecord ? prevRecord.skeletalMuscleMass : null, 2);
+    setDiffVal('w-modal-diff-subcutaneous', item.subcutaneousFat, prevRecord ? prevRecord.subcutaneousFat : null, 1);
+    setDiffVal('w-modal-diff-bodyage', item.bodyAge, prevRecord ? prevRecord.bodyAge : null, 0);
+
+    const diffBodyTypeEl = document.getElementById('w-modal-diff-bodytype');
+    if (diffBodyTypeEl) {
+      diffBodyTypeEl.textContent = '--';
+      diffBodyTypeEl.className = 'col-diff-val val-neutral';
     }
 
     weightDetailModal.style.display = 'flex';
