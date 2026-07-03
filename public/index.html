@@ -171,25 +171,11 @@
             </div>
           </div>
         </div>
-      </section>
-
-      <!-- 2. 履歴タブ -->
-      <section id="tab-history" class="tab-content">
-        <div id="history-list" class="history-list">
-          <!-- 履歴カードが動的に挿入されます -->
-          <div class="empty-state">
-            <p>まだ解析履歴がありません。</p>
-            <span>食事を解析するとここに保存されます。</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. 体組成タブ -->
-      <section id="tab-weight" class="tab-content">
-        <!-- 体組成データの記録セクション -->
+        
+        <!-- 体組成データの記録セクション (食事解析の下に追加) -->
         <div class="body-composition-section">
           <div class="card upload-card body-comp-card">
-            <!-- カメラ起動 / アルバム選択の2つのボタン -->
+            <!-- カメラ起動 / アルバム選択 of two buttons -->
             <div class="upload-action-buttons" id="weight-drop-zone">
               <button type="button" class="btn upload-action-btn" id="btn-weight-camera-trigger">
                 <span class="btn-icon">📸</span>写真を撮る
@@ -300,7 +286,24 @@
               <button class="btn btn-success w-full" id="btn-save-weight">この内容でDriveに保存する</button>
             </div>
           </div>
-          
+        </div>
+      </section>
+
+      <!-- 2. 履歴タブ -->
+      <section id="tab-history" class="tab-content">
+        <div id="history-list" class="history-list">
+          <!-- 履歴カードが動的に挿入されます -->
+          <div class="empty-state">
+            <p>まだ解析履歴がありません。</p>
+            <span>食事を解析するとここに保存されます。</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 体組成タブ -->
+      <section id="tab-weight" class="tab-content">
+        <!-- 体組成データの記録セクション (履歴のみ) -->
+        <div class="body-composition-section" style="margin-top: 0;">
           <!-- 体組成の簡易履歴リスト -->
           <div class="card body-comp-history-card">
             <h3 class="history-card-title">🕒 直近の測定履歴</h3>
@@ -366,7 +369,7 @@
       </button>
       <button class="nav-item" data-tab="tab-history">
         <span class="nav-icon">🕒</span>
-        <span class="nav-label">履歴</span>
+        <span class="nav-label">食事</span>
       </button>
       <button class="nav-item" data-tab="tab-weight">
         <span class="nav-icon">⚖️</span>
