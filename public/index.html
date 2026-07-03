@@ -19,7 +19,7 @@
     <!-- ヘッダー -->
     <header class="app-header">
       <div class="logo">
-        <span class="logo-emoji">📊</span>
+        <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <h1>PhysiLog</h1>
       </div>
       <p class="subtitle">食事と体組成をスマートに解析・ログ</p>
@@ -62,10 +62,10 @@
           <!-- カメラ起動 / アルバム選択の2つのボタン -->
           <div class="upload-action-buttons" id="drop-zone">
             <button type="button" class="btn upload-action-btn" id="btn-camera-trigger">
-              <span class="btn-icon">📸</span>写真を撮る
+              <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
             </button>
             <button type="button" class="btn upload-action-btn" id="btn-gallery-trigger">
-              <span class="btn-icon">📁</span>アルバムから選択
+              <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
               <span class="upload-badge" id="meal-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-meal-badge">×</span></span>
             </button>
             <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
@@ -149,7 +149,7 @@
             <!-- 食材・調味料の推測と計算根拠 -->
             <div class="card inference-card" id="res-inference-card" style="display: none;">
               <div class="inference-header-v2">
-                <span class="inference-icon-v2">📝</span>
+                <span class="inference-icon-v2"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>
                 <div>
                   <span class="inference-title-v2">食材・調味料の推測</span>
                   <span class="inference-subtitle-v2">AIが推測した計算根拠</span>
@@ -161,7 +161,7 @@
             <!-- 管理栄養士コメント -->
             <div class="card advisor-card">
               <div class="advisor-header">
-                <span class="advisor-avatar">👩‍⚕️</span>
+                <span class="advisor-avatar"><svg class="icon-svg" style="width: 20px; height: 20px; color: #6bb884;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5 5 3Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1 1-2.5Z"/></svg></span>
                 <div>
                   <span class="advisor-title">管理栄養士 AI</span>
                   <span class="advisor-subtitle">栄養アドバイス</span>
@@ -178,10 +178,10 @@
             <!-- カメラ起動 / アルバム選択 of two buttons -->
             <div class="upload-action-buttons" id="weight-drop-zone">
               <button type="button" class="btn upload-action-btn" id="btn-weight-camera-trigger">
-                <span class="btn-icon">📸</span>写真を撮る
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
               </button>
               <button type="button" class="btn upload-action-btn" id="btn-weight-gallery-trigger">
-                <span class="btn-icon">📁</span>アルバムから選択
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
                 <span class="upload-badge" id="weight-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-weight-badge">×</span></span>
               </button>
               <input type="file" id="weight-camera-input" accept="image/*" capture="environment" hidden>
@@ -214,7 +214,7 @@
 
           <!-- 解析結果確認・編集フォーム (最初は非表示) -->
           <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
-            <h3 class="results-edit-title">🔍 解析結果の確認・修正</h3>
+            <h3 class="results-edit-title"><svg class="icon-svg" style="margin-right: 6px; color: #2b5585; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>解析結果の確認・修正</h3>
             <div class="body-comp-results-grid">
               <div class="result-edit-field">
                 <span class="label">体重 (kg)</span>
@@ -306,7 +306,7 @@
         <div class="body-composition-section" style="margin-top: 0;">
           <!-- 体組成の簡易履歴リスト -->
           <div class="card body-comp-history-card">
-            <h3 class="history-card-title">🕒 直近の測定履歴</h3>
+            <h3 class="history-card-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>直近の測定履歴</h3>
             <div class="table-wrapper">
               <table class="weight-history-table">
                 <thead>
@@ -331,7 +331,7 @@
 
       <!-- 3. 統計タブ -->
       <section id="tab-stats" class="tab-content">
-        <h2 class="section-title">📊 栄養統計</h2>
+        <h2 class="section-title"><svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>栄養統計</h2>
         
         <div class="stats-summary-grid">
           <div class="card stats-summary-card">
@@ -345,14 +345,14 @@
         </div>
 
         <div class="card chart-card">
-          <h3 class="chart-title">📅 カロリー推移 (直近7日間)</h3>
+          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>カロリー推移 (直近7日間)</h3>
           <div class="chart-container">
             <canvas id="calories-chart"></canvas>
           </div>
         </div>
 
         <div class="card chart-card">
-          <h3 class="chart-title">⚖️ 平均PFCバランス</h3>
+          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>平均PFCバランス</h3>
           <div class="chart-container">
             <canvas id="pfc-chart"></canvas>
           </div>
@@ -364,19 +364,19 @@
     <!-- 下部ナビゲーションバー（スマホ向け） -->
     <nav class="app-nav">
       <button class="nav-item active" data-tab="tab-analyze">
-        <span class="nav-icon">📸</span>
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
         <span class="nav-label">解析</span>
       </button>
       <button class="nav-item" data-tab="tab-history">
-        <span class="nav-icon">🕒</span>
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v8c0 1.1.9 2 2 2h3Zm0 0v5"/></svg></span>
         <span class="nav-label">食事</span>
       </button>
       <button class="nav-item" data-tab="tab-weight">
-        <span class="nav-icon">⚖️</span>
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 12L15 9"/><path d="M12 18A6 6 0 1 0 6 12"/></svg></span>
         <span class="nav-label">体組成</span>
       </button>
       <button class="nav-item" data-tab="tab-stats">
-        <span class="nav-icon">📊</span>
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
         <span class="nav-label">統計</span>
       </button>
     </nav>
@@ -399,20 +399,20 @@
         <!-- 編集用の日付・時刻・区分インラインフォーム -->
         <div class="modal-meta-edit">
           <div class="edit-field">
-            <span class="edit-label">📅 日付</span>
+            <span class="edit-label">日付</span>
             <input type="date" id="modal-date-input" class="modal-date-input">
           </div>
           <div class="edit-field">
-            <span class="edit-label">⏰ 時刻</span>
+            <span class="edit-label">時刻</span>
             <input type="time" id="modal-time-input" class="modal-time-input">
           </div>
           <div class="edit-field">
-            <span class="edit-label">🍟 区分</span>
+            <span class="edit-label">区分</span>
             <select id="modal-type-select" class="modal-type-select">
-              <option value="morning">朝 🌅</option>
-              <option value="noon">昼 ☀️</option>
-              <option value="night">夕 🌙</option>
-              <option value="snack">間 🍰</option>
+              <option value="morning">朝</option>
+              <option value="noon">昼</option>
+              <option value="night">夕</option>
+              <option value="snack">間</option>
             </select>
           </div>
         </div>
@@ -449,19 +449,19 @@
         
         <!-- 食材・調味料の推測と計算根拠 -->
         <div class="modal-inference-card" id="modal-inference-card" style="display: none;">
-          <div class="modal-inference-header">📝 食材・調味料の推測と計算根拠</div>
+          <div class="modal-inference-header"><svg class="icon-svg" style="margin-right: 6px; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>食材・調味料の推測と計算根拠</div>
           <p class="modal-inference-text" id="modal-inference"></p>
         </div>
 
         <div class="modal-comment-card">
-          <div class="comment-header">👩‍⚕️ 管理栄養士 AI のアドバイス</div>
+          <div class="comment-header"><svg class="icon-svg" style="margin-right: 6px; color: #6bb884; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5 5 3Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1 1-2.5Z"/></svg>管理栄養士 AI のアドバイス</div>
           <p class="comment-text" id="modal-comment"></p>
         </div>
 
         <!-- ボタンアクションエリア -->
         <div class="modal-action-row">
           <button type="button" class="btn btn-secondary modal-reanalyze-btn" id="btn-reanalyze-modal">
-            🔄 再計算する
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>再計算する
           </button>
           <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-modal">
             変更を保存する
@@ -496,7 +496,6 @@
         <div class="weight-modal-details-card">
           <div class="weight-details-grid">
             <div class="weight-detail-item">
-              <span class="emoji">⚖️</span>
               <span class="label">体重</span>
               <span class="val">
                 <input type="number" step="0.01" id="w-modal-weight" class="weight-modal-input" placeholder="--.--">
@@ -504,14 +503,12 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">📊</span>
               <span class="label">BMI</span>
               <span class="val">
                 <input type="number" step="0.1" id="w-modal-bmi" class="weight-modal-input" placeholder="--.-">
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🔥</span>
               <span class="label">体脂肪率</span>
               <span class="val">
                 <input type="number" step="0.1" id="w-modal-fat" class="weight-modal-input" placeholder="--.-">
@@ -519,7 +516,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">💓</span>
               <span class="label">心拍数</span>
               <span class="val">
                 <input type="number" step="1" id="w-modal-heart" class="weight-modal-input" placeholder="--">
@@ -527,7 +523,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">💪</span>
               <span class="label">筋肉量</span>
               <span class="val">
                 <input type="number" step="0.01" id="w-modal-muscle" class="weight-modal-input" placeholder="--.--">
@@ -535,7 +530,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🏃</span>
               <span class="label">基礎代謝量</span>
               <span class="val">
                 <input type="number" step="1" id="w-modal-bmr" class="weight-modal-input" placeholder="----">
@@ -543,7 +537,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">💧</span>
               <span class="label">水分量</span>
               <span class="val">
                 <input type="number" step="0.1" id="w-modal-water" class="weight-modal-input" placeholder="--.-">
@@ -551,7 +544,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🥩</span>
               <span class="label">体脂肪量</span>
               <span class="val">
                 <input type="number" step="0.01" id="w-modal-fatmass" class="weight-modal-input" placeholder="--.--">
@@ -559,7 +551,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">👤</span>
               <span class="label">除脂肪体重</span>
               <span class="val">
                 <input type="number" step="0.01" id="w-modal-leanbody" class="weight-modal-input" placeholder="--.--">
@@ -567,7 +558,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🦴</span>
               <span class="label">骨量</span>
               <span class="val">
                 <input type="number" step="0.01" id="w-modal-bone" class="weight-modal-input" placeholder="--.--">
@@ -575,14 +565,12 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">☣️</span>
               <span class="label">内臓脂肪レベル</span>
               <span class="val">
                 <input type="number" step="0.5" id="w-modal-visceralfat" class="weight-modal-input" placeholder="--.-">
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🧬</span>
               <span class="label">タンパク質</span>
               <span class="val">
                 <input type="number" step="0.1" id="w-modal-proteinrate" class="weight-modal-input" placeholder="--.-">
@@ -590,7 +578,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🏋️</span>
               <span class="label">骨格筋量</span>
               <span class="val">
                 <input type="number" step="0.01" id="w-modal-skeletalmuscle" class="weight-modal-input" placeholder="--.--">
@@ -598,7 +585,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🧴</span>
               <span class="label">皮下脂肪</span>
               <span class="val">
                 <input type="number" step="0.1" id="w-modal-subcutaneous" class="weight-modal-input" placeholder="--.-">
@@ -606,7 +592,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🧓</span>
               <span class="label">体内年齢</span>
               <span class="val">
                 <input type="number" step="1" id="w-modal-bodyage" class="weight-modal-input" placeholder="--">
@@ -614,7 +599,6 @@
               </span>
             </div>
             <div class="weight-detail-item">
-              <span class="emoji">🧍</span>
               <span class="label">ボディタイプ</span>
               <span class="val">
                 <input type="text" id="w-modal-bodytype" class="weight-modal-input" style="font-family: inherit; font-size: 13px; width: 80px;" placeholder="----">
