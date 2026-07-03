@@ -301,6 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadHistory();
       } else if (targetTabId === 'tab-stats') {
         loadStats();
+      } else if (targetTabId === 'tab-weight') {
+        loadWeightHistory();
       }
     });
   });

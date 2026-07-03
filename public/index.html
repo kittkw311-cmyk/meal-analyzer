@@ -171,8 +171,22 @@
             </div>
           </div>
         </div>
+      </section>
 
-        <!-- 体組成データの記録セクション (食事解析の下に追加) -->
+      <!-- 2. 履歴タブ -->
+      <section id="tab-history" class="tab-content">
+        <div id="history-list" class="history-list">
+          <!-- 履歴カードが動的に挿入されます -->
+          <div class="empty-state">
+            <p>まだ解析履歴がありません。</p>
+            <span>食事を解析するとここに保存されます。</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 体組成タブ -->
+      <section id="tab-weight" class="tab-content">
+        <!-- 体組成データの記録セクション -->
         <div class="body-composition-section">
           <div class="card upload-card body-comp-card">
             <!-- カメラ起動 / アルバム選択の2つのボタン -->
@@ -212,80 +226,80 @@
             <button class="btn btn-primary btn-block" id="btn-analyze-weight">体組成データを登録する</button>
           </div>
 
-            <!-- 解析結果確認・編集フォーム (最初は非表示) -->
-            <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
-              <h3 class="results-edit-title">🔍 解析結果の確認・修正</h3>
-              <div class="body-comp-results-grid">
-                <div class="result-edit-field">
-                  <span class="label">体重 (kg)</span>
-                  <input type="number" step="0.01" id="input-weight-val" class="input-number-v2" placeholder="--.--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">BMI</span>
-                  <input type="number" step="0.1" id="input-bmi-val" class="input-number-v2" placeholder="--.-">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">体脂肪率 (%)</span>
-                  <input type="number" step="0.1" id="input-fat-val" class="input-number-v2" placeholder="--.-">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">心拍数 (bpm)</span>
-                  <input type="number" step="1" id="input-heart-val" class="input-number-v2" placeholder="--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">筋肉量 (kg)</span>
-                  <input type="number" step="0.01" id="input-muscle-val" class="input-number-v2" placeholder="--.--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">基礎代謝 (kcal)</span>
-                  <input type="number" step="1" id="input-bmr-val" class="input-number-v2" placeholder="----">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">水分量 (%)</span>
-                  <input type="number" step="0.1" id="input-water-val" class="input-number-v2" placeholder="--.-">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">体脂肪量 (kg)</span>
-                  <input type="number" step="0.01" id="input-fatmass-val" class="input-number-v2" placeholder="--.--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">除脂肪体重 (kg)</span>
-                  <input type="number" step="0.01" id="input-leanbody-val" class="input-number-v2" placeholder="--.--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">骨量 (kg)</span>
-                  <input type="number" step="0.01" id="input-bone-val" class="input-number-v2" placeholder="--.--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">内臓脂肪</span>
-                  <input type="number" step="0.5" id="input-visceralfat-val" class="input-number-v2" placeholder="--.-">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">タンパク質 (%)</span>
-                  <input type="number" step="0.1" id="input-proteinrate-val" class="input-number-v2" placeholder="--.-">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">骨格筋量 (kg)</span>
-                  <input type="number" step="0.01" id="input-skeletalmuscle-val" class="input-number-v2" placeholder="--.--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">皮下脂肪 (%)</span>
-                  <input type="number" step="0.1" id="input-subcutaneous-val" class="input-number-v2" placeholder="--.-">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">体内年齢 (歳)</span>
-                  <input type="number" step="1" id="input-bodyage-val" class="input-number-v2" placeholder="--">
-                </div>
-                <div class="result-edit-field">
-                  <span class="label">ボディタイプ</span>
-                  <input type="text" id="input-bodytype-val" class="input-number-v2" style="font-family: inherit; font-size: 13px;" placeholder="標準的">
-                </div>
+          <!-- 解析結果確認・編集フォーム (最初は非表示) -->
+          <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
+            <h3 class="results-edit-title">🔍 解析結果の確認・修正</h3>
+            <div class="body-comp-results-grid">
+              <div class="result-edit-field">
+                <span class="label">体重 (kg)</span>
+                <input type="number" step="0.01" id="input-weight-val" class="input-number-v2" placeholder="--.--">
               </div>
-              
-              <div class="result-action-row">
-                <button class="btn btn-success w-full" id="btn-save-weight">この内容でDriveに保存する</button>
+              <div class="result-edit-field">
+                <span class="label">BMI</span>
+                <input type="number" step="0.1" id="input-bmi-val" class="input-number-v2" placeholder="--.-">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">体脂肪率 (%)</span>
+                <input type="number" step="0.1" id="input-fat-val" class="input-number-v2" placeholder="--.-">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">心拍数 (bpm)</span>
+                <input type="number" step="1" id="input-heart-val" class="input-number-v2" placeholder="--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">筋肉量 (kg)</span>
+                <input type="number" step="0.01" id="input-muscle-val" class="input-number-v2" placeholder="--.--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">基礎代謝 (kcal)</span>
+                <input type="number" step="1" id="input-bmr-val" class="input-number-v2" placeholder="----">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">水分量 (%)</span>
+                <input type="number" step="0.1" id="input-water-val" class="input-number-v2" placeholder="--.-">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">体脂肪量 (kg)</span>
+                <input type="number" step="0.01" id="input-fatmass-val" class="input-number-v2" placeholder="--.--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">除脂肪体重 (kg)</span>
+                <input type="number" step="0.01" id="input-leanbody-val" class="input-number-v2" placeholder="--.--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">骨量 (kg)</span>
+                <input type="number" step="0.01" id="input-bone-val" class="input-number-v2" placeholder="--.--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">内臓脂肪</span>
+                <input type="number" step="0.5" id="input-visceralfat-val" class="input-number-v2" placeholder="--.-">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">タンパク質 (%)</span>
+                <input type="number" step="0.1" id="input-proteinrate-val" class="input-number-v2" placeholder="--.-">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">骨格筋量 (kg)</span>
+                <input type="number" step="0.01" id="input-skeletalmuscle-val" class="input-number-v2" placeholder="--.--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">皮下脂肪 (%)</span>
+                <input type="number" step="0.1" id="input-subcutaneous-val" class="input-number-v2" placeholder="--.-">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">体内年齢 (歳)</span>
+                <input type="number" step="1" id="input-bodyage-val" class="input-number-v2" placeholder="--">
+              </div>
+              <div class="result-edit-field">
+                <span class="label">ボディタイプ</span>
+                <input type="text" id="input-bodytype-val" class="input-number-v2" style="font-family: inherit; font-size: 13px;" placeholder="標準的">
               </div>
             </div>
+            
+            <div class="result-action-row">
+              <button class="btn btn-success w-full" id="btn-save-weight">この内容でDriveに保存する</button>
+            </div>
+          </div>
           
           <!-- 体組成の簡易履歴リスト -->
           <div class="card body-comp-history-card">
@@ -308,17 +322,6 @@
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 2. 履歴タブ -->
-      <section id="tab-history" class="tab-content">
-        <div id="history-list" class="history-list">
-          <!-- 履歴カードが動的に挿入されます -->
-          <div class="empty-state">
-            <p>まだ解析履歴がありません。</p>
-            <span>食事を解析するとここに保存されます。</span>
           </div>
         </div>
       </section>
@@ -364,6 +367,10 @@
       <button class="nav-item" data-tab="tab-history">
         <span class="nav-icon">🕒</span>
         <span class="nav-label">履歴</span>
+      </button>
+      <button class="nav-item" data-tab="tab-weight">
+        <span class="nav-icon">⚖️</span>
+        <span class="nav-label">体組成</span>
       </button>
       <button class="nav-item" data-tab="tab-stats">
         <span class="nav-icon">📊</span>
