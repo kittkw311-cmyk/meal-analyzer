@@ -39,6 +39,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReanalyzeModal = document.getElementById('btn-reanalyze-modal');
   const btnPresetModal = document.getElementById('btn-preset-modal');
   
+  // Presets Elements
+  const presetSelector = document.getElementById('preset-selector');
+  const presetsList = document.getElementById('presets-list');
+  const formPresetsManual = document.getElementById('form-presets-manual');
+  const formPresetsAiAnalyze = document.getElementById('form-presets-ai-analyze');
+  const btnPresetsAiSubmit = document.getElementById('btn-presets-ai-submit');
+  const presetsManualToggle = document.getElementById('presets-manual-toggle');
+  const presetsManualContent = document.getElementById('presets-manual-content');
+  const presetsManualArrow = document.getElementById('presets-manual-arrow');
+  const presetsTextInput = document.getElementById('presets-text-input');
+  
+  // Presets AI upload elements
+  const btnPresetsCameraTrigger = document.getElementById('btn-presets-camera-trigger');
+  const btnPresetsGalleryTrigger = document.getElementById('btn-presets-gallery-trigger');
+  const presetsCameraInput = document.getElementById('presets-camera-input');
+  const presetsGalleryInput = document.getElementById('presets-gallery-input');
+  const presetsImagePreviewContainer = document.getElementById('presets-image-preview-container');
+  const presetsImagePreview = document.getElementById('presets-image-preview');
+  const btnPresetsRemoveImage = document.getElementById('btn-presets-remove-image');
+  
   // Modal Edit Inputs
   const modalDateInput = document.getElementById('modal-date-input');
   const modalTimeInput = document.getElementById('modal-time-input');
@@ -630,25 +650,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   // 定番メニュー (Presets) 管理ロジック
   // ==========================================================================
-  const presetSelector = document.getElementById('preset-selector');
-  const presetsList = document.getElementById('presets-list');
-  const formPresetsManual = document.getElementById('form-presets-manual');
-  const formPresetsAiAnalyze = document.getElementById('form-presets-ai-analyze');
-  const btnPresetsAiSubmit = document.getElementById('btn-presets-ai-submit');
-  const presetsManualToggle = document.getElementById('presets-manual-toggle');
-  const presetsManualContent = document.getElementById('presets-manual-content');
-  const presetsManualArrow = document.getElementById('presets-manual-arrow');
-  const presetsTextInput = document.getElementById('presets-text-input');
-  
-  // 定番AI登録用のファイル/カメラ制御
-  const btnPresetsCameraTrigger = document.getElementById('btn-presets-camera-trigger');
-  const btnPresetsGalleryTrigger = document.getElementById('btn-presets-gallery-trigger');
-  const presetsCameraInput = document.getElementById('presets-camera-input');
-  const presetsGalleryInput = document.getElementById('presets-gallery-input');
-  const presetsImagePreviewContainer = document.getElementById('presets-image-preview-container');
-  const presetsImagePreview = document.getElementById('presets-image-preview');
-  const btnPresetsRemoveImage = document.getElementById('btn-presets-remove-image');
-  
   let presetsSelectedFile = null;
 
   // 1. 定番データの読み込み ＆ レンダリング
