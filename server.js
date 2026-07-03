@@ -768,8 +768,18 @@ app.delete('/api/history/:id', async (req, res) => {
 app.get('/api/body-composition', async (req, res) => {
   try {
     const weightHistory = await readWeight();
-    // 計測日時の降順（最新が上）でソート
-    weightHistory.sort((a, b) => new Date(b.measuredAt || b.date) - new Date(a.measuredAt || a.date));
+    // 日付 (YYYY-MM-DD) の降順、および区分の降順 (夜 -> 朝 -> 他) でソート
+    const priority = { night: 3, morning: 2, other: 1 };
+    weightHistory.sort((a, b) => {
+      const dateA = a.date ? a.date.substring(0, 10) : '';
+      const dateB = b.date ? b.date.substring(0, 10) : '';
+      if (dateA !== dateB) {
+        return dateB.localeCompare(dateA); // 日付降順
+      }
+      const pA = priority[a.measurementType] || 0;
+      const pB = priority[b.measurementType] || 0;
+      return pB - pA; // 区分降順 (夜 -> 朝 -> 他)
+    });
     res.json(weightHistory);
   } catch (err) {
     console.error('Failed to load weight history:', err);
@@ -907,7 +917,8 @@ app.post('/api/body-composition', upload.single('image'), async (req, res) => {
     const bodyType = req.body.bodyType || null;
     
     // 日時と区分
-    const measuredAt = req.body.measuredAt ? new Date(req.body.measuredAt).toISOString() : new Date().toISOString();
+    // 日付と区分
+    const date = req.body.date || new Date().toISOString().substring(0, 10);
     const measurementType = req.body.measurementType || 'other'; // morning, night, other
     const textInput = req.body.textInput || '';
     
@@ -945,8 +956,7 @@ app.post('/api/body-composition', upload.single('image'), async (req, res) => {
     
     const newRecord = {
       id: Date.now().toString(),
-      date: new Date().toISOString(),
-      measuredAt: measuredAt,
+      date: date, // YYYY-MM-DD
       measurementType: measurementType,
       weight: weight,
       bmi: bmi,

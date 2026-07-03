@@ -1163,14 +1163,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadingOverlay.style.display = 'flex';
     btnSaveWeight.disabled = true;
 
-    // 選択された日付に現在の時間を補正して送信
-    const selectedDate = weightDateInput.value;
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
-    const measuredAtToSend = new Date(fullDateTimeStr).toISOString();
+    // 選択された測定日をそのまま送信
+    const selectedDate = weightDateInput.value; // YYYY-MM-DD
 
     const formData = new FormData();
     formData.append('weight', weight || '');
@@ -1189,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('subcutaneousFat', subcutaneousFat || '');
     formData.append('bodyAge', bodyAge || '');
     formData.append('bodyType', bodyType || '');
-    formData.append('measuredAt', measuredAtToSend);
+    formData.append('date', selectedDate);
     formData.append('measurementType', weightTypeSelect.value);
     formData.append('textInput', weightTextInput.value);
     if (selectedWeightFile) {
@@ -1271,39 +1265,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       weightHistory.forEach(item => {
-        const dateObj = new Date(item.measuredAt || item.date);
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const hh = String(dateObj.getHours()).padStart(2, '0');
-        const min = String(dateObj.getMinutes()).padStart(2, '0');
         const typeJa = {
           morning: '朝 🌅',
           night: '夜 🌙',
           other: '他 ⚙️'
         }[item.measurementType || 'other'];
 
+        // 日付のフォーマット (例: 2026-07-03 -> 2026/07/03)
+        const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="td-datetime">
-            <span class="date">${mm}/${dd} ${hh}:${min}</span>
+          <td class="td-date-only">${dateDisp}</td>
+          <td class="td-type-only">
             <span class="badge ${item.measurementType || 'other'}">${typeJa}</span>
           </td>
           <td class="td-weight">${item.weight !== null ? `${item.weight.toFixed(2)} kg` : '--.-'}</td>
-          <td class="td-fat">${item.fatRate !== null ? `${item.fatRate.toFixed(1)} %` : '--.-'}</td>
-          <td class="td-muscle">${item.muscleMass !== null ? `${item.muscleMass.toFixed(2)} kg` : '--.-'}</td>
+          <td class="td-bmr-only">${item.bmr !== null ? `${item.bmr} kcal` : '----'}</td>
           <td class="td-action">
-            <button class="btn-detail-weight" data-id="${item.id}">🔍</button>
             <button class="btn-delete-weight" data-id="${item.id}">🗑️</button>
           </td>
         `;
 
-        // 詳細ボタンイベント
-        tr.querySelector('.btn-detail-weight').addEventListener('click', (e) => {
-          e.stopPropagation();
+        // 行自体をクリックした際の遷移（詳細モーダル起動）
+        tr.addEventListener('click', () => {
           openWeightDetailModal(item);
         });
 
-        // 削除ボタンイベント
+        // 削除ボタンイベント (イベント伝播を防止して詳細画面が開くのを防ぐ)
         tr.querySelector('.btn-delete-weight').addEventListener('click', async (e) => {
           e.stopPropagation();
           if (!confirm('この測定データを削除しますか？')) return;
@@ -1334,14 +1323,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 体組成詳細モーダルの開閉
   const openWeightDetailModal = (item) => {
-    const dateObj = new Date(item.measuredAt || item.date);
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    const hh = String(dateObj.getHours()).padStart(2, '0');
-    const min = String(dateObj.getMinutes()).padStart(2, '0');
-    
-    weightModalDate.textContent = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    // 測定日 (YYYY-MM-DD -> YYYY/MM/DD)
+    const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
+    weightModalDate.textContent = dateDisp;
     
     const typeJa = {
       morning: '朝 🌅',
