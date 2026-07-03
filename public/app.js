@@ -1036,20 +1036,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 体組成 (Weight / Body Composition) OCR & 記録ロジック
   // ==========================================================================
 
-  // 1. 画像アップロードイベント
-  btnWeightCameraTrigger.addEventListener('click', () => weightCameraInput.click());
-  btnWeightGalleryTrigger.addEventListener('click', () => weightGalleryInput.click());
-
-  const handleWeightFileSelect = (file) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('画像ファイルを選択してください。');
-      return;
-    }
-  // ==========================================================================
-  // 体組成 (Weight / Body Composition) OCR & 記録ロジック
-  // ==========================================================================
-
   // 現在選択されている食事日付に対応する最新体重・基礎代謝サマリーの更新
   async function updateDailyWeightSummary() {
     try {
