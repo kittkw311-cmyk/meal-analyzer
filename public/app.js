@@ -600,11 +600,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!groups[dateKey]) {
           groups[dateKey] = {
-            dateLabel: dateObj.toLocaleDateString('ja-JP', {
-              month: 'long',
-              day: 'numeric',
-              weekday: 'short'
-            }),
+            dateLabel: (() => {
+              const mmStr = String(dateObj.getMonth() + 1).padStart(2, '0');
+              const ddStr = String(dateObj.getDate()).padStart(2, '0');
+              const wday = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
+              return `${mmStr}/${ddStr}(${wday})`;
+            })(),
             meals: [],
             totalCalories: 0,
             totalProtein: 0,
@@ -649,9 +650,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerEl = document.createElement('div');
         headerEl.className = 'history-date-header';
         
-        const pTotal = Math.round(group.totalProtein * 10) / 10;
-        const fTotal = Math.round(group.totalFat * 10) / 10;
-        const cTotal = Math.round(group.totalCarbs * 10) / 10;
+        const pTotal = Math.round(group.totalProtein);
+        const fTotal = Math.round(group.totalFat);
+        const cTotal = Math.round(group.totalCarbs);
 
         // 理想PFC比率 (P:15%, F:25%, C:60% カロリーベース) との乖離の計算
         const pCal = group.totalProtein * 4;
