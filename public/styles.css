@@ -969,22 +969,71 @@ body {
 .daily-summary-grid-v2 {
   display: flex;
   flex-direction: row;
+  align-items: stretch;
   justify-content: space-between;
-  align-items: center;
   gap: 12px;
   width: 100%;
 }
 
-.daily-summary-calorie-box-v2 {
+.summary-left-block {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.summary-right-block {
+  width: 140px;
   flex-shrink: 0;
+  display: flex;
+}
+
+.daily-weight-large-box {
+  flex: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  min-height: 70px;
+}
+
+.daily-weight-large-box .weight-display-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.daily-weight-large-box #summary-weight-val {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+}
+
+.daily-weight-large-box .weight-diff-val {
+  font-size: 11px;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+}
+
+.daily-summary-calorie-box-v2 {
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
 }
 
 .daily-summary-calorie-box-v2 .daily-summary-val {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
@@ -992,21 +1041,17 @@ body {
 }
 
 .daily-summary-calorie-box-v2 .daily-summary-unit {
-  font-size: 11px;
-}
-
-.daily-summary-calorie-box-v2 .daily-summary-label {
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 13px;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-left: 3px;
 }
 
 .daily-summary-pfc-boxes {
   display: flex;
   flex-direction: row;
   gap: 6px;
-  flex-grow: 1;
+  width: 100%;
 }
 
 .daily-summary-pfc-boxes .daily-pfc-box {
@@ -1015,8 +1060,8 @@ body {
 }
 
 .daily-pfc-box {
-  border-radius: 8px;
-  padding: 6px 4px;
+  border-radius: 10px;
+  padding: 6px 8px;
   text-align: center;
   display: flex;
   flex-direction: row;
@@ -1024,21 +1069,16 @@ body {
   align-items: center;
   gap: 4px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.daily-pfc-box .label {
-  font-size: 11px;
-  font-weight: 800;
-  color: inherit;
-  opacity: 0.8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .daily-pfc-box .val {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   display: flex;
   align-items: baseline;
+  gap: 3px;
 }
 
 /* Daily PFC backgrounds */
@@ -2026,27 +2066,26 @@ body {
 /* スマホ幅での1行サマリー要素の折り返し・はみ出し防止 */
 @media (max-width: 480px) {
   .daily-summary-grid-v2 {
-    gap: 6px !important;
-  }
-  .daily-summary-calorie-box-v2 {
-    gap: 0 !important;
+    gap: 8px !important;
   }
   .daily-summary-calorie-box-v2 .daily-summary-val {
-    font-size: 15px !important;
+    font-size: 20px !important;
   }
   .daily-summary-pfc-boxes {
     gap: 4px !important;
   }
   .daily-pfc-box {
-    padding: 4px 2px !important;
-    gap: 2px !important;
-    border-radius: 6px !important;
-  }
-  .daily-pfc-box .label {
-    font-size: 10px !important;
+    padding: 4px 6px !important;
+    border-radius: 8px !important;
   }
   .daily-pfc-box .val {
-    font-size: 13px !important;
+    font-size: 11px !important;
+  }
+  .summary-right-block {
+    width: 120px !important;
+  }
+  .daily-weight-large-box #summary-weight-val {
+    font-size: 17px !important;
   }
 }
 

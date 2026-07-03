@@ -1076,6 +1076,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const latest = sameDayRecords[0];
         summaryWeightVal.textContent = latest.weight !== null ? latest.weight.toFixed(1) : '--.-';
         
+        // 前日比 (前回の測定値との差) の算出
+        const sortedAll = [...weightHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const latestTime = new Date(latest.date).getTime();
+        // 今回のレコードより過去で、体重データが存在する直近のレコードを検索
+        const prevRecord = sortedAll.find(r => new Date(r.date).getTime() < latestTime && r.weight !== null);
+        const diffEl = document.getElementById('daily-weight-diff');
+        
+        if (diffEl) {
+          if (prevRecord && latest.weight !== null && prevRecord.weight !== null) {
+            const diff = latest.weight - prevRecord.weight;
+            if (diff > 0) {
+              diffEl.textContent = `(+${diff.toFixed(1)})`;
+              diffEl.style.color = '#ff7676'; // 上昇 (赤)
+            } else if (diff < 0) {
+              diffEl.textContent = `(${diff.toFixed(1)})`;
+              diffEl.style.color = '#4dbf77'; // 下降 (緑)
+            } else {
+              diffEl.textContent = `(±0)`;
+              diffEl.style.color = 'var(--text-muted)';
+            }
+          } else {
+            diffEl.textContent = ''; // 比較対象がない場合は何も表示しない
+          }
+        }
+        
         // 基礎代謝を食事カロリー表示の横にマージする
         if (latest.bmr !== null) {
           if (dailyBmrCalories) dailyBmrCalories.textContent = latest.bmr;
