@@ -1902,10 +1902,10 @@ body {
 
 /* 体組成詳細モーダルのカスタムスタイル */
 .weight-modal-details-card {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .weight-details-grid {
@@ -2100,27 +2100,52 @@ body {
 }
 
 /* 体組成詳細モーダルの一覧テーブルスタイル */
+.weight-details-fixed-header {
+  display: flex;
+  padding: 10px 8px; /* テーブルセルの左右パディング8pxと合わせる */
+  border-bottom: 2px solid var(--border-color);
+  background: var(--card-bg);
+  box-sizing: border-box;
+}
+
+.weight-details-fixed-header span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.weight-details-fixed-header .col-label {
+  width: 120px;
+  text-align: left;
+}
+
+.weight-details-fixed-header .col-input-val {
+  width: 110px;
+  text-align: center;
+}
+
+.weight-details-fixed-header .col-unit {
+  width: 50px;
+  text-align: left;
+}
+
+.weight-details-fixed-header .col-diff-val {
+  width: 80px;
+  text-align: right;
+}
+
 .weight-details-list-table {
   width: 100%;
+  table-layout: fixed; /* 各セルのピクセル幅を厳格に反映 */
   border-collapse: collapse;
   margin-top: 0;
 }
 
-.weight-details-list-table th {
-  position: sticky;
-  top: 0;
-  background: var(--card-bg);
-  z-index: 10;
-  box-shadow: inset 0 -1px 0 var(--border-color); /* sticky時の境界線のチラつき防止 */
-  border-bottom: 2px solid var(--border-color);
-  padding: 8px 8px;
-  font-weight: 700;
-}
-
 .weight-details-list-table td {
-  padding: 4px 8px; /* 縦幅スリム化 (10px -> 4px) */
+  padding: 4px 8px; /* 縦幅スリム化 */
   vertical-align: middle;
   border-bottom: 1px solid var(--border-color);
+  box-sizing: border-box;
 }
 
 .weight-details-list-table td.col-label {
@@ -2137,7 +2162,7 @@ body {
 
 .weight-details-list-table .weight-modal-input {
   width: 80px;
-  padding: 4px 6px; /* インプット内余白スリム化 */
+  padding: 4px 6px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 13px;

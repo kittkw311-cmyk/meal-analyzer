@@ -486,6 +486,14 @@
             <option value="other">他</option>
           </select>
         </div>
+        
+        <!-- 固定見出しヘッダー (スクロール外に固定) -->
+        <div class="weight-details-fixed-header">
+          <span class="col-label">項目</span>
+          <span class="col-input-val">測定値</span>
+          <span class="col-unit">単位</span>
+          <span class="col-diff-val">前回比</span>
+        </div>
       </div>
       
       <div class="modal-body-scrollable">
@@ -496,14 +504,6 @@
         <div class="weight-modal-details-card">
           <div class="table-wrapper weight-details-table-wrapper" style="border: none; margin-top: 0; box-shadow: none;">
             <table class="weight-details-list-table">
-              <thead>
-                <tr>
-                  <th class="col-label" style="text-align: left; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">項目</th>
-                  <th class="col-input-val" style="text-align: center; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">測定値</th>
-                  <th class="col-unit" style="text-align: left; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">単位</th>
-                  <th class="col-diff-val" style="text-align: right; padding: 10px 8px; font-size: 12px; color: var(--text-muted);">前回比</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr>
                   <td class="col-label">体重</td>
