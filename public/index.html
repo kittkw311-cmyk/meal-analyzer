@@ -222,15 +222,67 @@
               <div class="body-comp-results-grid">
                 <div class="result-edit-field">
                   <span class="label">体重 (kg)</span>
-                  <input type="number" step="0.1" id="input-weight-val" class="input-number-v2" placeholder="--.-">
+                  <input type="number" step="0.01" id="input-weight-val" class="input-number-v2" placeholder="--.--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">BMI</span>
+                  <input type="number" step="0.1" id="input-bmi-val" class="input-number-v2" placeholder="--.-">
                 </div>
                 <div class="result-edit-field">
                   <span class="label">体脂肪率 (%)</span>
                   <input type="number" step="0.1" id="input-fat-val" class="input-number-v2" placeholder="--.-">
                 </div>
                 <div class="result-edit-field">
+                  <span class="label">心拍数 (bpm)</span>
+                  <input type="number" step="1" id="input-heart-val" class="input-number-v2" placeholder="--">
+                </div>
+                <div class="result-edit-field">
                   <span class="label">筋肉量 (kg)</span>
-                  <input type="number" step="0.1" id="input-muscle-val" class="input-number-v2" placeholder="--.-">
+                  <input type="number" step="0.01" id="input-muscle-val" class="input-number-v2" placeholder="--.--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">基礎代謝 (kcal)</span>
+                  <input type="number" step="1" id="input-bmr-val" class="input-number-v2" placeholder="----">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">水分量 (%)</span>
+                  <input type="number" step="0.1" id="input-water-val" class="input-number-v2" placeholder="--.-">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">体脂肪量 (kg)</span>
+                  <input type="number" step="0.01" id="input-fatmass-val" class="input-number-v2" placeholder="--.--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">除脂肪体重 (kg)</span>
+                  <input type="number" step="0.01" id="input-leanbody-val" class="input-number-v2" placeholder="--.--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">骨量 (kg)</span>
+                  <input type="number" step="0.01" id="input-bone-val" class="input-number-v2" placeholder="--.--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">内臓脂肪</span>
+                  <input type="number" step="0.5" id="input-visceralfat-val" class="input-number-v2" placeholder="--.-">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">タンパク質 (%)</span>
+                  <input type="number" step="0.1" id="input-proteinrate-val" class="input-number-v2" placeholder="--.-">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">骨格筋量 (kg)</span>
+                  <input type="number" step="0.01" id="input-skeletalmuscle-val" class="input-number-v2" placeholder="--.--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">皮下脂肪 (%)</span>
+                  <input type="number" step="0.1" id="input-subcutaneous-val" class="input-number-v2" placeholder="--.-">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">体内年齢 (歳)</span>
+                  <input type="number" step="1" id="input-bodyage-val" class="input-number-v2" placeholder="--">
+                </div>
+                <div class="result-edit-field">
+                  <span class="label">ボディタイプ</span>
+                  <input type="text" id="input-bodytype-val" class="input-number-v2" style="font-family: inherit; font-size: 13px;" placeholder="標準的">
                 </div>
               </div>
               
@@ -410,6 +462,112 @@
           <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-modal">
             変更を保存する
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 体組成詳細モーダル -->
+  <div class="modal-overlay" id="weight-detail-modal" style="display: none;">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="btn-close-weight-modal">✕</button>
+      
+      <div class="modal-header-fixed">
+        <h3 class="modal-title" id="weight-modal-title">体組成 測定詳細</h3>
+        <div class="modal-meta-edit" style="border: none; background: transparent; padding: 0; justify-content: center; gap: 12px; margin-top: 6px;">
+          <span id="weight-modal-date" style="font-weight: 800; color: var(--text-main); font-size: 13px;">2026-07-03 09:15</span>
+          <span id="weight-modal-type-badge" class="badge">朝 🌅</span>
+        </div>
+      </div>
+      
+      <div class="modal-body-scrollable">
+        <div id="weight-modal-image-container" class="modal-image-container" style="display: none;">
+          <img id="weight-modal-image" src="" alt="体組成画像">
+        </div>
+        
+        <div class="weight-modal-details-card">
+          <div class="weight-details-grid">
+            <div class="weight-detail-item">
+              <span class="emoji">⚖️</span>
+              <span class="label">体重</span>
+              <span class="val"><span id="w-modal-weight">--.-</span> <span class="unit">kg</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">📊</span>
+              <span class="label">BMI</span>
+              <span class="val"><span id="w-modal-bmi">--.-</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🔥</span>
+              <span class="label">体脂肪率</span>
+              <span class="val"><span id="w-modal-fat">--.-</span> <span class="unit">%</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">💓</span>
+              <span class="label">心拍数</span>
+              <span class="val"><span id="w-modal-heart">--</span> <span class="unit">bpm</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">💪</span>
+              <span class="label">筋肉量</span>
+              <span class="val"><span id="w-modal-muscle">--.-</span> <span class="unit">kg</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🏃</span>
+              <span class="label">基礎代謝量</span>
+              <span class="val"><span id="w-modal-bmr">----</span> <span class="unit">kcal</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">💧</span>
+              <span class="label">水分量</span>
+              <span class="val"><span id="w-modal-water">--.-</span> <span class="unit">%</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🥩</span>
+              <span class="label">体脂肪量</span>
+              <span class="val"><span id="w-modal-fatmass">--.-</span> <span class="unit">kg</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">👤</span>
+              <span class="label">除脂肪体重</span>
+              <span class="val"><span id="w-modal-leanbody">--.-</span> <span class="unit">kg</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🦴</span>
+              <span class="label">骨量</span>
+              <span class="val"><span id="w-modal-bone">--.-</span> <span class="unit">kg</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">☣️</span>
+              <span class="label">内臓脂肪レベル</span>
+              <span class="val"><span id="w-modal-visceralfat">--.-</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🧬</span>
+              <span class="label">タンパク質</span>
+              <span class="val"><span id="w-modal-proteinrate">--.-</span> <span class="unit">%</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🏋️</span>
+              <span class="label">骨格筋量</span>
+              <span class="val"><span id="w-modal-skeletalmuscle">--.-</span> <span class="unit">kg</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🧴</span>
+              <span class="label">皮下脂肪</span>
+              <span class="val"><span id="w-modal-subcutaneous">--.-</span> <span class="unit">%</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🧓</span>
+              <span class="label">体内年齢</span>
+              <span class="val"><span id="w-modal-bodyage">--</span> <span class="unit">歳</span></span>
+            </div>
+            <div class="weight-detail-item">
+              <span class="emoji">🧍</span>
+              <span class="label">ボディタイプ</span>
+              <span class="val"><span id="w-modal-bodytype">----</span></span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

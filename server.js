@@ -800,14 +800,30 @@ app.post('/api/body-composition/analyze', upload.single('image'), async (req, re
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
     let promptInstruction = `
-アップロードされた体組成計（体重計）の画面画像（OCR）、または貼り付けられたテキスト（"${textInput}"）を読み取り、以下の4つの項目を抽出してください。
-1. 体重 (kg) - 数値
-2. 体脂肪率 (%) - 数値
-3. 筋肉量 (kg) - 数値
-4. 計測日時（形式は YYYY-MM-DDTHH:MM:SS。画像やテキストから計測された年月日や時刻が読み取れない場合、日時は本日 ${todayStr} の現在時刻 ${timeStr} 付近として推計してください）
+アップロードされた体組成計（体重計）の画面画像（OCR）、または貼り付けられたテキスト（"${textInput}"）を読み取り、以下の16個の測定指標の数値を正確に抽出してください。
+
+【抽出する項目】
+1. 体重 (weight) - kg単位
+2. BMI (bmi)
+3. 体脂肪率 (fatRate) - %単位
+4. 心拍数 (heartRate) - bpm単位
+5. 筋肉量 (muscleMass) - kg単位
+6. 基礎代謝量 (bmr) - kcal単位
+7. 水分量 (waterRate) - %単位
+8. 体脂肪量 (fatMass) - kg単位
+9. 除脂肪体重 (leanBodyMass) - kg単位
+10. 骨量 (boneMass) - kg単位
+11. 内臓脂肪レベル (visceralFat) - 数値（例: 12.0）
+12. タンパク質 (proteinRate) - %単位
+13. 骨格筋量 (skeletalMuscleMass) - kg単位
+14. 皮下脂肪 (subcutaneousFat) - %単位
+15. 体内年齢 (bodyAge) - 整数（歳）
+16. ボディタイプ (bodyType) - 文字列（例: "標準的"、"マッスル"など。液晶の表示または説明テキストから抽出）
+
+また、画像やテキストから計測された年月日や時刻が読み取れる場合は「計測日時(measuredAt)」を形式「YYYY-MM-DDTHH:MM:SS」で抽出してください。読み取れない場合、日時は本日 ${todayStr} の現在時刻 ${timeStr} 付近として推計してください。
 
 【注意事項】
-- 体重、体脂肪率、筋肉量のうち、どうしても画像やテキストから読み取れない項目がある場合は、その項目を null としてください。
+- どうしても画像やテキストから読み取れない項目がある場合は、その項目を null としてください。
 `;
     
     const contents = [];
@@ -829,29 +845,35 @@ app.post('/api/body-composition/analyze', upload.single('image'), async (req, re
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            weight: {
-              type: Type.NUMBER,
-              description: "体重 (kg) の数値。読み取れなかった場合は null"
-            },
-            fatRate: {
-              type: Type.NUMBER,
-              description: "体脂肪率 (%) の数値。読み取れなかった場合は null"
-            },
-            muscleMass: {
-              type: Type.NUMBER,
-              description: "筋肉量 (kg) の数値。読み取れなかった場合は null"
-            },
-            measuredAt: {
-              type: Type.STRING,
-              description: "計測日時。形式は YYYY-MM-DDTHH:MM:SS"
-            }
+            weight: { type: Type.NUMBER, description: "体重 (kg)。不明ならnull" },
+            bmi: { type: Type.NUMBER, description: "BMI。不明ならnull" },
+            fatRate: { type: Type.NUMBER, description: "体脂肪率 (%)。不明ならnull" },
+            heartRate: { type: Type.INTEGER, description: "心拍数 (bpm)。不明ならnull" },
+            muscleMass: { type: Type.NUMBER, description: "筋肉量 (kg)。不明ならnull" },
+            bmr: { type: Type.INTEGER, description: "基礎代謝量 (kcal)。不明ならnull" },
+            waterRate: { type: Type.NUMBER, description: "水分量 (%)。不明ならnull" },
+            fatMass: { type: Type.NUMBER, description: "体脂肪量 (kg)。不明ならnull" },
+            leanBodyMass: { type: Type.NUMBER, description: "除脂肪体重 (kg)。不明ならnull" },
+            boneMass: { type: Type.NUMBER, description: "骨量 (kg)。不明ならnull" },
+            visceralFat: { type: Type.NUMBER, description: "内臓脂肪。不明ならnull" },
+            proteinRate: { type: Type.NUMBER, description: "タンパク質 (%)。不明ならnull" },
+            skeletalMuscleMass: { type: Type.NUMBER, description: "骨格筋量 (kg)。不明ならnull" },
+            subcutaneousFat: { type: Type.NUMBER, description: "皮下脂肪 (%)。不明ならnull" },
+            bodyAge: { type: Type.INTEGER, description: "体内年齢。不明ならnull" },
+            bodyType: { type: Type.STRING, description: "ボディタイプ。不明ならnull" },
+            measuredAt: { type: Type.STRING, description: "計測日時。形式は YYYY-MM-DDTHH:MM:SS" }
           },
-          required: ["weight", "fatRate", "muscleMass", "measuredAt"]
+          required: [
+            "weight", "bmi", "fatRate", "heartRate", "muscleMass", "bmr", 
+            "waterRate", "fatMass", "leanBodyMass", "boneMass", "visceralFat", 
+            "proteinRate", "skeletalMuscleMass", "subcutaneousFat", "bodyAge", 
+            "bodyType", "measuredAt"
+          ]
         }
       }
     });
     
-    const responseText = result.response.text;
+    const responseText = result.text;
     console.log('Gemini raw response for weight OCR:', responseText);
     
     const analysisResult = JSON.parse(responseText);
@@ -868,8 +890,21 @@ app.post('/api/body-composition/analyze', upload.single('image'), async (req, re
 app.post('/api/body-composition', upload.single('image'), async (req, res) => {
   try {
     const weight = req.body.weight ? parseFloat(req.body.weight) : null;
+    const bmi = req.body.bmi ? parseFloat(req.body.bmi) : null;
     const fatRate = req.body.fatRate ? parseFloat(req.body.fatRate) : null;
+    const heartRate = req.body.heartRate ? parseInt(req.body.heartRate, 10) : null;
     const muscleMass = req.body.muscleMass ? parseFloat(req.body.muscleMass) : null;
+    const bmr = req.body.bmr ? parseInt(req.body.bmr, 10) : null;
+    const waterRate = req.body.waterRate ? parseFloat(req.body.waterRate) : null;
+    const fatMass = req.body.fatMass ? parseFloat(req.body.fatMass) : null;
+    const leanBodyMass = req.body.leanBodyMass ? parseFloat(req.body.leanBodyMass) : null;
+    const boneMass = req.body.boneMass ? parseFloat(req.body.boneMass) : null;
+    const visceralFat = req.body.visceralFat ? parseFloat(req.body.visceralFat) : null;
+    const proteinRate = req.body.proteinRate ? parseFloat(req.body.proteinRate) : null;
+    const skeletalMuscleMass = req.body.skeletalMuscleMass ? parseFloat(req.body.skeletalMuscleMass) : null;
+    const subcutaneousFat = req.body.subcutaneousFat ? parseFloat(req.body.subcutaneousFat) : null;
+    const bodyAge = req.body.bodyAge ? parseInt(req.body.bodyAge, 10) : null;
+    const bodyType = req.body.bodyType || null;
     
     // 日時と区分
     const measuredAt = req.body.measuredAt ? new Date(req.body.measuredAt).toISOString() : new Date().toISOString();
@@ -914,8 +949,21 @@ app.post('/api/body-composition', upload.single('image'), async (req, res) => {
       measuredAt: measuredAt,
       measurementType: measurementType,
       weight: weight,
+      bmi: bmi,
       fatRate: fatRate,
+      heartRate: heartRate,
       muscleMass: muscleMass,
+      bmr: bmr,
+      waterRate: waterRate,
+      fatMass: fatMass,
+      leanBodyMass: leanBodyMass,
+      boneMass: boneMass,
+      visceralFat: visceralFat,
+      proteinRate: proteinRate,
+      skeletalMuscleMass: skeletalMuscleMass,
+      subcutaneousFat: subcutaneousFat,
+      bodyAge: bodyAge,
+      bodyType: bodyType,
       textInput: textInput,
       imageId: imageId,
       imageSource: imageId ? (drive ? 'drive' : 'local') : null

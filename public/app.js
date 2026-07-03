@@ -78,11 +78,53 @@ document.addEventListener('DOMContentLoaded', () => {
   const weightTypeSelect = document.getElementById('weight-type-select');
   const btnAnalyzeWeight = document.getElementById('btn-analyze-weight');
   const weightResultEditContainer = document.getElementById('weight-result-edit-container');
+  
+  // 16個の確認インプット要素
   const inputWeightVal = document.getElementById('input-weight-val');
+  const inputBmiVal = document.getElementById('input-bmi-val');
   const inputFatVal = document.getElementById('input-fat-val');
+  const inputHeartVal = document.getElementById('input-heart-val');
   const inputMuscleVal = document.getElementById('input-muscle-val');
+  const inputBmrVal = document.getElementById('input-bmr-val');
+  const inputWaterVal = document.getElementById('input-water-val');
+  const inputFatMassVal = document.getElementById('input-fatmass-val');
+  const inputLeanBodyVal = document.getElementById('input-leanbody-val');
+  const inputBoneVal = document.getElementById('input-bone-val');
+  const inputVisceralFatVal = document.getElementById('input-visceralfat-val');
+  const inputProteinRateVal = document.getElementById('input-proteinrate-val');
+  const inputSkeletalMuscleVal = document.getElementById('input-skeletalmuscle-val');
+  const inputSubcutaneousVal = document.getElementById('input-subcutaneous-val');
+  const inputBodyAgeVal = document.getElementById('input-bodyage-val');
+  const inputBodyTypeVal = document.getElementById('input-bodytype-val');
+
   const btnSaveWeight = document.getElementById('btn-save-weight');
   const weightHistoryTbody = document.getElementById('weight-history-tbody');
+
+  // 体組成詳細モーダルの要素
+  const weightDetailModal = document.getElementById('weight-detail-modal');
+  const btnCloseWeightModal = document.getElementById('btn-close-weight-modal');
+  const weightModalDate = document.getElementById('weight-modal-date');
+  const weightModalTypeBadge = document.getElementById('weight-modal-type-badge');
+  const weightModalImageContainer = document.getElementById('weight-modal-image-container');
+  const weightModalImage = document.getElementById('weight-modal-image');
+
+  // 詳細モーダル内の値表示
+  const wModalWeight = document.getElementById('w-modal-weight');
+  const wModalBmi = document.getElementById('w-modal-bmi');
+  const wModalFat = document.getElementById('w-modal-fat');
+  const wModalHeart = document.getElementById('w-modal-heart');
+  const wModalMuscle = document.getElementById('w-modal-muscle');
+  const wModalBmr = document.getElementById('w-modal-bmr');
+  const wModalWater = document.getElementById('w-modal-water');
+  const wModalFatMass = document.getElementById('w-modal-fatmass');
+  const wModalLeanBody = document.getElementById('w-modal-leanbody');
+  const wModalBone = document.getElementById('w-modal-bone');
+  const wModalVisceralFat = document.getElementById('w-modal-visceralfat');
+  const wModalProteinRate = document.getElementById('w-modal-proteinrate');
+  const wModalSkeletalMuscle = document.getElementById('w-modal-skeletalmuscle');
+  const wModalSubcutaneous = document.getElementById('w-modal-subcutaneous');
+  const wModalBodyAge = document.getElementById('w-modal-bodyage');
+  const wModalBodyType = document.getElementById('w-modal-bodytype');
 
   let selectedWeightFile = null;
 
@@ -1043,8 +1085,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 数値を結果編集フォームにバインド
       inputWeightVal.value = result.weight !== null ? result.weight : '';
+      inputBmiVal.value = result.bmi !== null ? result.bmi : '';
       inputFatVal.value = result.fatRate !== null ? result.fatRate : '';
+      inputHeartVal.value = result.heartRate !== null ? result.heartRate : '';
       inputMuscleVal.value = result.muscleMass !== null ? result.muscleMass : '';
+      inputBmrVal.value = result.bmr !== null ? result.bmr : '';
+      inputWaterVal.value = result.waterRate !== null ? result.waterRate : '';
+      inputFatMassVal.value = result.fatMass !== null ? result.fatMass : '';
+      inputLeanBodyVal.value = result.leanBodyMass !== null ? result.leanBodyMass : '';
+      inputBoneVal.value = result.boneMass !== null ? result.boneMass : '';
+      inputVisceralFatVal.value = result.visceralFat !== null ? result.visceralFat : '';
+      inputProteinRateVal.value = result.proteinRate !== null ? result.proteinRate : '';
+      inputSkeletalMuscleVal.value = result.skeletalMuscleMass !== null ? result.skeletalMuscleMass : '';
+      inputSubcutaneousVal.value = result.subcutaneousFat !== null ? result.subcutaneousFat : '';
+      inputBodyAgeVal.value = result.bodyAge !== null ? result.bodyAge : '';
+      inputBodyTypeVal.value = result.bodyType || '';
 
       // 解析された計測日時に基づいて日付と区分を自動バインド
       if (result.measuredAt) {
@@ -1084,8 +1139,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. 解析結果の保存処理
   btnSaveWeight.addEventListener('click', async () => {
     const weight = inputWeightVal.value ? parseFloat(inputWeightVal.value) : null;
+    const bmi = inputBmiVal.value ? parseFloat(inputBmiVal.value) : null;
     const fatRate = inputFatVal.value ? parseFloat(inputFatVal.value) : null;
+    const heartRate = inputHeartVal.value ? parseInt(inputHeartVal.value, 10) : null;
     const muscleMass = inputMuscleVal.value ? parseFloat(inputMuscleVal.value) : null;
+    const bmr = inputBmrVal.value ? parseInt(inputBmrVal.value, 10) : null;
+    const waterRate = inputWaterVal.value ? parseFloat(inputWaterVal.value) : null;
+    const fatMass = inputFatMassVal.value ? parseFloat(inputFatMassVal.value) : null;
+    const leanBodyMass = inputLeanBodyVal.value ? parseFloat(inputLeanBodyVal.value) : null;
+    const boneMass = inputBoneVal.value ? parseFloat(inputBoneVal.value) : null;
+    const visceralFat = inputVisceralFatVal.value ? parseFloat(inputVisceralFatVal.value) : null;
+    const proteinRate = inputProteinRateVal.value ? parseFloat(inputProteinRateVal.value) : null;
+    const skeletalMuscleMass = inputSkeletalMuscleVal.value ? parseFloat(inputSkeletalMuscleVal.value) : null;
+    const subcutaneousFat = inputSubcutaneousVal.value ? parseFloat(inputSubcutaneousVal.value) : null;
+    const bodyAge = inputBodyAgeVal.value ? parseInt(inputBodyAgeVal.value, 10) : null;
+    const bodyType = inputBodyTypeVal.value || null;
 
     if (weight === null && fatRate === null && muscleMass === null) {
       alert('体重、体脂肪率、筋肉量のいずれかを入力してください。');
@@ -1106,8 +1174,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formData = new FormData();
     formData.append('weight', weight || '');
+    formData.append('bmi', bmi || '');
     formData.append('fatRate', fatRate || '');
+    formData.append('heartRate', heartRate || '');
     formData.append('muscleMass', muscleMass || '');
+    formData.append('bmr', bmr || '');
+    formData.append('waterRate', waterRate || '');
+    formData.append('fatMass', fatMass || '');
+    formData.append('leanBodyMass', leanBodyMass || '');
+    formData.append('boneMass', boneMass || '');
+    formData.append('visceralFat', visceralFat || '');
+    formData.append('proteinRate', proteinRate || '');
+    formData.append('skeletalMuscleMass', skeletalMuscleMass || '');
+    formData.append('subcutaneousFat', subcutaneousFat || '');
+    formData.append('bodyAge', bodyAge || '');
+    formData.append('bodyType', bodyType || '');
     formData.append('measuredAt', measuredAtToSend);
     formData.append('measurementType', weightTypeSelect.value);
     formData.append('textInput', weightTextInput.value);
@@ -1134,6 +1215,23 @@ document.addEventListener('DOMContentLoaded', () => {
       weightTextInput.value = '';
       weightResultEditContainer.style.display = 'none';
       
+      inputWeightVal.value = '';
+      inputBmiVal.value = '';
+      inputFatVal.value = '';
+      inputHeartVal.value = '';
+      inputMuscleVal.value = '';
+      inputBmrVal.value = '';
+      inputWaterVal.value = '';
+      inputFatMassVal.value = '';
+      inputLeanBodyVal.value = '';
+      inputBoneVal.value = '';
+      inputVisceralFatVal.value = '';
+      inputProteinRateVal.value = '';
+      inputSkeletalMuscleVal.value = '';
+      inputSubcutaneousVal.value = '';
+      inputBodyAgeVal.value = '';
+      inputBodyTypeVal.value = '';
+
       const today = new Date();
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -1190,13 +1288,20 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="date">${mm}/${dd} ${hh}:${min}</span>
             <span class="badge ${item.measurementType || 'other'}">${typeJa}</span>
           </td>
-          <td class="td-weight">${item.weight !== null ? `${item.weight} kg` : '--.-'}</td>
-          <td class="td-fat">${item.fatRate !== null ? `${item.fatRate} %` : '--.-'}</td>
-          <td class="td-muscle">${item.muscleMass !== null ? `${item.muscleMass} kg` : '--.-'}</td>
+          <td class="td-weight">${item.weight !== null ? `${item.weight.toFixed(2)} kg` : '--.-'}</td>
+          <td class="td-fat">${item.fatRate !== null ? `${item.fatRate.toFixed(1)} %` : '--.-'}</td>
+          <td class="td-muscle">${item.muscleMass !== null ? `${item.muscleMass.toFixed(2)} kg` : '--.-'}</td>
           <td class="td-action">
+            <button class="btn-detail-weight" data-id="${item.id}">🔍</button>
             <button class="btn-delete-weight" data-id="${item.id}">🗑️</button>
           </td>
         `;
+
+        // 詳細ボタンイベント
+        tr.querySelector('.btn-detail-weight').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openWeightDetailModal(item);
+        });
 
         // 削除ボタンイベント
         tr.querySelector('.btn-delete-weight').addEventListener('click', async (e) => {
@@ -1226,6 +1331,70 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
   }
+
+  // 体組成詳細モーダルの開閉
+  const openWeightDetailModal = (item) => {
+    const dateObj = new Date(item.measuredAt || item.date);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const min = String(dateObj.getMinutes()).padStart(2, '0');
+    
+    weightModalDate.textContent = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    
+    const typeJa = {
+      morning: '朝 🌅',
+      night: '夜 🌙',
+      other: '他 ⚙️'
+    }[item.measurementType || 'other'];
+    
+    weightModalTypeBadge.textContent = typeJa;
+    weightModalTypeBadge.className = `badge ${item.measurementType || 'other'}`;
+
+    // 各値を詳細表示ラベルにバインド
+    wModalWeight.textContent = item.weight !== null ? item.weight.toFixed(2) : '--.--';
+    wModalBmi.textContent = item.bmi !== null ? item.bmi.toFixed(1) : '--.-';
+    wModalFat.textContent = item.fatRate !== null ? item.fatRate.toFixed(1) : '--.-';
+    wModalHeart.textContent = item.heartRate !== null ? item.heartRate : '--';
+    wModalMuscle.textContent = item.muscleMass !== null ? item.muscleMass.toFixed(2) : '--.--';
+    wModalBmr.textContent = item.bmr !== null ? item.bmr : '----';
+    wModalWater.textContent = item.waterRate !== null ? item.waterRate.toFixed(1) : '--.-';
+    wModalFatMass.textContent = item.fatMass !== null ? item.fatMass.toFixed(2) : '--.--';
+    wModalLeanBody.textContent = item.leanBodyMass !== null ? item.leanBodyMass.toFixed(2) : '--.--';
+    wModalBone.textContent = item.boneMass !== null ? item.boneMass.toFixed(2) : '--.--';
+    wModalVisceralFat.textContent = item.visceralFat !== null ? item.visceralFat.toFixed(1) : '--.-';
+    wModalProteinRate.textContent = item.proteinRate !== null ? item.proteinRate.toFixed(1) : '--.-';
+    wModalSkeletalMuscle.textContent = item.skeletalMuscleMass !== null ? item.skeletalMuscleMass.toFixed(2) : '--.--';
+    wModalSubcutaneous.textContent = item.subcutaneousFat !== null ? item.subcutaneousFat.toFixed(1) : '--.-';
+    wModalBodyAge.textContent = item.bodyAge !== null ? item.bodyAge : '--';
+    wModalBodyType.textContent = item.bodyType || '----';
+
+    // 画像があれば表示
+    if (item.imageId) {
+      const src = item.imageSource === 'drive' 
+        ? `/api/drive-image/${item.imageId}` 
+        : `/uploads/${item.imageId}`;
+      weightModalImage.src = src;
+      weightModalImageContainer.style.display = 'block';
+    } else {
+      weightModalImage.src = '';
+      weightModalImageContainer.style.display = 'none';
+    }
+
+    weightDetailModal.style.display = 'flex';
+  };
+
+  btnCloseWeightModal.addEventListener('click', () => {
+    weightDetailModal.style.display = 'none';
+  });
+
+  // モーダル外側クリックで閉じる
+  weightDetailModal.addEventListener('click', (e) => {
+    if (e.target === weightDetailModal) {
+      weightDetailModal.style.display = 'none';
+    }
+  });
 
   // 初期ロードに体組成履歴のロードを追加
   loadWeightHistory();
