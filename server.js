@@ -840,6 +840,31 @@ app.delete('/api/presets/:id', async (req, res) => {
   }
 });
 
+// 4.5. 定番メニュー部分更新（名前のみ） API
+app.patch('/api/presets/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'メニュー名を入力してください。' });
+    }
+
+    let presets = await readPresets();
+    const preset = presets.find(p => p.id === id);
+    if (!preset) {
+      return res.status(404).json({ error: '指定された定番メニューが見つかりません。' });
+    }
+
+    preset.name = name.trim();
+    await writePresets(presets);
+
+    res.json({ success: true, preset });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '定番メニュー名の更新に失敗しました。' });
+  }
+});
+
 // 5. 定番メニューからの食事履歴登録 API
 app.post('/api/history/preset', async (req, res) => {
   try {

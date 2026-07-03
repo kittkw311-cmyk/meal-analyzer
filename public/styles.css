@@ -2366,6 +2366,49 @@ body {
   border-color: #ffe082 !important;
 }
 
+/* 定番メニュー名 インライン編集スタイル */
+.preset-card-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: -6px;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.preset-card-name-wrapper:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.preset-edit-icon {
+  opacity: 0;
+  color: var(--text-muted);
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.preset-card-name-wrapper:hover .preset-edit-icon {
+  opacity: 0.7;
+}
+
+.preset-edit-input {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  border: 1.5px solid var(--primary);
+  border-radius: 6px;
+  padding: 2px 6px;
+  outline: none;
+  font-family: inherit;
+  width: 160px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
 
 
 

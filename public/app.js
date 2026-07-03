@@ -691,7 +691,12 @@ document.addEventListener('DOMContentLoaded', () => {
           card.className = 'preset-card';
           card.innerHTML = `
             <div class="preset-card-info">
-              <span class="preset-card-name">${p.name}</span>
+              <div class="preset-card-name-wrapper" data-id="${p.id}">
+                <span class="preset-card-name">${p.name}</span>
+                <span class="preset-edit-icon" title="名前を編集">
+                  <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </span>
+              </div>
               <div class="preset-card-macros">
                 <span class="macro-badge calories">${p.calories} kcal</span>
                 <span class="macro-badge p">P: ${p.protein}g</span>
@@ -724,6 +729,80 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('通信エラーが発生しました。');
               }
             }
+          });
+        });
+
+        // 名前編集のリスナー追加
+        document.querySelectorAll('.preset-card-name-wrapper').forEach(wrapper => {
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = wrapper.getAttribute('data-id');
+            const nameSpan = wrapper.querySelector('.preset-card-name');
+            const currentName = nameSpan.textContent;
+
+            // すでに入力欄に切り替わっている場合は多重処理防止
+            if (wrapper.querySelector('.preset-edit-input')) return;
+
+            // 入力フィールドを生成して置き換える
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'preset-edit-input';
+            input.value = currentName;
+
+            // 表示を切り替え
+            nameSpan.style.display = 'none';
+            const editIcon = wrapper.querySelector('.preset-edit-icon');
+            if (editIcon) editIcon.style.display = 'none';
+            wrapper.appendChild(input);
+            input.focus();
+            input.select();
+
+            // 保存処理
+            const saveNameEdit = async () => {
+              const newName = input.value.trim();
+              if (newName === '' || newName === currentName) {
+                // 空、または変更なしなら元に戻す
+                nameSpan.style.display = '';
+                if (editIcon) editIcon.style.display = '';
+                input.remove();
+                return;
+              }
+
+              try {
+                const res = await fetch(`/api/presets/${id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: newName })
+                });
+
+                if (res.ok) {
+                  // リロードしてドロップダウンも更新
+                  loadPresets();
+                } else {
+                  alert('名前の更新に失敗しました。');
+                  nameSpan.style.display = '';
+                  if (editIcon) editIcon.style.display = '';
+                  input.remove();
+                }
+              } catch (err) {
+                console.error(err);
+                alert('更新中に通信エラーが発生しました。');
+                nameSpan.style.display = '';
+                if (editIcon) editIcon.style.display = '';
+                input.remove();
+              }
+            };
+
+            // Enterキーで確定
+            input.addEventListener('keydown', (event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                input.blur();
+              }
+            });
+
+            // フォーカスアウトで確定・保存
+            input.addEventListener('blur', saveNameEdit);
           });
         });
       }
