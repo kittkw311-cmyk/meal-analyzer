@@ -1103,10 +1103,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. その日の食事カードの生成
         group.meals.forEach(item => {
           const mealTypeJa = {
-            morning: '朝食 🌅',
-            noon: '昼食 ☀️',
-            night: '夕食 🌙',
-            snack: '間食 🍰'
+            morning: '朝食',
+            noon: '昼食',
+            night: '夕食',
+            snack: '間食'
           }[item.mealType || 'snack'];
 
           const card = document.createElement('div');
@@ -1120,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // 画像が無い場合の履歴カードのプレースホルダー
           const imageHtml = item.imageId
             ? `<img class="history-img" src="/api/image?source=${item.imageSource}&id=${item.imageId}" alt="食事画像" loading="lazy">`
-            : `<div class="history-no-img">✍️ テキスト入力</div>`;
+            : `<div class="history-no-img-text">写真</div>`;
 
           // 表示用の料理名・テキスト（Geminiが解析した具体的な料理名 mealName を優先表示）
           const displayText = item.textInput && item.textInput.trim() 
@@ -1128,32 +1128,25 @@ document.addEventListener('DOMContentLoaded', () => {
             : (item.imageId ? '📸 画像から解析' : '🍽️ 食事データ');
           const displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
 
-          // カロリーの右側にPFCをインライン横並びで配置 (history-info-row-v3) - 添付画像と同等スタイル
+          // カロリー・PFCを上段、料理名・食事区分を下段に配した2行構成
           card.innerHTML = `
             <div class="history-img-wrapper">
               ${imageHtml}
             </div>
             <div class="history-info">
-              <div class="history-date">
-                <span class="history-meal-badge ${item.mealType || 'snack'}">${mealTypeJa}</span>
-                <span class="history-meal-text">${displayMealName}</span>
-              </div>
-              <div class="history-info-row-v3">
-                <div class="history-calories-v3">${item.nutrition.calories}<span class="unit">kcal</span></div>
-                <div class="history-pfc-boxes-v3">
-                  <div class="history-pfc-box-v3 protein">
-                    <span class="label">P</span>
-                    <span class="val">${item.nutrition.protein}<span class="unit">g</span></span>
-                  </div>
-                  <div class="history-pfc-box-v3 fat">
-                    <span class="label">F</span>
-                    <span class="val">${item.nutrition.fat}<span class="unit">g</span></span>
-                  </div>
-                  <div class="history-pfc-box-v3 carbs">
-                    <span class="label">C</span>
-                    <span class="val">${item.nutrition.carbohydrates}<span class="unit">g</span></span>
-                  </div>
+              <!-- 1行目: カロリーとPFCチップス -->
+              <div class="history-info-row-top">
+                <div class="history-calories">${item.nutrition.calories} kcal</div>
+                <div class="history-pfc-chips">
+                  <div class="history-pfc-chip protein">P ${item.nutrition.protein}</div>
+                  <div class="history-pfc-chip fat">F ${item.nutrition.fat}</div>
+                  <div class="history-pfc-chip carbs">C ${item.nutrition.carbohydrates}</div>
                 </div>
+              </div>
+              <!-- 2行目: 料理名と食事区分チップ -->
+              <div class="history-info-row-bottom">
+                <span class="history-meal-text">${displayMealName}</span>
+                <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
             </div>
           `;
