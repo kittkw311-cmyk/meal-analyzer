@@ -630,9 +630,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // DOM要素の更新
       document.getElementById('daily-total-calories').textContent = totalCal;
-      document.getElementById('daily-total-protein').textContent = Math.round(totalP * 10) / 10;
-      document.getElementById('daily-total-fat').textContent = Math.round(totalF * 10) / 10;
-      document.getElementById('daily-total-carbs').textContent = Math.round(totalC * 10) / 10;
+      document.getElementById('daily-total-protein').textContent = Number(totalP).toFixed(1);
+      document.getElementById('daily-total-fat').textContent = Number(totalF).toFixed(1);
+      document.getElementById('daily-total-carbs').textContent = Number(totalC).toFixed(1);
 
     } catch (err) {
       console.error('Failed to update daily summary:', err);
@@ -1524,10 +1524,20 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const weightHistory = await response.json();
       
-      // 体重データが存在する全測定記録を日付の昇順（古い順）にソート
+      // 体重データが存在する全測定記録を日付の昇順（古い順）、および区分の昇順（朝 -> 夜）にソート
       const validHistory = [...weightHistory]
         .filter(item => item.weight !== null)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+        .sort((a, b) => {
+          const dateA = a.date ? a.date.substring(0, 10) : '';
+          const dateB = b.date ? b.date.substring(0, 10) : '';
+          if (dateA !== dateB) {
+            return dateA.localeCompare(dateB);
+          }
+          const priority = { night: 3, morning: 2, other: 1 };
+          const pA = priority[a.measurementType] || 0;
+          const pB = priority[b.measurementType] || 0;
+          return pA - pB;
+        });
 
       if (validHistory.length > 0) {
         // 一番最後の要素が最も新しい測定データ
