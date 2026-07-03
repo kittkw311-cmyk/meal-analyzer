@@ -33,12 +33,7 @@
         <!-- 本日の合計栄養素サマリー (最上部・見出し無しのスリム型) -->
         <div class="card daily-summary-card" id="daily-summary-card">
           <div class="daily-summary-capsule">
-            <!-- カロリー表示 -->
-            <div class="summary-calorie-capsule">
-              <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit"> kcal</span>
-            </div>
-            
-            <!-- PFCW チップス -->
+            <!-- PFCW チップス (左右入れ替えにより左側に配置) -->
             <div class="summary-chips-capsule">
               <div class="summary-chip protein">
                 <span>P <span id="daily-total-protein">0</span></span>
@@ -53,6 +48,11 @@
                 <span>W <span id="summary-weight-val">--.-</span></span>
                 <span id="daily-weight-diff" style="display: none;"></span>
               </div>
+            </div>
+
+            <!-- カロリー表示 (左右入れ替えにより右側に配置) -->
+            <div class="summary-calorie-capsule">
+              <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit"> kcal</span>
             </div>
           </div>
         </div>
