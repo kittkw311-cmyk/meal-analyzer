@@ -1576,19 +1576,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
         }
         
-        dailyWeightSummaryBar.style.display = 'flex';
+        dailyWeightSummaryBar.style.display = 'inline-flex';
       } else {
         // 測定データが一件もない場合はデフォルト表示
         summaryWeightVal.textContent = '--.-';
         const diffEl = document.getElementById('daily-weight-diff');
         if (diffEl) diffEl.textContent = '';
         if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
-        dailyWeightSummaryBar.style.display = 'none';
+        dailyWeightSummaryBar.style.display = 'inline-flex';
       }
     } catch (err) {
       console.error('Failed to update daily weight summary:', err);
       if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
-      dailyWeightSummaryBar.style.display = 'none';
+      dailyWeightSummaryBar.style.display = 'inline-flex';
     }
   }
 

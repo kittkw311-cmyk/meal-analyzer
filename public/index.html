@@ -32,34 +32,26 @@
       <section id="tab-analyze" class="tab-content active">
         <!-- 本日の合計栄養素サマリー (最上部・見出し無しのスリム型) -->
         <div class="card daily-summary-card" id="daily-summary-card">
-          <div class="daily-summary-grid-v2">
-            <!-- 左ブロック: カロリー(上) ＆ PFCバランス(下) -->
-            <div class="summary-left-block">
-              <!-- カロリー数値 (上段) -->
-              <div class="daily-summary-calorie-box-v2">
-                <span class="daily-summary-val">
-                  <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;"> / <span id="daily-bmr-calories">----</span></span> <span class="daily-summary-unit">kcal</span>
-                </span>
-              </div>
-              <!-- PFCボックス (下段) -->
-              <div class="daily-summary-pfc-boxes">
-                <div class="daily-pfc-box protein">
-                  <span class="val">P <span id="daily-total-protein">0</span></span>
-                </div>
-                <div class="daily-pfc-box fat">
-                  <span class="val">F <span id="daily-total-fat">0</span></span>
-                </div>
-                <div class="daily-pfc-box carbs">
-                  <span class="val">C <span id="daily-total-carbs">0</span></span>
-                </div>
-              </div>
+          <div class="daily-summary-capsule">
+            <!-- カロリー表示 -->
+            <div class="summary-calorie-capsule">
+              <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit"> kcal</span>
             </div>
             
-            <!-- 右ブロック: W ＆ 前日比 (縦長ボックス・2行構成) -->
-            <div class="summary-right-block" id="daily-weight-box">
-              <div class="daily-weight-large-box">
-                <span class="weight-label-row">W <span id="summary-weight-val">--.-</span></span>
-                <span id="daily-weight-diff" class="weight-diff-val"></span>
+            <!-- PFCW チップス -->
+            <div class="summary-chips-capsule">
+              <div class="summary-chip protein">
+                <span>P <span id="daily-total-protein">0</span></span>
+              </div>
+              <div class="summary-chip fat">
+                <span>F <span id="daily-total-fat">0</span></span>
+              </div>
+              <div class="summary-chip carbs">
+                <span>C <span id="daily-total-carbs">0</span></span>
+              </div>
+              <div class="summary-chip weight" id="daily-weight-box">
+                <span>W <span id="summary-weight-val">--.-</span></span>
+                <span id="daily-weight-diff" style="display: none;"></span>
               </div>
             </div>
           </div>

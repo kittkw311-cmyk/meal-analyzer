@@ -973,132 +973,75 @@ body {
   padding: 8px 12px;
 }
 
-.daily-summary-grid-v2 {
+.daily-summary-capsule {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-}
-
-.summary-left-block {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.summary-right-block {
-  width: 135px;
-  flex-shrink: 0;
-  display: flex;
-}
-
-.daily-weight-large-box {
-  flex: 1;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 8px;
-  text-align: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-  min-height: 70px;
-}
-
-.daily-weight-large-box .weight-label-row {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-main);
-  font-family: 'Outfit', sans-serif;
-}
-
-.daily-weight-large-box .weight-diff-val {
-  font-size: 12px;
-  font-weight: 800;
-  font-family: 'Outfit', sans-serif;
-  margin-top: 4px;
-}
-
-.daily-summary-calorie-box-v2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 6px 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  border: 1.5px solid rgba(156, 212, 176, 0.35);
+  border-radius: 9999px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 15px rgba(156, 212, 176, 0.04);
   width: 100%;
   box-sizing: border-box;
 }
 
-.daily-summary-calorie-box-v2 .daily-summary-val {
-  font-size: 18px;
+.summary-calorie-capsule {
+  font-size: 19px;
   font-weight: 800;
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
-  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  padding-left: 6px;
 }
 
-.daily-summary-calorie-box-v2 .daily-summary-unit {
+.summary-calorie-capsule .calorie-unit {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 700;
   margin-left: 3px;
 }
 
-.daily-summary-pfc-boxes {
+.summary-chips-capsule {
   display: flex;
   flex-direction: row;
   gap: 6px;
-  width: 100%;
-}
-
-.daily-summary-pfc-boxes .daily-pfc-box {
-  flex: 1;
-  min-width: 0;
-}
-
-.daily-pfc-box {
-  border-radius: 10px;
-  padding: 6px 8px;
-  text-align: center;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
   align-items: center;
-  gap: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
-.daily-pfc-box .val {
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
 }
 
-/* Daily PFC backgrounds */
-.daily-pfc-box.protein {
+.summary-chip.protein {
   background-color: rgba(154, 194, 244, 0.12);
   color: #2b5585;
 }
-.daily-pfc-box.fat {
+
+.summary-chip.fat {
   background-color: rgba(251, 216, 127, 0.16);
   color: #8c701f;
 }
-.daily-pfc-box.carbs {
+
+.summary-chip.carbs {
   background-color: rgba(247, 168, 184, 0.12);
   color: #a04859;
+}
+
+.summary-chip.weight {
+  background-color: rgba(180, 160, 220, 0.1);
+  color: #63459c;
 }
 
 /* ==========================================================================
@@ -2072,27 +2015,20 @@ body {
 
 /* スマホ幅での1行サマリー要素の折り返し・はみ出し防止 */
 @media (max-width: 480px) {
-  .daily-summary-grid-v2 {
-    gap: 8px !important;
+  .daily-summary-capsule {
+    padding: 8px 12px !important;
   }
-  .daily-summary-calorie-box-v2 .daily-summary-val {
-    font-size: 20px !important;
+  .summary-calorie-capsule {
+    font-size: 16px !important;
+    padding-left: 2px !important;
   }
-  .daily-summary-pfc-boxes {
+  .summary-chips-capsule {
     gap: 4px !important;
   }
-  .daily-pfc-box {
-    padding: 4px 6px !important;
-    border-radius: 8px !important;
-  }
-  .daily-pfc-box .val {
+  .summary-chip {
+    padding: 4px 8px !important;
     font-size: 11px !important;
-  }
-  .summary-right-block {
-    width: 120px !important;
-  }
-  .daily-weight-large-box #summary-weight-val {
-    font-size: 17px !important;
+    border-radius: 6px !important;
   }
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
