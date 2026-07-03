@@ -984,7 +984,7 @@ body {
 }
 
 .summary-right-block {
-  width: 140px;
+  width: 135px;
   flex-shrink: 0;
   display: flex;
 }
@@ -1004,44 +1004,43 @@ body {
   min-height: 70px;
 }
 
-.daily-weight-large-box .weight-display-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-main);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.daily-weight-large-box #summary-weight-val {
-  font-size: 20px;
+.daily-weight-large-box .weight-label-row {
+  font-size: 15px;
   font-weight: 800;
+  color: var(--text-main);
   font-family: 'Outfit', sans-serif;
 }
 
 .daily-weight-large-box .weight-diff-val {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
+  margin-top: 4px;
 }
 
 .daily-summary-calorie-box-v2 {
   display: flex;
   align-items: center;
-  padding-left: 2px;
+  justify-content: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 6px 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .daily-summary-calorie-box-v2 .daily-summary-val {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--text-main);
   font-family: 'Outfit', sans-serif;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .daily-summary-calorie-box-v2 .daily-summary-unit {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--text-muted);
   font-weight: 700;
   margin-left: 3px;

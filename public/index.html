@@ -33,9 +33,15 @@
         <!-- 本日の合計栄養素サマリー (最上部・見出し無しのスリム型) -->
         <div class="card daily-summary-card" id="daily-summary-card">
           <div class="daily-summary-grid-v2">
-            <!-- 左ブロック: PFCバランス ＆ カロリー -->
+            <!-- 左ブロック: カロリー(上) ＆ PFCバランス(下) -->
             <div class="summary-left-block">
-              <!-- PFCボックス -->
+              <!-- カロリー数値 (上段) -->
+              <div class="daily-summary-calorie-box-v2">
+                <span class="daily-summary-val">
+                  <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;"> / <span id="daily-bmr-calories">----</span></span> <span class="daily-summary-unit">kcal</span>
+                </span>
+              </div>
+              <!-- PFCボックス (下段) -->
               <div class="daily-summary-pfc-boxes">
                 <div class="daily-pfc-box protein">
                   <span class="val">P <span id="daily-total-protein">0</span></span>
@@ -47,18 +53,13 @@
                   <span class="val">C <span id="daily-total-carbs">0</span></span>
                 </div>
               </div>
-              <!-- カロリー数値 -->
-              <div class="daily-summary-calorie-box-v2">
-                <span class="daily-summary-val">
-                  <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;"> / <span id="daily-bmr-calories">----</span></span> <span class="daily-summary-unit">kcal</span>
-                </span>
-              </div>
             </div>
             
-            <!-- 右ブロック: 体重 ＆ 前日比 (縦長ボックス) -->
+            <!-- 右ブロック: W ＆ 前日比 (縦長ボックス・2行構成) -->
             <div class="summary-right-block" id="daily-weight-box" style="display: none;">
               <div class="daily-weight-large-box">
-                <span class="weight-display-text">体重 <span id="summary-weight-val">--.-</span> <span id="daily-weight-diff" class="weight-diff-val"></span></span>
+                <span class="weight-label-row">W <span id="summary-weight-val">--.-</span></span>
+                <span id="daily-weight-diff" class="weight-diff-val"></span>
               </div>
             </div>
           </div>
