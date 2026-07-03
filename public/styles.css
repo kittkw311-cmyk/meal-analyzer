@@ -1502,17 +1502,6 @@ body {
   color: #a04859;
 }
 
-.history-meal-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-top: 0;
-  max-width: 175px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-}
 
 /* ==========================================================================
    History Detail Modal Action Buttons and Text Editor Styles
