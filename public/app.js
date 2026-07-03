@@ -1159,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleWeightFileSelect(e.dataTransfer.files[0]);
   });
 
-  // 2. 体組成データのOCR解析
+  // 2. 体組成データの登録 (自動解析＆保存)
   btnAnalyzeWeight.addEventListener('click', async () => {
     if (!selectedWeightFile && !weightTextInput.value.trim()) {
       alert('画像を選択するか、または数値を入力してください。');
@@ -1169,16 +1169,17 @@ document.addEventListener('DOMContentLoaded', () => {
     loadingOverlay.style.display = 'flex';
     btnAnalyzeWeight.disabled = true;
 
-    const formData = new FormData();
+    // A. まずOCR解析を実行
+    const analyzeFormData = new FormData();
     if (selectedWeightFile) {
-      formData.append('image', selectedWeightFile);
+      analyzeFormData.append('image', selectedWeightFile);
     }
-    formData.append('textInput', weightTextInput.value);
+    analyzeFormData.append('textInput', weightTextInput.value);
 
     try {
       const response = await fetch('/api/body-composition/analyze', {
         method: 'POST',
-        body: formData
+        body: analyzeFormData
       });
 
       if (!response.ok) {
@@ -1190,36 +1191,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const result = await response.json();
 
-      // 数値を結果編集フォームにバインド
-      inputWeightVal.value = result.weight !== null ? result.weight : '';
-      inputBmiVal.value = result.bmi !== null ? result.bmi : '';
-      inputFatVal.value = result.fatRate !== null ? result.fatRate : '';
-      inputHeartVal.value = result.heartRate !== null ? result.heartRate : '';
-      inputMuscleVal.value = result.muscleMass !== null ? result.muscleMass : '';
-      inputBmrVal.value = result.bmr !== null ? result.bmr : '';
-      inputWaterVal.value = result.waterRate !== null ? result.waterRate : '';
-      inputFatMassVal.value = result.fatMass !== null ? result.fatMass : '';
-      inputLeanBodyVal.value = result.leanBodyMass !== null ? result.leanBodyMass : '';
-      inputBoneVal.value = result.boneMass !== null ? result.boneMass : '';
-      inputVisceralFatVal.value = result.visceralFat !== null ? result.visceralFat : '';
-      inputProteinRateVal.value = result.proteinRate !== null ? result.proteinRate : '';
-      inputSkeletalMuscleVal.value = result.skeletalMuscleMass !== null ? result.skeletalMuscleMass : '';
-      inputSubcutaneousVal.value = result.subcutaneousFat !== null ? result.subcutaneousFat : '';
-      inputBodyAgeVal.value = result.bodyAge !== null ? result.bodyAge : '';
-      inputBodyTypeVal.value = result.bodyType || '';
+      // B. 取得した解析結果をそのまま自動でGoogle Driveに保存する
+      const selectedDate = weightDateInput.value; // YYYY-MM-DD
+      const activeChip = document.querySelector('#weight-type-chips .weight-chip.active');
+      const measurementType = activeChip ? activeChip.getAttribute('data-type') : 'other';
 
-      // ★ 日付・測定区分は自動で上書き（初期化）しないように修正 (事前設定値を保持)
+      const saveFormData = new FormData();
+      saveFormData.append('date', selectedDate);
+      saveFormData.append('measurementType', measurementType);
+      
+      // OCR結果の数値をすべてセット
+      saveFormData.append('weight', result.weight !== null ? result.weight : '');
+      saveFormData.append('bmi', result.bmi !== null ? result.bmi : '');
+      saveFormData.append('fatRate', result.fatRate !== null ? result.fatRate : '');
+      saveFormData.append('heartRate', result.heartRate !== null ? result.heartRate : '');
+      saveFormData.append('muscleMass', result.muscleMass !== null ? result.muscleMass : '');
+      saveFormData.append('bmr', result.bmr !== null ? result.bmr : '');
+      saveFormData.append('waterRate', result.waterRate !== null ? result.waterRate : '');
+      saveFormData.append('fatMass', result.fatMass !== null ? result.fatMass : '');
+      saveFormData.append('leanBodyMass', result.leanBodyMass !== null ? result.leanBodyMass : '');
+      saveFormData.append('boneMass', result.boneMass !== null ? result.boneMass : '');
+      saveFormData.append('visceralFat', result.visceralFat !== null ? result.visceralFat : '');
+      saveFormData.append('proteinRate', result.proteinRate !== null ? result.proteinRate : '');
+      saveFormData.append('skeletalMuscleMass', result.skeletalMuscleMass !== null ? result.skeletalMuscleMass : '');
+      saveFormData.append('subcutaneousFat', result.subcutaneousFat !== null ? result.subcutaneousFat : '');
+      saveFormData.append('bodyAge', result.bodyAge !== null ? result.bodyAge : '');
+      saveFormData.append('bodyType', result.bodyType || '');
 
-      // 結果編集コンテナを表示
-      weightResultEditContainer.style.display = 'block';
+      // 画像があれば添付して保存 (画像IDを紐付けて保存)
+      if (selectedWeightFile) {
+        saveFormData.append('image', selectedWeightFile);
+      }
+
+      const saveResponse = await fetch('/api/body-composition', {
+        method: 'POST',
+        body: saveFormData
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('解析結果の自動登録に失敗しました。');
+      }
+
+      // C. 保存完了後のフォーム初期化処理
+      clearWeightImage();
+      weightTextInput.value = '';
+      weightResultEditContainer.style.display = 'none';
+
+      // 測定日は本日の日付、測定区分は現在時刻に応じたデフォルトへ自動再設定
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      weightDateInput.value = `${yyyy}-${mm}-${dd}`;
+      
+      const currentHour = today.getHours();
+      if (currentHour >= 5 && currentHour < 17) {
+        setWeightTypeActive('morning');
+      } else {
+        setWeightTypeActive('night');
+      }
+
+      // 履歴テーブルの更新＆サマリー更新
+      await loadWeightHistory();
+      await updateDailyWeightSummary();
+      alert('体組成データを登録しました。');
 
     } catch (err) {
       console.error(err);
       const msg = err.message || '';
       if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\n体組成解析が一時的に混み合っています。\n10秒〜20秒ほど待ってからもう一度お試しください。\n\n詳細: ' + msg);
+        alert('【AIアクセス制限】\n体組成解析が一時的に混み合っています。\n10秒〜20秒ほど待ってからもう一度お試しください。');
       } else {
-        alert('解析に失敗しました。\n詳細: ' + msg);
+        alert('登録に失敗しました。\n詳細: ' + msg);
       }
     } finally {
       loadingOverlay.style.display = 'none';
