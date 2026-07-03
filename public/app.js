@@ -1680,6 +1680,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = 'AIが体組成データを解析しています...';
+    loadingSubTextEl.textContent = '体重や体脂肪率などの数値を読み取り中';
     loadingOverlay.style.display = 'flex';
     btnAnalyzeWeight.disabled = true;
 
@@ -1810,6 +1814,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '体組成データを保存しています...';
+    loadingSubTextEl.textContent = '測定記録をGoogleドライブへ追加中';
     loadingOverlay.style.display = 'flex';
     btnSaveWeight.disabled = true;
 
@@ -1968,6 +1976,12 @@ document.addEventListener('DOMContentLoaded', () => {
           e.stopPropagation();
           if (!confirm('この測定データを削除しますか？')) return;
 
+          const loadingTextEl = loadingOverlay.querySelector('p');
+          const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+          loadingTextEl.textContent = '体組成データを削除しています...';
+          loadingSubTextEl.textContent = 'データをGoogleドライブから消去中';
+          loadingOverlay.style.display = 'flex';
+
           try {
             const delRes = await fetch(`/api/body-composition/${item.id}`, { method: 'DELETE' });
             if (!delRes.ok) throw new Error('削除に失敗しました。');
@@ -1977,6 +1991,8 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch (err) {
             console.error(err);
             alert(err.message);
+          } finally {
+            loadingOverlay.style.display = 'none';
           }
         });
 
@@ -2093,6 +2109,10 @@ document.addEventListener('DOMContentLoaded', () => {
   btnSaveWeightModal.addEventListener('click', async () => {
     if (!currentEditingWeightId) return;
 
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '体組成データを更新しています...';
+    loadingSubTextEl.textContent = '修正された測定記録を保存中';
     loadingOverlay.style.display = 'flex';
     btnSaveWeightModal.disabled = true;
 

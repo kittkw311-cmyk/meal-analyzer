@@ -112,15 +112,6 @@
           <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
         </div>
 
-        <!-- 解析中ローディング -->
-        <div class="loading-overlay" id="loading-overlay" style="display: none;">
-          <div class="loader-content">
-            <div class="spinner"></div>
-            <p>AIが栄養素を解析しています...</p>
-            <span class="loading-subtext">カロリーやPFCバランスを計算中</span>
-          </div>
-        </div>
-
 
         
         <!-- 体組成データの記録セクション (食事解析の下に追加) -->
@@ -644,6 +635,15 @@
           変更を保存する
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- 全画面ローディングオーバーレイ -->
+  <div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p>AIが解析しています...</p>
+      <span class="loading-subtext">データを処理中</span>
     </div>
   </div>
 
