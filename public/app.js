@@ -1318,13 +1318,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (weightHistory.length === 0) {
         weightHistoryTbody.innerHTML = `
           <tr>
-            <td colspan="5" class="empty-row">測定データがありません。</td>
+            <td colspan="4" class="empty-row">測定データがありません。</td>
           </tr>
         `;
         return;
       }
 
-      weightHistory.forEach(item => {
+      weightHistory.forEach((item, i) => {
         const typeJa = {
           morning: '朝',
           night: '夜',
@@ -1334,13 +1334,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // 日付のフォーマット (例: 2026-07-03 -> 2026/07/03)
         const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
 
+        // 体重の増減差分の計算 (過去実績 i + 1 との比較)
+        let diffStr = '';
+        if (i < weightHistory.length - 1) {
+          const prevItem = weightHistory[i + 1];
+          if (item.weight !== null && prevItem.weight !== null) {
+            const diff = item.weight - prevItem.weight;
+            const sign = diff > 0 ? '+' : '';
+            const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
+            diffStr = `<span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(2)} kg)</span>`;
+          }
+        }
+
+        const tdWeightHTML = `${item.weight !== null ? `${item.weight.toFixed(2)} kg` : '--.-'} ${diffStr}`;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="td-date-only">${dateDisp}</td>
-          <td class="td-type-only">
-            <span class="badge ${item.measurementType || 'other'}">${typeJa}</span>
+          <td class="td-date-only">
+            <span class="date-text">${dateDisp}</span>
+            <span class="badge ${item.measurementType || 'other'}" style="margin-left: 6px;">${typeJa}</span>
           </td>
-          <td class="td-weight">${item.weight !== null ? `${item.weight.toFixed(2)} kg` : '--.-'}</td>
+          <td class="td-weight">${tdWeightHTML}</td>
           <td class="td-bmr-only">${item.bmr !== null ? `${item.bmr} kcal` : '----'}</td>
           <td class="td-action">
             <button class="btn-delete-weight" data-id="${item.id}">🗑️</button>
@@ -1376,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       weightHistoryTbody.innerHTML = `
         <tr>
-          <td colspan="5" class="error-row">履歴の読み込みに失敗しました。</td>
+          <td colspan="4" class="error-row">履歴の読み込みに失敗しました。</td>
         </tr>
       `;
     }

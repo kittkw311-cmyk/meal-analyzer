@@ -93,10 +93,10 @@
           <div class="selectors-inline-row">
             <input type="date" id="meal-date-input" class="date-input">
             <div class="meal-type-chips">
-              <button type="button" class="chip" data-type="morning">朝 🌅</button>
-              <button type="button" class="chip" data-type="noon">昼 ☀️</button>
-              <button type="button" class="chip" data-type="night">夕 🌙</button>
-              <button type="button" class="chip" data-type="snack">間 🍰</button>
+              <button type="button" class="chip" data-type="morning">朝</button>
+              <button type="button" class="chip" data-type="noon">昼</button>
+              <button type="button" class="chip" data-type="night">夕</button>
+              <button type="button" class="chip" data-type="snack">間</button>
             </div>
           </div>
 
@@ -179,10 +179,7 @@
         </div>
 
         <!-- 体組成データの記録セクション (食事解析の下に追加) -->
-        <div class="body-composition-section-divider"></div>
-        
         <div class="body-composition-section">
-          <h2 class="section-title">⚖️ 体組成の記録 (体重・体脂肪・筋肉量)</h2>
           <div class="card upload-card body-comp-card">
             <!-- カメラ起動 / アルバム選択の2つのボタン -->
             <div class="upload-action-buttons" id="weight-drop-zone">
@@ -303,7 +300,6 @@
                 <thead>
                   <tr>
                     <th>日付</th>
-                    <th>区分</th>
                     <th>体重 (kg)</th>
                     <th>基礎代謝 (kcal)</th>
                     <th>操作</th>
@@ -312,7 +308,7 @@
                 <tbody id="weight-history-tbody">
                   <!-- ここに体組成履歴行が動的に挿入されます -->
                   <tr>
-                    <td colspan="5" class="empty-row">測定データがありません。</td>
+                    <td colspan="4" class="empty-row">測定データがありません。</td>
                   </tr>
                 </tbody>
               </table>

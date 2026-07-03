@@ -1600,18 +1600,29 @@ body {
    Body Composition Section Styles (Weight, Fat, Muscle Tracking)
    ========================================================================== */
 
-.body-composition-section-divider {
-  height: 2px;
-  background: linear-gradient(to right, transparent, rgba(156, 212, 176, 0.25), transparent);
-  margin: 32px 0 24px 0;
-  width: 100%;
-}
-
 .body-composition-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-top: -8px; /* 上の領域との隙間を極限まで縮める */
   margin-bottom: 40px;
+}
+
+/* 体重の増減差分表示 */
+.weight-diff {
+  font-size: 11px;
+  margin-left: 6px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+.weight-diff-up {
+  color: #e15f5f; /* 増加（赤系） */
+}
+.weight-diff-down {
+  color: #2b8555; /* 減少（緑系。ヘルシーなグリーン） */
+}
+.weight-diff-stable {
+  color: #888888; /* 維持 */
 }
 
 /* .body-comp-card の旧レイアウト用スタイルは共通 upload-card に統合されたため削除 */
