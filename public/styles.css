@@ -1862,27 +1862,29 @@ body {
   font-weight: 700;
 }
 
-.td-datetime .badge {
-  font-size: 8px;
+.td-datetime .badge, .td-type-only .badge, .modal-meta-edit .badge {
+  font-size: 9px;
   font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
   width: fit-content;
+  display: inline-block;
+  text-align: center;
 }
 
-.td-datetime .badge.morning {
-  background-color: rgba(154, 194, 244, 0.15);
-  color: #2b5585;
+.badge.morning {
+  background-color: rgba(0, 85, 255, 0.08) !important;
+  color: #0055ff !important;
 }
 
-.td-datetime .badge.night {
-  background-color: rgba(135, 110, 160, 0.15);
-  color: #5c3b7a;
+.badge.night {
+  background-color: rgba(255, 59, 48, 0.08) !important;
+  color: #ff3b30 !important;
 }
 
-.td-datetime .badge.other {
-  background-color: rgba(160, 170, 165, 0.15);
-  color: #55605a;
+.badge.other {
+  background-color: rgba(100, 110, 105, 0.08) !important;
+  color: #666666 !important;
 }
 
 .td-weight {
@@ -2013,6 +2015,58 @@ body {
   font-size: 9px;
   font-weight: 800;
   color: var(--text-muted);
+}
+
+/* 食事サマリーの下の体重・基礎代謝サマリーバー */
+.daily-weight-summary-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  background: rgba(43, 85, 133, 0.04);
+  border: 1px dashed rgba(43, 85, 133, 0.15);
+  border-radius: 16px;
+  padding: 8px 16px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-main);
+  animation: fadeIn 0.4s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.daily-weight-summary-bar .item strong {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-blue);
+}
+
+.daily-weight-summary-bar .divider {
+  color: rgba(0, 0, 0, 0.15);
+}
+
+/* 体組成詳細モーダル内のインプット要素 */
+.weight-modal-input {
+  border: none;
+  border-bottom: 1px dashed rgba(43, 85, 133, 0.2);
+  background: transparent;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-main);
+  width: 60px;
+  text-align: center;
+  outline: none;
+  padding: 2px 0;
+  transition: border-bottom-color 0.2s;
+}
+
+.weight-modal-input:focus {
+  border-bottom: 1px solid var(--accent-blue);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 

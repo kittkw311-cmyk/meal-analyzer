@@ -1034,7 +1034,68 @@ app.delete('/api/body-composition/:id', async (req, res) => {
   }
 });
 
-// サーバー起動処理 (非同期初期化後に起動)
+// 5. 体組成データの更新
+app.put('/api/body-composition/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const weightHistory = await readWeight();
+    const index = weightHistory.findIndex(item => item.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: '更新対象の体組成データが見つかりません。' });
+    }
+
+    // 値の更新 (req.body が存在すれば更新、なければ既存値を維持)
+    const weight = req.body.weight !== undefined ? (req.body.weight ? parseFloat(req.body.weight) : null) : weightHistory[index].weight;
+    const bmi = req.body.bmi !== undefined ? (req.body.bmi ? parseFloat(req.body.bmi) : null) : weightHistory[index].bmi;
+    const fatRate = req.body.fatRate !== undefined ? (req.body.fatRate ? parseFloat(req.body.fatRate) : null) : weightHistory[index].fatRate;
+    const heartRate = req.body.heartRate !== undefined ? (req.body.heartRate ? parseInt(req.body.heartRate, 10) : null) : weightHistory[index].heartRate;
+    const muscleMass = req.body.muscleMass !== undefined ? (req.body.muscleMass ? parseFloat(req.body.muscleMass) : null) : weightHistory[index].muscleMass;
+    const bmr = req.body.bmr !== undefined ? (req.body.bmr ? parseInt(req.body.bmr, 10) : null) : weightHistory[index].bmr;
+    const waterRate = req.body.waterRate !== undefined ? (req.body.waterRate ? parseFloat(req.body.waterRate) : null) : weightHistory[index].waterRate;
+    const fatMass = req.body.fatMass !== undefined ? (req.body.fatMass ? parseFloat(req.body.fatMass) : null) : weightHistory[index].fatMass;
+    const leanBodyMass = req.body.leanBodyMass !== undefined ? (req.body.leanBodyMass ? parseFloat(req.body.leanBodyMass) : null) : weightHistory[index].leanBodyMass;
+    const boneMass = req.body.boneMass !== undefined ? (req.body.boneMass ? parseFloat(req.body.boneMass) : null) : weightHistory[index].boneMass;
+    const visceralFat = req.body.visceralFat !== undefined ? (req.body.visceralFat ? parseFloat(req.body.visceralFat) : null) : weightHistory[index].visceralFat;
+    const proteinRate = req.body.proteinRate !== undefined ? (req.body.proteinRate ? parseFloat(req.body.proteinRate) : null) : weightHistory[index].proteinRate;
+    const skeletalMuscleMass = req.body.skeletalMuscleMass !== undefined ? (req.body.skeletalMuscleMass ? parseFloat(req.body.skeletalMuscleMass) : null) : weightHistory[index].skeletalMuscleMass;
+    const subcutaneousFat = req.body.subcutaneousFat !== undefined ? (req.body.subcutaneousFat ? parseFloat(req.body.subcutaneousFat) : null) : weightHistory[index].subcutaneousFat;
+    const bodyAge = req.body.bodyAge !== undefined ? (req.body.bodyAge ? parseInt(req.body.bodyAge, 10) : null) : weightHistory[index].bodyAge;
+    const bodyType = req.body.bodyType !== undefined ? req.body.bodyType : weightHistory[index].bodyType;
+
+    const date = req.body.date || weightHistory[index].date;
+    const measurementType = req.body.measurementType || weightHistory[index].measurementType;
+
+    weightHistory[index] = {
+      ...weightHistory[index],
+      date: date,
+      measurementType: measurementType,
+      weight,
+      bmi,
+      fatRate,
+      heartRate,
+      muscleMass,
+      bmr,
+      waterRate,
+      fatMass,
+      leanBodyMass,
+      boneMass,
+      visceralFat,
+      proteinRate,
+      skeletalMuscleMass,
+      subcutaneousFat,
+      bodyAge,
+      bodyType
+    };
+
+    await writeWeight(weightHistory);
+    res.json(weightHistory[index]);
+  } catch (err) {
+    console.error('Update weight record error:', err);
+    res.status(500).json({ error: '体組成データの更新中にエラーが発生しました。: ' + err.message });
+  }
+});
+
+// サーバー起動処理 (非担当初期化後に起動)
 (async () => {
   if (drive && folderId) {
     await initDriveHistory();

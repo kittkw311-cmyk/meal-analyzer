@@ -103,10 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // 体組成詳細モーダルの要素
   const weightDetailModal = document.getElementById('weight-detail-modal');
   const btnCloseWeightModal = document.getElementById('btn-close-weight-modal');
-  const weightModalDate = document.getElementById('weight-modal-date');
-  const weightModalTypeBadge = document.getElementById('weight-modal-type-badge');
+  const weightModalDateInput = document.getElementById('weight-modal-date-input');
+  const weightModalTypeSelect = document.getElementById('weight-modal-type-select');
+  const btnSaveWeightModal = document.getElementById('btn-save-weight-modal');
   const weightModalImageContainer = document.getElementById('weight-modal-image-container');
   const weightModalImage = document.getElementById('weight-modal-image');
+
+  // 解析タブのサマリー要素
+  const dailyWeightSummaryBar = document.getElementById('daily-weight-summary-bar');
+  const summaryWeightVal = document.getElementById('summary-weight-val');
+  const summaryBmrVal = document.getElementById('summary-bmr-val');
 
   // 詳細モーダル内の値表示
   const wModalWeight = document.getElementById('w-modal-weight');
@@ -152,6 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     setMealTypeActive(defaultType);
+
+    // 体組成測定区分の初期値自動設定 (朝5時〜夕方5時までは朝、それ以外は夜)
+    if (hour >= 5 && hour < 17) {
+      weightTypeSelect.value = 'morning';
+    } else {
+      weightTypeSelect.value = 'night';
+    }
   };
 
   function setMealTypeActive(type) {
@@ -1014,6 +1027,56 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('画像ファイルを選択してください。');
       return;
     }
+  // ==========================================================================
+  // 体組成 (Weight / Body Composition) OCR & 記録ロジック
+  // ==========================================================================
+
+  // 現在選択されている食事日付に対応する最新体重・基礎代謝サマリーの更新
+  async function updateDailyWeightSummary() {
+    try {
+      const response = await fetch('/api/body-composition');
+      if (!response.ok) throw new Error('データ取得失敗');
+      
+      const weightHistory = await response.json();
+      const targetDate = mealDateInput.value; // YYYY-MM-DD
+      
+      // 同じ日付の測定データを抽出
+      const sameDayRecords = weightHistory.filter(item => {
+        const itemDate = item.date ? item.date.substring(0, 10) : '';
+        return itemDate === targetDate;
+      });
+
+      if (sameDayRecords.length > 0) {
+        // ソート順（夜 -> 朝 -> 他）なので、最初の要素が最新（最も優先度が高い時間帯または最新）
+        const latest = sameDayRecords[0];
+        summaryWeightVal.textContent = latest.weight !== null ? latest.weight.toFixed(2) : '--.--';
+        summaryBmrVal.textContent = latest.bmr !== null ? latest.bmr : '----';
+        dailyWeightSummaryBar.style.display = 'flex';
+      } else {
+        // データがない場合は非表示
+        dailyWeightSummaryBar.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('Failed to update daily weight summary:', err);
+      dailyWeightSummaryBar.style.display = 'none';
+    }
+  }
+
+  // 食事の日付変更時に体組成サマリーも連動更新
+  mealDateInput.addEventListener('change', () => {
+    updateDailyWeightSummary();
+  });
+
+  // 1. 画像アップロードイベント
+  btnWeightCameraTrigger.addEventListener('click', () => weightCameraInput.click());
+  btnWeightGalleryTrigger.addEventListener('click', () => weightGalleryInput.click());
+
+  const handleWeightFileSelect = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください。');
+      return;
+    }
     selectedWeightFile = file;
 
     const reader = new FileReader();
@@ -1101,23 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       inputBodyAgeVal.value = result.bodyAge !== null ? result.bodyAge : '';
       inputBodyTypeVal.value = result.bodyType || '';
 
-      // 解析された計測日時に基づいて日付と区分を自動バインド
-      if (result.measuredAt) {
-        const dateObj = new Date(result.measuredAt);
-        const yyyy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        weightDateInput.value = `${yyyy}-${mm}-${dd}`;
-
-        const hour = dateObj.getHours();
-        if (hour >= 5 && hour < 12) {
-          weightTypeSelect.value = 'morning';
-        } else if (hour >= 18 && hour < 24) {
-          weightTypeSelect.value = 'night';
-        } else {
-          weightTypeSelect.value = 'other';
-        }
-      }
+      // ★ 日付・測定区分は自動で上書き（初期化）しないように修正 (事前設定値を保持)
 
       // 結果編集コンテナを表示
       weightResultEditContainer.style.display = 'block';
@@ -1231,10 +1278,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const dd = String(today.getDate()).padStart(2, '0');
       weightDateInput.value = `${yyyy}-${mm}-${dd}`;
-      weightTypeSelect.value = 'other';
+      
+      // デフォルト区分自動再設定 (朝5時〜夕方5時までは朝、それ以外は夜)
+      const currentHour = today.getHours();
+      if (currentHour >= 5 && currentHour < 17) {
+        weightTypeSelect.value = 'morning';
+      } else {
+        weightTypeSelect.value = 'night';
+      }
 
-      // 履歴テーブルの更新
+      // 履歴テーブルの更新＆サマリー更新
       await loadWeightHistory();
+      await updateDailyWeightSummary();
       alert('体組成データを保存しました。');
 
     } catch (err) {
@@ -1266,9 +1321,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       weightHistory.forEach(item => {
         const typeJa = {
-          morning: '朝 🌅',
-          night: '夜 🌙',
-          other: '他 ⚙️'
+          morning: '朝',
+          night: '夜',
+          other: '他'
         }[item.measurementType || 'other'];
 
         // 日付のフォーマット (例: 2026-07-03 -> 2026/07/03)
@@ -1302,6 +1357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!delRes.ok) throw new Error('削除に失敗しました。');
             
             await loadWeightHistory();
+            await updateDailyWeightSummary();
           } catch (err) {
             console.error(err);
             alert(err.message);
@@ -1321,38 +1377,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 体組成詳細モーダルの開閉
-  const openWeightDetailModal = (item) => {
-    // 測定日 (YYYY-MM-DD -> YYYY/MM/DD)
-    const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
-    weightModalDate.textContent = dateDisp;
-    
-    const typeJa = {
-      morning: '朝 🌅',
-      night: '夜 🌙',
-      other: '他 ⚙️'
-    }[item.measurementType || 'other'];
-    
-    weightModalTypeBadge.textContent = typeJa;
-    weightModalTypeBadge.className = `badge ${item.measurementType || 'other'}`;
+  // 現在編集中の体組成データのIDを保持する変数
+  let currentEditingWeightId = null;
 
-    // 各値を詳細表示ラベルにバインド
-    wModalWeight.textContent = item.weight !== null ? item.weight.toFixed(2) : '--.--';
-    wModalBmi.textContent = item.bmi !== null ? item.bmi.toFixed(1) : '--.-';
-    wModalFat.textContent = item.fatRate !== null ? item.fatRate.toFixed(1) : '--.-';
-    wModalHeart.textContent = item.heartRate !== null ? item.heartRate : '--';
-    wModalMuscle.textContent = item.muscleMass !== null ? item.muscleMass.toFixed(2) : '--.--';
-    wModalBmr.textContent = item.bmr !== null ? item.bmr : '----';
-    wModalWater.textContent = item.waterRate !== null ? item.waterRate.toFixed(1) : '--.-';
-    wModalFatMass.textContent = item.fatMass !== null ? item.fatMass.toFixed(2) : '--.--';
-    wModalLeanBody.textContent = item.leanBodyMass !== null ? item.leanBodyMass.toFixed(2) : '--.--';
-    wModalBone.textContent = item.boneMass !== null ? item.boneMass.toFixed(2) : '--.--';
-    wModalVisceralFat.textContent = item.visceralFat !== null ? item.visceralFat.toFixed(1) : '--.-';
-    wModalProteinRate.textContent = item.proteinRate !== null ? item.proteinRate.toFixed(1) : '--.-';
-    wModalSkeletalMuscle.textContent = item.skeletalMuscleMass !== null ? item.skeletalMuscleMass.toFixed(2) : '--.--';
-    wModalSubcutaneous.textContent = item.subcutaneousFat !== null ? item.subcutaneousFat.toFixed(1) : '--.-';
-    wModalBodyAge.textContent = item.bodyAge !== null ? item.bodyAge : '--';
-    wModalBodyType.textContent = item.bodyType || '----';
+  // 体組成詳細モーダルの開閉とバインド (スパンからインプット要素への変更に伴う調整)
+  const openWeightDetailModal = (item) => {
+    currentEditingWeightId = item.id;
+
+    // 測定日と区分をモーダル上部フォームにセット
+    weightModalDateInput.value = item.date ? item.date.substring(0, 10) : '';
+    weightModalTypeSelect.value = item.measurementType || 'other';
+
+    // 各インプットに数値をバインド
+    wModalWeight.value = item.weight !== null ? item.weight : '';
+    wModalBmi.value = item.bmi !== null ? item.bmi : '';
+    wModalFat.value = item.fatRate !== null ? item.fatRate : '';
+    wModalHeart.value = item.heartRate !== null ? item.heartRate : '';
+    wModalMuscle.value = item.muscleMass !== null ? item.muscleMass : '';
+    wModalBmr.value = item.bmr !== null ? item.bmr : '';
+    wModalWater.value = item.waterRate !== null ? item.waterRate : '';
+    wModalFatMass.value = item.fatMass !== null ? item.fatMass : '';
+    wModalLeanBody.value = item.leanBodyMass !== null ? item.leanBodyMass : '';
+    wModalBone.value = item.boneMass !== null ? item.boneMass : '';
+    wModalVisceralFat.value = item.visceralFat !== null ? item.visceralFat : '';
+    wModalProteinRate.value = item.proteinRate !== null ? item.proteinRate : '';
+    wModalSkeletalMuscle.value = item.skeletalMuscleMass !== null ? item.skeletalMuscleMass : '';
+    wModalSubcutaneous.value = item.subcutaneousFat !== null ? item.subcutaneousFat : '';
+    wModalBodyAge.value = item.bodyAge !== null ? item.bodyAge : '';
+    wModalBodyType.value = item.bodyType || '';
 
     // 画像があれば表示
     if (item.imageId) {
@@ -1369,6 +1421,58 @@ document.addEventListener('DOMContentLoaded', () => {
     weightDetailModal.style.display = 'flex';
   };
 
+  // モーダル内の「変更を保存する」ボタンの処理
+  btnSaveWeightModal.addEventListener('click', async () => {
+    if (!currentEditingWeightId) return;
+
+    loadingOverlay.style.display = 'flex';
+    btnSaveWeightModal.disabled = true;
+
+    // 入力された数値を収集
+    const updatedData = {
+      date: weightModalDateInput.value,
+      measurementType: weightModalTypeSelect.value,
+      weight: wModalWeight.value ? parseFloat(wModalWeight.value) : null,
+      bmi: wModalBmi.value ? parseFloat(wModalBmi.value) : null,
+      fatRate: wModalFat.value ? parseFloat(wModalFat.value) : null,
+      heartRate: wModalHeart.value ? parseInt(wModalHeart.value, 10) : null,
+      muscleMass: wModalMuscle.value ? parseFloat(wModalMuscle.value) : null,
+      bmr: wModalBmr.value ? parseInt(wModalBmr.value, 10) : null,
+      waterRate: wModalWater.value ? parseFloat(wModalWater.value) : null,
+      fatMass: wModalFatMass.value ? parseFloat(wModalFatMass.value) : null,
+      leanBodyMass: wModalLeanBody.value ? parseFloat(wModalLeanBody.value) : null,
+      boneMass: wModalBone.value ? parseFloat(wModalBone.value) : null,
+      visceralFat: wModalVisceralFat.value ? parseFloat(wModalVisceralFat.value) : null,
+      proteinRate: wModalProteinRate.value ? parseFloat(wModalProteinRate.value) : null,
+      skeletalMuscleMass: wModalSkeletalMuscle.value ? parseFloat(wModalSkeletalMuscle.value) : null,
+      subcutaneousFat: wModalSubcutaneous.value ? parseFloat(wModalSubcutaneous.value) : null,
+      bodyAge: wModalBodyAge.value ? parseInt(wModalBodyAge.value, 10) : null,
+      bodyType: wModalBodyType.value || null
+    };
+
+    try {
+      const response = await fetch(`/api/body-composition/${currentEditingWeightId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!response.ok) throw new Error('体組成データの更新に失敗しました。');
+
+      weightDetailModal.style.display = 'none';
+      await loadWeightHistory();
+      await updateDailyWeightSummary();
+      alert('変更を保存しました。');
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      loadingOverlay.style.display = 'none';
+      btnSaveWeightModal.disabled = false;
+    }
+  });
+
   btnCloseWeightModal.addEventListener('click', () => {
     weightDetailModal.style.display = 'none';
   });
@@ -1380,6 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 初期ロードに体組成履歴のロードを追加
+  // 初期ロードに体組成履歴のロードとサマリーのロードを追加
   loadWeightHistory();
+  updateDailyWeightSummary();
 });

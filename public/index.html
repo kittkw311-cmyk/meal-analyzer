@@ -52,6 +52,13 @@
             </div>
           </div>
         </div>
+        
+        <!-- 体組成サマリー（体重・基礎代謝） -->
+        <div id="daily-weight-summary-bar" class="daily-weight-summary-bar" style="display: none;">
+          <span class="item">⚖️ 体重: <strong id="summary-weight-val">--.--</strong> kg</span>
+          <span class="divider">|</span>
+          <span class="item">🏃 基礎代謝: <strong id="summary-bmr-val">----</strong> kcal</span>
+        </div>
 
         <div class="card upload-card">
           <!-- カメラ起動 / アルバム選択の2つのボタン -->
@@ -475,8 +482,12 @@
       <div class="modal-header-fixed">
         <h3 class="modal-title" id="weight-modal-title">体組成 測定詳細</h3>
         <div class="modal-meta-edit" style="border: none; background: transparent; padding: 0; justify-content: center; gap: 12px; margin-top: 6px;">
-          <span id="weight-modal-date" style="font-weight: 800; color: var(--text-main); font-size: 13px;">2026-07-03 09:15</span>
-          <span id="weight-modal-type-badge" class="badge">朝 🌅</span>
+          <input type="date" id="weight-modal-date-input" class="modal-date-input" style="font-weight: 800; font-size: 13px; text-align: center; border-bottom: 1px dashed var(--border-color); background: transparent; outline: none; border-top:none; border-left:none; border-right:none; color: var(--text-main);">
+          <select id="weight-modal-type-select" class="modal-type-select" style="font-weight: 800; font-size: 13px; border-bottom: 1px dashed var(--border-color); background: transparent; outline: none; border-top:none; border-left:none; border-right:none; color: var(--text-main);">
+            <option value="morning">朝</option>
+            <option value="night">夜</option>
+            <option value="other">他</option>
+          </select>
         </div>
       </div>
       
@@ -490,83 +501,134 @@
             <div class="weight-detail-item">
               <span class="emoji">⚖️</span>
               <span class="label">体重</span>
-              <span class="val"><span id="w-modal-weight">--.-</span> <span class="unit">kg</span></span>
+              <span class="val">
+                <input type="number" step="0.01" id="w-modal-weight" class="weight-modal-input" placeholder="--.--">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">📊</span>
               <span class="label">BMI</span>
-              <span class="val"><span id="w-modal-bmi">--.-</span></span>
+              <span class="val">
+                <input type="number" step="0.1" id="w-modal-bmi" class="weight-modal-input" placeholder="--.-">
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🔥</span>
               <span class="label">体脂肪率</span>
-              <span class="val"><span id="w-modal-fat">--.-</span> <span class="unit">%</span></span>
+              <span class="val">
+                <input type="number" step="0.1" id="w-modal-fat" class="weight-modal-input" placeholder="--.-">
+                <span class="unit">%</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">💓</span>
               <span class="label">心拍数</span>
-              <span class="val"><span id="w-modal-heart">--</span> <span class="unit">bpm</span></span>
+              <span class="val">
+                <input type="number" step="1" id="w-modal-heart" class="weight-modal-input" placeholder="--">
+                <span class="unit">bpm</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">💪</span>
               <span class="label">筋肉量</span>
-              <span class="val"><span id="w-modal-muscle">--.-</span> <span class="unit">kg</span></span>
+              <span class="val">
+                <input type="number" step="0.01" id="w-modal-muscle" class="weight-modal-input" placeholder="--.--">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🏃</span>
               <span class="label">基礎代謝量</span>
-              <span class="val"><span id="w-modal-bmr">----</span> <span class="unit">kcal</span></span>
+              <span class="val">
+                <input type="number" step="1" id="w-modal-bmr" class="weight-modal-input" placeholder="----">
+                <span class="unit">kcal</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">💧</span>
               <span class="label">水分量</span>
-              <span class="val"><span id="w-modal-water">--.-</span> <span class="unit">%</span></span>
+              <span class="val">
+                <input type="number" step="0.1" id="w-modal-water" class="weight-modal-input" placeholder="--.-">
+                <span class="unit">%</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🥩</span>
               <span class="label">体脂肪量</span>
-              <span class="val"><span id="w-modal-fatmass">--.-</span> <span class="unit">kg</span></span>
+              <span class="val">
+                <input type="number" step="0.01" id="w-modal-fatmass" class="weight-modal-input" placeholder="--.--">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">👤</span>
               <span class="label">除脂肪体重</span>
-              <span class="val"><span id="w-modal-leanbody">--.-</span> <span class="unit">kg</span></span>
+              <span class="val">
+                <input type="number" step="0.01" id="w-modal-leanbody" class="weight-modal-input" placeholder="--.--">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🦴</span>
               <span class="label">骨量</span>
-              <span class="val"><span id="w-modal-bone">--.-</span> <span class="unit">kg</span></span>
+              <span class="val">
+                <input type="number" step="0.01" id="w-modal-bone" class="weight-modal-input" placeholder="--.--">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">☣️</span>
               <span class="label">内臓脂肪レベル</span>
-              <span class="val"><span id="w-modal-visceralfat">--.-</span></span>
+              <span class="val">
+                <input type="number" step="0.5" id="w-modal-visceralfat" class="weight-modal-input" placeholder="--.-">
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🧬</span>
               <span class="label">タンパク質</span>
-              <span class="val"><span id="w-modal-proteinrate">--.-</span> <span class="unit">%</span></span>
+              <span class="val">
+                <input type="number" step="0.1" id="w-modal-proteinrate" class="weight-modal-input" placeholder="--.-">
+                <span class="unit">%</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🏋️</span>
               <span class="label">骨格筋量</span>
-              <span class="val"><span id="w-modal-skeletalmuscle">--.-</span> <span class="unit">kg</span></span>
+              <span class="val">
+                <input type="number" step="0.01" id="w-modal-skeletalmuscle" class="weight-modal-input" placeholder="--.--">
+                <span class="unit">kg</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🧴</span>
               <span class="label">皮下脂肪</span>
-              <span class="val"><span id="w-modal-subcutaneous">--.-</span> <span class="unit">%</span></span>
+              <span class="val">
+                <input type="number" step="0.1" id="w-modal-subcutaneous" class="weight-modal-input" placeholder="--.-">
+                <span class="unit">%</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🧓</span>
               <span class="label">体内年齢</span>
-              <span class="val"><span id="w-modal-bodyage">--</span> <span class="unit">歳</span></span>
+              <span class="val">
+                <input type="number" step="1" id="w-modal-bodyage" class="weight-modal-input" placeholder="--">
+                <span class="unit">歳</span>
+              </span>
             </div>
             <div class="weight-detail-item">
               <span class="emoji">🧍</span>
               <span class="label">ボディタイプ</span>
-              <span class="val"><span id="w-modal-bodytype">----</span></span>
+              <span class="val">
+                <input type="text" id="w-modal-bodytype" class="weight-modal-input" style="font-family: inherit; font-size: 13px; width: 80px;" placeholder="----">
+              </span>
             </div>
+          </div>
+          
+          <div class="modal-action-row" style="margin-top: 20px;">
+            <button type="button" class="btn btn-primary modal-save-btn w-full" id="btn-save-weight-modal">
+              変更を保存する
+            </button>
           </div>
         </div>
       </div>
