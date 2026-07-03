@@ -115,6 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const summaryWeightVal = document.getElementById('summary-weight-val');
   const dailyBmrDivider = document.getElementById('daily-bmr-divider');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
+  
+  // バッジおよびクリアボタン要素
+  const mealUploadBadge = document.getElementById('meal-upload-badge');
+  const btnClearMealBadge = document.getElementById('btn-clear-meal-badge');
+  const weightUploadBadge = document.getElementById('weight-upload-badge');
+  const btnClearWeightBadge = document.getElementById('btn-clear-weight-badge');
 
   // 詳細モーダル内の値表示
   const wModalWeight = document.getElementById('w-modal-weight');
@@ -352,7 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       imagePreview.src = e.target.result;
-      previewContainer.style.display = 'flex';
+      previewContainer.style.display = 'none'; // 画像はそのまま表示しない
+      mealUploadBadge.style.display = 'inline-flex'; // 件数バッジを表示
       validateInputs();
     };
     reader.readAsDataURL(file);
@@ -363,12 +370,20 @@ document.addEventListener('DOMContentLoaded', () => {
     clearImage();
   });
 
+  if (btnClearMealBadge) {
+    btnClearMealBadge.addEventListener('click', (e) => {
+      e.stopPropagation(); // Galleryダイアログ起動を防止
+      clearImage();
+    });
+  }
+
   function clearImage() {
     selectedFile = null;
     cameraInput.value = '';
     galleryInput.value = '';
     imagePreview.src = '#';
     previewContainer.style.display = 'none';
+    mealUploadBadge.style.display = 'none'; // バッジを非表示
     validateInputs();
   }
 
@@ -1098,7 +1113,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       weightImagePreview.src = e.target.result;
-      weightPreviewContainer.style.display = 'block';
+      weightPreviewContainer.style.display = 'none'; // 画像はそのまま表示しない
+      weightUploadBadge.style.display = 'inline-flex'; // 件数バッジを表示
     };
     reader.readAsDataURL(file);
   };
@@ -1106,14 +1122,26 @@ document.addEventListener('DOMContentLoaded', () => {
   weightCameraInput.addEventListener('change', (e) => handleWeightFileSelect(e.target.files[0]));
   weightGalleryInput.addEventListener('change', (e) => handleWeightFileSelect(e.target.files[0]));
 
-  btnRemoveWeightImage.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const clearWeightImage = () => {
     selectedWeightFile = null;
     weightCameraInput.value = '';
     weightGalleryInput.value = '';
     weightPreviewContainer.style.display = 'none';
     weightImagePreview.src = '';
+    weightUploadBadge.style.display = 'none'; // バッジを非表示
+  };
+
+  btnRemoveWeightImage.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearWeightImage();
   });
+
+  if (btnClearWeightBadge) {
+    btnClearWeightBadge.addEventListener('click', (e) => {
+      e.stopPropagation(); // Galleryダイアログ起動を防止
+      clearWeightImage();
+    });
+  }
 
   // ドラッグ＆ドロップイベント (体組成用)
   weightDropZone.addEventListener('dragover', (e) => {
@@ -1267,8 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedWeightFile = null;
       weightCameraInput.value = '';
       weightGalleryInput.value = '';
-      weightPreviewContainer.style.display = 'none';
-      weightImagePreview.src = '';
+      clearWeightImage();
       weightTextInput.value = '';
       weightResultEditContainer.style.display = 'none';
       
