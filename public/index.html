@@ -178,50 +178,42 @@
         
         <div class="body-composition-section">
           <h2 class="section-title">⚖️ 体組成の記録 (体重・体脂肪・筋肉量)</h2>
-          <div class="card body-comp-card">
-            <!-- 入力フォームエリア -->
-            <div class="body-comp-form-layout">
-              <div class="body-comp-upload-zone">
-                <div class="body-comp-drop-zone" id="weight-drop-zone">
-                  <span class="emoji">⚖️</span>
-                  <p>体組成計の画面写真をアップロード</p>
-                  <div class="upload-buttons-row">
-                    <button class="btn btn-secondary btn-sm" id="btn-weight-camera-trigger">📸 カメラ</button>
-                    <button class="btn btn-secondary btn-sm" id="btn-weight-gallery-trigger">🖼️ ギャラリー</button>
-                  </div>
-                  <input type="file" id="weight-camera-input" accept="image/*" capture="environment" style="display: none;">
-                  <input type="file" id="weight-gallery-input" accept="image/*" style="display: none;">
-                </div>
-                
-                <div class="preview-container-v2" id="weight-preview-container" style="display: none;">
-                  <img id="weight-image-preview" src="" alt="体組成プレビュー">
-                  <button class="btn-remove-image-v2" id="btn-remove-weight-image">✕</button>
-                </div>
-              </div>
-
-              <div class="body-comp-inputs">
-                <!-- テキスト直接入力エリア -->
-                <textarea id="weight-text-input" class="textarea-v2" rows="2" placeholder="または体組成計の数値テキストなどを貼り付け..."></textarea>
-                
-                <!-- 日付・区分選択 -->
-                <div class="body-comp-meta-edit">
-                  <div class="edit-field">
-                    <span class="edit-label">📅 測定日</span>
-                    <input type="date" id="weight-date-input" class="date-input-v2">
-                  </div>
-                  <div class="edit-field">
-                    <span class="edit-label">🍟 測定区分</span>
-                    <select id="weight-type-select" class="select-v2">
-                      <option value="morning">朝 🌅</option>
-                      <option value="night">夜 🌙</option>
-                      <option value="other" selected>その他 ⚙️</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button class="btn btn-primary w-full" id="btn-analyze-weight">体組成データを解析・読取</button>
+          <div class="card upload-card body-comp-card">
+            <!-- カメラ起動 / アルバム選択の2つのボタン -->
+            <div class="upload-action-buttons" id="weight-drop-zone">
+              <button type="button" class="btn upload-action-btn" id="btn-weight-camera-trigger">
+                <span class="btn-icon">📸</span>写真を撮る
+              </button>
+              <button type="button" class="btn upload-action-btn" id="btn-weight-gallery-trigger">
+                <span class="btn-icon">📁</span>アルバムから選択
+              </button>
+              <input type="file" id="weight-camera-input" accept="image/*" capture="environment" hidden>
+              <input type="file" id="weight-gallery-input" accept="image/*" hidden>
+            </div>
+            
+            <!-- プレビュー表示エリア -->
+            <div class="preview-container" id="weight-preview-container" style="display: none;">
+              <img id="weight-image-preview" src="#" alt="体組成プレビュー">
+              <button class="btn btn-danger btn-sm" id="btn-remove-weight-image">写真を消去</button>
+            </div>
+            
+            <!-- 体組成テキスト入力エリア -->
+            <div class="text-input-area">
+              <textarea id="weight-text-input" class="meal-textarea" placeholder="または体組成計の数値テキストなどを貼り付け..." rows="2"></textarea>
+            </div>
+            
+            <!-- 測定日と区分の選択 (見出し無しの横1行インライン構成) -->
+            <div class="selectors-inline-row">
+              <input type="date" id="weight-date-input" class="date-input">
+              <div class="weight-type-chips" id="weight-type-chips">
+                <button type="button" class="weight-chip" data-type="morning">朝</button>
+                <button type="button" class="weight-chip" data-type="night">夜</button>
+                <button type="button" class="weight-chip" data-type="other">他</button>
               </div>
             </div>
+
+            <button class="btn btn-primary btn-block" id="btn-analyze-weight">体組成データを解析する</button>
+          </div>
 
             <!-- 解析結果確認・編集フォーム (最初は非表示) -->
             <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">

@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRemoveWeightImage = document.getElementById('btn-remove-weight-image');
   const weightTextInput = document.getElementById('weight-text-input');
   const weightDateInput = document.getElementById('weight-date-input');
-  const weightTypeSelect = document.getElementById('weight-type-select');
+  const weightTypeChips = document.querySelectorAll('#weight-type-chips .weight-chip');
+  let activeWeightType = 'morning';
   const btnAnalyzeWeight = document.getElementById('btn-analyze-weight');
   const weightResultEditContainer = document.getElementById('weight-result-edit-container');
   
@@ -161,9 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 体組成測定区分の初期値自動設定 (朝5時〜夕方5時までは朝、それ以外は夜)
     if (hour >= 5 && hour < 17) {
-      weightTypeSelect.value = 'morning';
+      setWeightTypeActive('morning');
     } else {
-      weightTypeSelect.value = 'night';
+      setWeightTypeActive('night');
     }
   };
 
@@ -177,6 +178,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  function setWeightTypeActive(type) {
+    activeWeightType = type;
+    weightTypeChips.forEach(chip => {
+      if (chip.getAttribute('data-type') === type) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+
+  // 体組成区分チップスのクリックイベント登録
+  weightTypeChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      setWeightTypeActive(chip.getAttribute('data-type'));
+    });
+  });
 
   // チップクリック時のイベント
   mealTypeChips.forEach(chip => {
@@ -1231,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('bodyAge', bodyAge || '');
     formData.append('bodyType', bodyType || '');
     formData.append('date', selectedDate);
-    formData.append('measurementType', weightTypeSelect.value);
+    formData.append('measurementType', activeWeightType);
     formData.append('textInput', weightTextInput.value);
     if (selectedWeightFile) {
       formData.append('image', selectedWeightFile);
@@ -1282,9 +1301,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // デフォルト区分自動再設定 (朝5時〜夕方5時までは朝、それ以外は夜)
       const currentHour = today.getHours();
       if (currentHour >= 5 && currentHour < 17) {
-        weightTypeSelect.value = 'morning';
+        setWeightTypeActive('morning');
       } else {
-        weightTypeSelect.value = 'night';
+        setWeightTypeActive('night');
       }
 
       // 履歴テーブルの更新＆サマリー更新

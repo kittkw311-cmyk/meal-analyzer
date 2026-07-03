@@ -1614,146 +1614,7 @@ body {
   margin-bottom: 40px;
 }
 
-.body-comp-card {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
-}
-
-.body-comp-form-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-@media (min-width: 640px) {
-  .body-comp-form-layout {
-    flex-direction: row;
-  }
-  .body-comp-upload-zone {
-    flex: 1;
-  }
-  .body-comp-inputs {
-    flex: 1.2;
-  }
-}
-
-.body-comp-upload-zone {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.body-comp-drop-zone {
-  border: 2px dashed rgba(43, 85, 133, 0.2);
-  background-color: rgba(43, 85, 133, 0.02);
-  border-radius: 20px;
-  padding: 24px 16px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.body-comp-drop-zone:hover, .body-comp-drop-zone.dragover {
-  border-color: var(--accent-blue);
-  background-color: rgba(43, 85, 133, 0.05);
-}
-
-.body-comp-drop-zone .emoji {
-  font-size: 32px;
-}
-
-.body-comp-drop-zone p {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.preview-container-v2 {
-  position: relative;
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  aspect-ratio: 16 / 9;
-  background-color: #000000;
-}
-
-.preview-container-v2 img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.btn-remove-image-v2 {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
-  color: #ffffff;
-  border: none;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.body-comp-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.textarea-v2 {
-  width: 100%;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 12px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 13px;
-  color: var(--text-main);
-  background-color: rgba(255, 255, 255, 0.9);
-  resize: none;
-  outline: none;
-}
-
-.textarea-v2:focus {
-  border-color: var(--accent-blue);
-}
-
-.body-comp-meta-edit {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  background-color: rgba(43, 85, 133, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 10px;
-}
-
-.date-input-v2, .select-v2 {
-  border: none;
-  background: transparent;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-main);
-  width: 100%;
-  outline: none;
-}
+/* .body-comp-card の旧レイアウト用スタイルは共通 upload-card に統合されたため削除 */
 
 /* 記録結果編集カード */
 .body-comp-results-edit-card {
@@ -1885,6 +1746,54 @@ body {
 .badge.other {
   background-color: rgba(100, 110, 105, 0.08) !important;
   color: #666666 !important;
+}
+
+/* 体組成用区分選択チップス (食事チップスと同等) */
+.weight-type-chips {
+  display: flex;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.weight-chip {
+  flex: 1;
+  background-color: rgba(220, 230, 224, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 6px 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+
+.weight-chip:active {
+  transform: scale(0.95);
+}
+
+.weight-chip.active[data-type="morning"] {
+  background-color: rgba(0, 85, 255, 0.08);
+  border-color: #0055ff;
+  color: #0055ff;
+  font-weight: 700;
+}
+
+.weight-chip.active[data-type="night"] {
+  background-color: rgba(255, 59, 48, 0.08);
+  border-color: #ff3b30;
+  color: #ff3b30;
+  font-weight: 700;
+}
+
+.weight-chip.active[data-type="other"] {
+  background-color: rgba(100, 110, 105, 0.08);
+  border-color: #666666;
+  color: #666666;
+  font-weight: 700;
 }
 
 .td-weight {
