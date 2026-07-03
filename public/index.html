@@ -51,13 +51,18 @@
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- 体組成サマリー（体重・基礎代謝） -->
-        <div id="daily-weight-summary-bar" class="daily-weight-summary-bar" style="display: none;">
-          <span class="item">⚖️ 体重: <strong id="summary-weight-val">--.--</strong> kg</span>
-          <span class="divider">|</span>
-          <span class="item">🏃 基礎代謝: <strong id="summary-bmr-val">----</strong> kcal</span>
+          
+          <!-- 体組成サマリー (PFCボックスのデザインと揃えた横並び構成) -->
+          <div id="daily-weight-summary-bar" class="daily-summary-weight-row" style="display: none;">
+            <div class="daily-pfc-box weight-box">
+              <span class="label">⚖️ W</span>
+              <span class="val"><span id="summary-weight-val">--.--</span><span class="unit">kg</span></span>
+            </div>
+            <div class="daily-pfc-box bmr-box">
+              <span class="label">🏃 B</span>
+              <span class="val"><span id="summary-bmr-val">----</span><span class="unit">kcal</span></span>
+            </div>
+          </div>
         </div>
 
         <div class="card upload-card">
