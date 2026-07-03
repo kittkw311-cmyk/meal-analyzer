@@ -113,71 +113,7 @@
           </div>
         </div>
 
-        <!-- 解析結果表示 -->
-        <div class="result-container" id="result-container" style="display: none;">
-          <h2 class="section-title">✨ 解析結果</h2>
-          
-          <div class="card result-card">
-            <!-- カロリーサマリー -->
-            <div class="calorie-summary">
-              <span class="calorie-label">推定エネルギー</span>
-              <div class="calorie-value">
-                <span class="number" id="res-calories">0</span>
-                <span class="unit">kcal</span>
-              </div>
-            </div>
 
-            <!-- 三大栄養素 (PFC) 横並びボックス -->
-            <div class="pfc-boxes">
-              <div class="pfc-box protein">
-                <span class="pfc-box-label">タンパク質 (P)</span>
-                <span class="pfc-box-value"><span id="res-protein">0</span><span class="pfc-box-unit">g</span></span>
-              </div>
-              <div class="pfc-box fat">
-                <span class="pfc-box-label">脂質 (F)</span>
-                <span class="pfc-box-value"><span id="res-fat">0</span><span class="pfc-box-unit">g</span></span>
-              </div>
-              <div class="pfc-box carbs">
-                <span class="pfc-box-label">炭水化物 (C)</span>
-                <span class="pfc-box-value"><span id="res-carbs">0</span><span class="pfc-box-unit">g</span></span>
-              </div>
-            </div>
-
-            <!-- 1本統合型のPFC比率メーター -->
-            <div class="pfc-ratio-container">
-              <div class="pfc-ratio-label">PFCバランス（比率）</div>
-              <div class="pfc-ratio-bar-bg">
-                <div class="pfc-ratio-bar-fill p" id="ratio-protein" style="width: 0%;"></div>
-                <div class="pfc-ratio-bar-fill f" id="ratio-fat" style="width: 0%;"></div>
-                <div class="pfc-ratio-bar-fill c" id="ratio-carbs" style="width: 0%;"></div>
-              </div>
-            </div>
-            
-            <!-- 食材・調味料の推測と計算根拠 -->
-            <div class="card inference-card" id="res-inference-card" style="display: none;">
-              <div class="inference-header-v2">
-                <span class="inference-icon-v2"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>
-                <div>
-                  <span class="inference-title-v2">食材・調味料の推測</span>
-                  <span class="inference-subtitle-v2">AIが推測した計算根拠</span>
-                </div>
-              </div>
-              <p class="inference-text-v2" id="res-inference"></p>
-            </div>
-
-            <!-- 管理栄養士コメント -->
-            <div class="card advisor-card">
-              <div class="advisor-header">
-                <span class="advisor-avatar"><svg class="icon-svg" style="width: 20px; height: 20px; color: #6bb884;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5 5 3Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1 1-2.5Z"/></svg></span>
-                <div>
-                  <span class="advisor-title">管理栄養士 AI</span>
-                  <span class="advisor-subtitle">栄養アドバイス</span>
-                </div>
-              </div>
-              <p class="advisor-comment" id="res-comment">食事の写真を解析して、ここにアドバイスを表示します。</p>
-            </div>
-          </div>
-        </div>
         
         <!-- 体組成データの記録セクション (食事解析の下に追加) -->
         <div class="body-composition-section">

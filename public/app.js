@@ -24,17 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const mealDateInput = document.getElementById('meal-date-input');
   const mealTypeChips = document.querySelectorAll('.meal-type-chips .chip');
   
-  // Loading & Result Elements
+  // Loading Elements
   const loadingOverlay = document.getElementById('loading-overlay');
-  const resultContainer = document.getElementById('result-container');
-  const resCalories = document.getElementById('res-calories');
-  const resProtein = document.getElementById('res-protein');
-  const resFat = document.getElementById('res-fat');
-  const resCarbs = document.getElementById('res-carbs');
-  const ratioProtein = document.getElementById('ratio-protein');
-  const ratioFat = document.getElementById('ratio-fat');
-  const ratioCarbs = document.getElementById('ratio-carbs');
-  const resComment = document.getElementById('res-comment');
 
   // History & Stats Elements
   const historyList = document.getElementById('history-list');
@@ -423,7 +414,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadingTextEl.textContent = 'AIが栄養素を解析しています...';
     loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
     loadingOverlay.style.display = 'flex';
-    resultContainer.style.display = 'none';
 
     const formData = new FormData();
     if (hasImage) {
@@ -457,13 +447,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const record = await response.json();
-      displayResult(record.nutrition);
       
       // 今日の合計表示をリアルタイム更新
       updateDailySummary();
 
       // 履歴一覧も同期してリロード
       await loadHistory();
+
+      // 自動で食事（履歴）タブ（tab-history）へ遷移
+      const historyNavItem = document.querySelector('[data-tab="tab-history"]');
+      if (historyNavItem) {
+        historyNavItem.click();
+      }
 
       // 作成された履歴の詳細モーダルを表示
       openDetailModal(record);
@@ -486,48 +481,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btnAnalyze.disabled = false;
     }
   });
-
-  // ==========================================================================
-  // Display Result on Analysis Tab
-  // ==========================================================================
-  function displayResult(nutrition) {
-    resCalories.textContent = nutrition.calories;
-    resProtein.textContent = nutrition.protein;
-    resFat.textContent = nutrition.fat;
-    resCarbs.textContent = nutrition.carbohydrates;
-
-    const resInference = document.getElementById('res-inference');
-    const resInferenceCard = document.getElementById('res-inference-card');
-    if (nutrition.inference) {
-      resInference.textContent = nutrition.inference;
-      resInferenceCard.style.display = 'block';
-      resComment.textContent = nutrition.advice || nutrition.comment;
-    } else {
-      resInferenceCard.style.display = 'none';
-      resComment.textContent = nutrition.comment;
-    }
-
-    // PFC比率バー（1本統合型）のアニメーション
-    const total = nutrition.protein + nutrition.fat + nutrition.carbohydrates;
-    if (total > 0) {
-      const pPercent = (nutrition.protein / total) * 100;
-      const fPercent = (nutrition.fat / total) * 100;
-      const cPercent = (nutrition.carbohydrates / total) * 100;
-
-      setTimeout(() => {
-        ratioProtein.style.width = `${pPercent}%`;
-        ratioFat.style.width = `${fPercent}%`;
-        ratioCarbs.style.width = `${cPercent}%`;
-      }, 100);
-    } else {
-      ratioProtein.style.width = '0%';
-      ratioFat.style.width = '0%';
-      ratioCarbs.style.width = '0%';
-    }
-
-    resultContainer.style.display = 'block';
-    resultContainer.scrollIntoView({ behavior: 'smooth' });
-  }
 
   // ==========================================================================
   // Update Daily Summary (Always Visible Card on Analyze Tab)
