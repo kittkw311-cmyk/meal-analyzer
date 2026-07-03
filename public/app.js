@@ -243,10 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (item.nutrition.inference) {
       modalInference.textContent = item.nutrition.inference;
       modalInferenceCard.style.display = 'block';
-      document.getElementById('modal-comment').textContent = item.nutrition.advice || item.nutrition.comment;
     } else {
       modalInferenceCard.style.display = 'none';
-      document.getElementById('modal-comment').textContent = item.nutrition.comment;
     }
 
     // モーダルを表示
@@ -880,10 +878,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (updatedRecord.nutrition.inference) {
         modalInference.textContent = updatedRecord.nutrition.inference;
         modalInferenceCard.style.display = 'block';
-        document.getElementById('modal-comment').textContent = updatedRecord.nutrition.advice || updatedRecord.nutrition.comment;
       } else {
         modalInferenceCard.style.display = 'none';
-        document.getElementById('modal-comment').textContent = updatedRecord.nutrition.comment;
       }
 
       // 履歴一覧と今日の合計を非同期でリロード
