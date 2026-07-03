@@ -1130,11 +1130,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="history-info-row-top">
                 <div class="history-left-group">
                   <div class="history-calories">${item.nutrition.calories} kcal</div>
-                  <div class="history-pfc-chips">
-                    <div class="history-pfc-chip protein">P ${item.nutrition.protein}</div>
-                    <div class="history-pfc-chip fat">F ${item.nutrition.fat}</div>
-                    <div class="history-pfc-chip carbs">C ${item.nutrition.carbohydrates}</div>
-                  </div>
+                    <div class="history-pfc-chip protein">P${item.nutrition.protein}</div>
+                    <div class="history-pfc-chip fat">F${item.nutrition.fat}</div>
+                    <div class="history-pfc-chip carbs">C${item.nutrition.carbohydrates}</div>
                 </div>
                 <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
