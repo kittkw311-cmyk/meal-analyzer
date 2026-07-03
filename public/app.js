@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseModal = document.getElementById('btn-close-modal');
   const btnSaveModal = document.getElementById('btn-save-modal');
   const btnReanalyzeModal = document.getElementById('btn-reanalyze-modal');
+  const btnPresetModal = document.getElementById('btn-preset-modal');
   
   // Modal Edit Inputs
   const modalDateInput = document.getElementById('modal-date-input');
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
+  let activeDetailMeal = null; // 現在詳細モーダルに表示されている食事レコードを保持
 
   // 体組成 (Weight / Body Comp) Elements
   const weightDropZone = document.getElementById('weight-drop-zone');
@@ -204,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 詳細モーダルを開いてデータをバインドする共通関数
   function openDetailModal(item) {
+    activeDetailMeal = item;
     currentEditingHistoryId = item.id;
     
     // 画像が無い場合のプレースホルダー対応
@@ -264,6 +267,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 食事テキスト入力欄をクリア
     mealTextInput.value = '';
     
+    // 定番メニューセレクタをリセット
+    if (presetSelector) {
+      presetSelector.value = '';
+      btnAnalyze.textContent = "食事を解析する";
+      btnAnalyze.style.backgroundColor = "";
+    }
+
     // 日付・食事区分セレクタを現在時刻で初期化
     initializeSelectors();
   }
@@ -292,6 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStats();
       } else if (targetTabId === 'tab-weight') {
         loadWeightHistory();
+      } else if (targetTabId === 'tab-presets') {
+        loadPresets();
       }
     });
   });
@@ -389,9 +401,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // Inputs Validation (Enable/Disable Analyze Button)
   // ==========================================================================
   function validateInputs() {
+    const hasPreset = presetSelector && presetSelector.value !== "";
     const hasImage = !!selectedFile;
     const hasText = mealTextInput.value.trim().length > 0;
-    btnAnalyze.disabled = !(hasImage || hasText);
+    btnAnalyze.disabled = !(hasPreset || hasImage || hasText);
+  }
+
+  if (presetSelector) {
+    presetSelector.addEventListener('change', () => {
+      const selectedId = presetSelector.value;
+      if (selectedId !== "") {
+        // 定番メニューが選ばれたら、通常入力値をクリアしてボタンを切替
+        btnAnalyze.textContent = "定番メニューで記録する";
+        btnAnalyze.style.backgroundColor = "var(--primary-dark)";
+        mealTextInput.value = "";
+        selectedFile = null;
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        if (previewContainer) previewContainer.style.display = 'none';
+        if (imagePreview) imagePreview.src = '#';
+        const mealUploadBadge = document.getElementById('meal-upload-badge');
+        if (mealUploadBadge) mealUploadBadge.style.display = 'none';
+      } else {
+        btnAnalyze.textContent = "食事を解析する";
+        btnAnalyze.style.backgroundColor = "";
+      }
+      validateInputs();
+    });
   }
 
   mealTextInput.addEventListener('input', validateInputs);
@@ -400,6 +436,75 @@ document.addEventListener('DOMContentLoaded', () => {
   // Analyze Meal Execution
   // ==========================================================================
   btnAnalyze.addEventListener('click', async () => {
+    const selectedPresetId = presetSelector ? presetSelector.value : "";
+    
+    // A. 定番メニューが選ばれている場合の直接記録処理
+    if (selectedPresetId !== "") {
+      const opt = presetSelector.options[presetSelector.selectedIndex];
+      const presetName = opt.dataset.name;
+      const cVal = opt.dataset.calories;
+      const pVal = opt.dataset.protein;
+      const fVal = opt.dataset.fat;
+      const carbVal = opt.dataset.carbohydrates;
+
+      btnAnalyze.disabled = true;
+
+      const loadingTextEl = loadingOverlay.querySelector('p');
+      const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+      loadingTextEl.textContent = '定番メニューを記録しています...';
+      loadingSubTextEl.textContent = '計算済みのデータを食事履歴へ追加中';
+      loadingOverlay.style.display = 'flex';
+
+      const selectedDate = mealDateInput.value;
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
+      const mealDateToSend = new Date(fullDateTimeStr).toISOString();
+
+      try {
+        const response = await fetch('/api/history/preset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: presetName,
+            calories: cVal,
+            protein: pVal,
+            fat: fVal,
+            carbohydrates: carbVal,
+            mealDate: mealDateToSend,
+            mealType: activeMealType
+          })
+        });
+
+        if (!response.ok) throw new Error('定番メニューの記録に失敗しました。');
+
+        const record = await response.json();
+
+        // 成功後の各種同期 ＆ 自動遷移 ＆ モーダル起動
+        updateDailySummary();
+        await loadHistory();
+
+        const historyNavItem = document.querySelector('[data-tab="tab-history"]');
+        if (historyNavItem) {
+          historyNavItem.click();
+        }
+
+        openDetailModal(record);
+        resetAnalyzeForm();
+
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      } finally {
+        loadingOverlay.style.display = 'none';
+        btnAnalyze.disabled = false;
+      }
+      return; // 定番記録処理はここで終了
+    }
+
+    // B. 通常の AI 解析処理
     const hasImage = !!selectedFile;
     const hasText = mealTextInput.value.trim().length > 0;
     if (!hasImage && !hasText) return;
@@ -521,6 +626,299 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 起動時に今日の合計をロード
   updateDailySummary();
+
+  // ==========================================================================
+  // 定番メニュー (Presets) 管理ロジック
+  // ==========================================================================
+  const presetSelector = document.getElementById('preset-selector');
+  const presetsList = document.getElementById('presets-list');
+  const formPresetsManual = document.getElementById('form-presets-manual');
+  const formPresetsAiAnalyze = document.getElementById('form-presets-ai-analyze');
+  const btnPresetsAiSubmit = document.getElementById('btn-presets-ai-submit');
+  const presetsManualToggle = document.getElementById('presets-manual-toggle');
+  const presetsManualContent = document.getElementById('presets-manual-content');
+  const presetsManualArrow = document.getElementById('presets-manual-arrow');
+  const presetsTextInput = document.getElementById('presets-text-input');
+  
+  // 定番AI登録用のファイル/カメラ制御
+  const btnPresetsCameraTrigger = document.getElementById('btn-presets-camera-trigger');
+  const btnPresetsGalleryTrigger = document.getElementById('btn-presets-gallery-trigger');
+  const presetsCameraInput = document.getElementById('presets-camera-input');
+  const presetsGalleryInput = document.getElementById('presets-gallery-input');
+  const presetsImagePreviewContainer = document.getElementById('presets-image-preview-container');
+  const presetsImagePreview = document.getElementById('presets-image-preview');
+  const btnPresetsRemoveImage = document.getElementById('btn-presets-remove-image');
+  
+  let presetsSelectedFile = null;
+
+  // 1. 定番データの読み込み ＆ レンダリング
+  async function loadPresets() {
+    try {
+      const response = await fetch('/api/presets');
+      const presets = await response.json();
+
+      // A. 解析画面のドロップダウンを更新
+      if (presetSelector) {
+        presetSelector.innerHTML = '<option value="">-- 選択してください (AI解析をスキップ) --</option>';
+        presets.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.dataset.calories = p.calories;
+          opt.dataset.protein = p.protein;
+          opt.dataset.fat = p.fat;
+          opt.dataset.carbohydrates = p.carbohydrates;
+          opt.dataset.name = p.name;
+          opt.textContent = `${p.name} (${p.calories} kcal - P:${p.protein} F:${p.fat} C:${p.carbohydrates})`;
+          presetSelector.appendChild(opt);
+        });
+      }
+
+      // B. 定番タブの一覧リストを更新
+      if (presetsList) {
+        if (presets.length === 0) {
+          presetsList.innerHTML = `
+            <div class="presets-empty-state" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px; background: rgba(255,255,255,0.7); border-radius: 12px; border: 1.5px dashed var(--border-color);">
+              登録されている定番メニューはありません。<br>上のAI解析か手動入力で登録してください。
+            </div>
+          `;
+          return;
+        }
+
+        presetsList.innerHTML = '';
+        presets.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'preset-card';
+          card.innerHTML = `
+            <div class="preset-card-info">
+              <span class="preset-card-name">${p.name}</span>
+              <div class="preset-card-macros">
+                <span class="macro-badge calories">${p.calories} kcal</span>
+                <span class="macro-badge p">P: ${p.protein}g</span>
+                <span class="macro-badge f">F: ${p.fat}g</span>
+                <span class="macro-badge c">C: ${p.carbohydrates}g</span>
+              </div>
+            </div>
+            <button class="btn-delete-preset" data-id="${p.id}" title="定番メニューから削除">
+              <svg class="icon-svg" style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          `;
+          presetsList.appendChild(card);
+        });
+
+        // 削除ボタンのリスナー追加
+        document.querySelectorAll('.btn-delete-preset').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            if (confirm('この定番メニューを削除してもよろしいですか？')) {
+              try {
+                const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                  loadPresets();
+                } else {
+                  alert('削除に失敗しました。');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('通信エラーが発生しました。');
+              }
+            }
+          });
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load predefined menu presets:', err);
+    }
+  }
+
+  // 2. 手動登録アコーディオン制御
+  if (presetsManualToggle) {
+    presetsManualToggle.addEventListener('click', () => {
+      const isHidden = presetsManualContent.style.display === 'none' || !presetsManualContent.style.display;
+      if (isHidden) {
+        presetsManualContent.style.display = 'block';
+        presetsManualArrow.classList.add('active');
+      } else {
+        presetsManualContent.style.display = 'none';
+        presetsManualArrow.classList.remove('active');
+      }
+    });
+  }
+
+  // 3. 手動登録フォーム送信処理
+  if (formPresetsManual) {
+    formPresetsManual.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('preset-manual-name').value.trim();
+      const calories = document.getElementById('preset-manual-calories').value;
+      const protein = document.getElementById('preset-manual-protein').value;
+      const fat = document.getElementById('preset-manual-fat').value;
+      const carbs = document.getElementById('preset-manual-carbs').value;
+
+      if (!name) return;
+
+      try {
+        const response = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, calories, protein, fat, carbohydrates: carbs })
+        });
+
+        if (response.ok) {
+          formPresetsManual.reset();
+          presetsManualContent.style.display = 'none';
+          presetsManualArrow.classList.remove('active');
+          loadPresets();
+        } else {
+          alert('定番マスタの登録に失敗しました。');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('登録中にエラーが発生しました。');
+      }
+    });
+  }
+
+  // 4. AI定番登録フォームのファイルハンドラ
+  if (btnPresetsCameraTrigger) {
+    btnPresetsCameraTrigger.addEventListener('click', () => presetsCameraInput.click());
+    btnPresetsGalleryTrigger.addEventListener('click', () => presetsGalleryInput.click());
+
+    const handlePresetsFile = (file) => {
+      if (!file.type.startsWith('image/')) {
+        alert('画像ファイルを選択してください。');
+        return;
+      }
+      presetsSelectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        presetsImagePreview.src = e.target.result;
+        presetsImagePreviewContainer.style.display = 'block';
+        checkPresetsAiSubmitState();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    presetsCameraInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handlePresetsFile(e.target.files[0]);
+    });
+    presetsGalleryInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handlePresetsFile(e.target.files[0]);
+    });
+
+    btnPresetsRemoveImage.addEventListener('click', () => {
+      presetsSelectedFile = null;
+      presetsCameraInput.value = '';
+      presetsGalleryInput.value = '';
+      presetsImagePreviewContainer.style.display = 'none';
+      presetsImagePreview.src = '';
+      checkPresetsAiSubmitState();
+    });
+  }
+
+  // AI定番登録ボタン活性化の制御
+  function checkPresetsAiSubmitState() {
+    const hasText = presetsTextInput.value.trim().length > 0;
+    const hasImage = !!presetsSelectedFile;
+    btnPresetsAiSubmit.disabled = (!hasText && !hasImage);
+  }
+
+  if (presetsTextInput) {
+    presetsTextInput.addEventListener('input', checkPresetsAiSubmitState);
+  }
+
+  // 5. AI定番登録フォーム送信処理
+  if (formPresetsAiAnalyze) {
+    formPresetsAiAnalyze.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const hasText = presetsTextInput.value.trim().length > 0;
+      const hasImage = !!presetsSelectedFile;
+      if (!hasText && !hasImage) return;
+
+      btnPresetsAiSubmit.disabled = true;
+      
+      const loadingTextEl = loadingOverlay.querySelector('p');
+      const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+      loadingTextEl.textContent = 'AIが栄養素を分析しています...';
+      loadingSubTextEl.textContent = '定番メニューに登録するデータを算出中';
+      loadingOverlay.style.display = 'flex';
+
+      const formData = new FormData();
+      if (hasImage) {
+        formData.append('image', presetsSelectedFile);
+      }
+      formData.append('textInput', presetsTextInput.value.trim());
+
+      try {
+        const response = await fetch('/api/presets/analyze', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || '定番登録中にサーバーエラーが発生しました。');
+        }
+
+        // フォームのリセット
+        presetsSelectedFile = null;
+        presetsCameraInput.value = '';
+        presetsGalleryInput.value = '';
+        presetsImagePreviewContainer.style.display = 'none';
+        presetsImagePreview.src = '';
+        presetsTextInput.value = '';
+        btnPresetsAiSubmit.disabled = true;
+
+        loadPresets();
+      } catch (err) {
+        console.error(err);
+        alert('AI定番登録に失敗しました:\n' + err.message);
+      } finally {
+        loadingOverlay.style.display = 'none';
+      }
+    });
+  }
+
+  // 6. 食事詳細モーダル内の「定番に登録」ボタン押下処理
+  if (btnPresetModal) {
+    btnPresetModal.addEventListener('click', async () => {
+      if (!activeDetailMeal) return;
+
+      const displayTitle = document.getElementById('modal-meal-title').textContent || '定番メニュー';
+      const cVal = activeDetailMeal.nutrition.calories;
+      const pVal = activeDetailMeal.nutrition.protein;
+      const fVal = activeDetailMeal.nutrition.fat;
+      const carbVal = activeDetailMeal.nutrition.carbohydrates;
+
+      btnPresetModal.disabled = true;
+      
+      try {
+        const response = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: displayTitle,
+            calories: cVal,
+            protein: pVal,
+            fat: fVal,
+            carbohydrates: carbVal
+          })
+        });
+
+        if (response.ok) {
+          alert(`「${displayTitle}」を定番メニューに保存しました！\n次回より簡単選択から一撃で記録できます。`);
+          loadPresets();
+        } else {
+          alert('定番登録に失敗しました。');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('定番登録中に通信エラーが発生しました。');
+      } finally {
+        btnPresetModal.disabled = false;
+      }
+    });
+  }
 
   // ==========================================================================
   // Load History Tab (With Daily Grouping & Priority sorting)
@@ -1630,4 +2028,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // 初期ロードに体組成履歴のロードとサマリーのロードを追加
   loadWeightHistory();
   updateDailyWeightSummary();
+  loadPresets();
 });

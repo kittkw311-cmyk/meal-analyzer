@@ -2263,6 +2263,109 @@ body {
   color: var(--text-muted);
 }
 
+/* ==========================================================================
+   Presets Tab & Predefined Meals Section Styles
+   ========================================================================== */
+.preset-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px !important;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  margin-bottom: 0 !important;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.preset-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.preset-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.preset-card-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.preset-card-macros {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.macro-badge {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.macro-badge.calories {
+  background-color: rgba(43, 85, 133, 0.08);
+  color: #2b5585;
+}
+.macro-badge.p {
+  background-color: rgba(43, 85, 133, 0.08);
+  color: #2b5585;
+}
+.macro-badge.f {
+  background-color: rgba(140, 112, 31, 0.08);
+  color: #8c701f;
+}
+.macro-badge.c {
+  background-color: rgba(160, 72, 89, 0.08);
+  color: #a04859;
+}
+
+.btn-delete-preset {
+  background: none;
+  border: none;
+  color: #c0392b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-delete-preset:hover {
+  background: rgba(192, 57, 43, 0.1);
+}
+
+/* アコーディオンアローのアニメーション用 */
+.accordion-arrow.active {
+  transform: rotate(180deg);
+}
+
+/* 定番セレクタ（解析画面用）ホバーエフェクト */
+#preset-selector {
+  transition: border-color 0.2s;
+}
+#preset-selector:hover {
+  border-color: var(--primary) !important;
+}
+
+/* 履歴モーダル定番ボタンホバー */
+#btn-preset-modal:hover {
+  background: #fff3cd !important;
+  border-color: #ffe082 !important;
+}
+
 
 
 

@@ -19,6 +19,7 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
+const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
@@ -31,6 +32,9 @@ if (!fs.existsSync(HISTORY_FILE)) {
 }
 if (!fs.existsSync(WEIGHT_FILE)) {
   fs.writeFileSync(WEIGHT_FILE, JSON.stringify([], null, 2));
+}
+if (!fs.existsSync(PRESETS_FILE)) {
+  fs.writeFileSync(PRESETS_FILE, JSON.stringify([], null, 2));
 }
 
 // Multer設定（メモリ上にバッファとして保存）
@@ -78,6 +82,7 @@ if (clientId && clientSecret && refreshToken) {
 // ==========================================================================
 let driveHistoryFileId = null;
 let driveWeightFileId = null;
+let drivePresetsFileId = null;
 
 // 体組成ファイルを検索または新規作成してファイルIDを設定する
 async function initDriveWeight() {
@@ -262,6 +267,98 @@ async function writeHistory(history) {
 // バッファをReadable Streamに変換するヘルパー
 function bufferToStream(buffer) {
   return Readable.from(buffer);
+}
+
+// 定番メニューファイルを検索または新規作成してファイルIDを設定する
+async function initDrivePresets() {
+  if (!drive || !folderId) return;
+  try {
+    console.log('Searching for presets.json in Google Drive...');
+    const res = await drive.files.list({
+      q: `name = 'presets.json' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    
+    if (res.data.files && res.data.files.length > 0) {
+      drivePresetsFileId = res.data.files[0].id;
+      console.log(`Found presets.json in Google Drive. File ID: ${drivePresetsFileId}`);
+    } else {
+      console.log('presets.json not found in Google Drive. Creating a new one...');
+      const fileMetadata = {
+        name: 'presets.json',
+        parents: [folderId],
+        mimeType: 'application/json',
+      };
+      const media = {
+        mimeType: 'application/json',
+        body: Readable.from(JSON.stringify([], null, 2)),
+      };
+      const driveResponse = await drive.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: 'id',
+      });
+      drivePresetsFileId = driveResponse.data.id;
+      console.log(`Created new presets.json in Google Drive. File ID: ${drivePresetsFileId}`);
+    }
+  } catch (err) {
+    console.error('Failed to initialize Google Drive presets file:', err.message);
+  }
+}
+
+// 定番メニューデータをロードする関数
+async function readPresets() {
+  if (drive && drivePresetsFileId) {
+    try {
+      const res = await drive.files.get(
+        { fileId: drivePresetsFileId, alt: 'media' },
+        { responseType: 'text' }
+      );
+      const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      return JSON.parse(dataText);
+    } catch (err) {
+      console.error('Error reading presets from Google Drive, trying to re-initialize:', err.message);
+      await initDrivePresets();
+      return [];
+    }
+  } else {
+    try {
+      if (!fs.existsSync(PRESETS_FILE)) {
+        fs.writeFileSync(PRESETS_FILE, JSON.stringify([], null, 2));
+      }
+      const data = fs.readFileSync(PRESETS_FILE, 'utf8');
+      return JSON.parse(data);
+    } catch (err) {
+      console.error('Error reading local presets file:', err);
+      return [];
+    }
+  }
+}
+
+// 定番メニューデータを書き込む関数
+async function writePresets(presets) {
+  if (drive && drivePresetsFileId) {
+    try {
+      const media = {
+        mimeType: 'application/json',
+        body: Readable.from(JSON.stringify(presets, null, 2)),
+      };
+      await drive.files.update({
+        fileId: drivePresetsFileId,
+        media: media,
+      });
+      console.log('Successfully updated presets.json in Google Drive.');
+    } catch (err) {
+      console.error('Error writing presets to Google Drive:', err.message);
+    }
+  } else {
+    try {
+      fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
+    } catch (err) {
+      console.error('Error writing local presets file:', err);
+    }
+  }
 }
 
 // ==========================================================================
@@ -605,6 +702,174 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
     console.error('Reanalyze history error:', error);
     const statusCode = error.status || error.statusCode || 500;
     res.status(statusCode).json({ error: '履歴の再分析中にエラーが発生しました。: ' + error.message, status: statusCode });
+  }
+});
+
+// ==========================================================================
+// 定番メニュー (Presets) API エンドポイント
+// ==========================================================================
+
+// 1. 定番メニュー一覧取得 API
+app.get('/api/presets', async (req, res) => {
+  try {
+    const presets = await readPresets();
+    res.json(presets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '定番メニューの取得に失敗しました。' });
+  }
+});
+
+// 2. 定番メニュー手動登録 API
+app.post('/api/presets', async (req, res) => {
+  try {
+    const { name, calories, protein, fat, carbohydrates } = req.body;
+    if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
+      return res.status(400).json({ error: '必須項目が不足しています。' });
+    }
+    const presets = await readPresets();
+    const newPreset = {
+      id: `preset_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      name: name.substring(0, 25),
+      calories: Math.round(Number(calories)),
+      protein: Math.round(Number(protein) * 10) / 10,
+      fat: Math.round(Number(fat) * 10) / 10,
+      carbohydrates: Math.round(Number(carbohydrates) * 10) / 10
+    };
+    presets.push(newPreset);
+    await writePresets(presets);
+    res.status(201).json(newPreset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '定番メニューの登録に失敗しました。' });
+  }
+});
+
+// 3. 定番メニュー AI 解析 ＆ 登録 API
+app.post('/api/presets/analyze', upload.single('image'), async (req, res) => {
+  try {
+    const textInput = req.body.textInput || '';
+    
+    if (!req.file && !textInput.trim()) {
+      return res.status(400).json({ error: '画像がアップロードされていないか、または食事内容のテキストが入力されていません。' });
+    }
+
+    if (!ai) {
+      return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
+    }
+
+    console.log('AI analyzing for predefined menu preset...');
+    
+    let promptInstruction = `
+入力された食事内容（添付された写真、または料理名・レシピ等のテキスト: "${textInput}"）から、使われているすべての食材と調味料を推測した上で、カロリー、たんぱく質（P）、脂質（F）、炭水化物（C）のグラム数を算出してください。
+解析結果から、代表的なメニュー名、料理名（例：ジューシー若鶏グリル、レモン風味プロテイン、パンケーキとフルーツなど）を簡潔に抽出してください。
+`;
+
+    const contents = [];
+    if (req.file) {
+      contents.push({
+        inlineData: {
+          mimeType: req.file.mimetype,
+          data: req.file.buffer.toString('base64'),
+        },
+      });
+    }
+    contents.push(promptInstruction);
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: contents,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            mealName: { type: Type.STRING, description: '解析結果から読み取った食事内容や代表的なメニュー名、料理名。最大20文字程度。' },
+            calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
+            protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
+            fat: { type: Type.NUMBER, description: '脂質 (g)' },
+            carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' }
+          },
+          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates']
+        }
+      }
+    });
+
+    const resultText = response.text;
+    console.log('Gemini preset raw response:', resultText);
+    const nutritionData = JSON.parse(resultText);
+
+    // 定番メニューとして保存
+    const presets = await readPresets();
+    
+    // ユーザー指定の名前があれば優先、無ければ AI が推測した名前を使用
+    const presetName = textInput.trim() ? textInput.trim().substring(0, 25) : nutritionData.mealName;
+
+    const newPreset = {
+      id: `preset_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      name: presetName || '定番メニュー',
+      calories: Math.round(Number(nutritionData.calories)),
+      protein: Math.round(Number(nutritionData.protein) * 10) / 10,
+      fat: Math.round(Number(nutritionData.fat) * 10) / 10,
+      carbohydrates: Math.round(Number(nutritionData.carbohydrates) * 10) / 10
+    };
+
+    presets.push(newPreset);
+    await writePresets(presets);
+
+    res.status(201).json(newPreset);
+
+  } catch (error) {
+    console.error('AI presets analyze error:', error);
+    const statusCode = error.status || error.statusCode || 500;
+    res.status(statusCode).json({ error: 'AIによる定番登録中にエラーが発生しました。: ' + error.message, status: statusCode });
+  }
+});
+
+// 4. 定番メニュー削除 API
+app.delete('/api/presets/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let presets = await readPresets();
+    presets = presets.filter(p => p.id !== id);
+    await writePresets(presets);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '定番メニューの削除に失敗しました。' });
+  }
+});
+
+// 5. 定番メニューからの食事履歴登録 API
+app.post('/api/history/preset', async (req, res) => {
+  try {
+    const { name, calories, protein, fat, carbohydrates, mealDate, mealType } = req.body;
+    if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
+      return res.status(400).json({ error: '食事データの作成に失敗しました。値が正しくありません。' });
+    }
+    const history = await readHistory();
+    const newRecord = {
+      id: `rec_${Date.now()}`,
+      date: new Date().toISOString(),
+      mealDate: mealDate ? new Date(mealDate).toISOString() : new Date().toISOString(),
+      mealType: mealType || 'snack',
+      imageUrl: null,
+      textInput: name,
+      nutrition: {
+        calories: Math.round(Number(calories)),
+        protein: Math.round(Number(protein) * 10) / 10,
+        fat: Math.round(Number(fat) * 10) / 10,
+        carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
+        inference: `定番メニュー: ${name}\n\n・登録済みの情報から直接追加しました。\n  - カロリー  : ${calories} kcal\n  - タンパク質: ${protein} g\n  - 脂質      : ${fat} g\n  - 炭水化物  : ${carbohydrates} g`,
+        comment: '事前登録された定番メニューから登録されました。'
+      }
+    };
+    history.push(newRecord);
+    await writeHistory(history);
+    res.status(201).json(newRecord);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '食事履歴への登録に失敗しました。' });
   }
 });
 
@@ -1100,6 +1365,7 @@ app.put('/api/body-composition/:id', async (req, res) => {
   if (drive && folderId) {
     await initDriveHistory();
     await initDriveWeight();
+    await initDrivePresets();
   }
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
