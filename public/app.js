@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // A. 解析画面のドロップダウンを更新
       if (presetSelector) {
-        presetSelector.innerHTML = '<option value="">-- 選択してください (AI解析をスキップ) --</option>';
+        presetSelector.innerHTML = '<option value="">定番メニューから選択</option>';
         presets.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.id;
@@ -1055,20 +1055,8 @@ document.addEventListener('DOMContentLoaded', () => {
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
         
-        // 食事区分優先順ソートロジック：夕食 (night:4) ➡ 昼食 (noon:3) ➡ 朝食 (morning:2) ➡ 間食 (snack:1)
-        const typeWeight = {
-          night: 4,
-          noon: 3,
-          morning: 2,
-          snack: 1
-        };
+        // 食事日時（登録時刻）の降順でソート
         group.meals.sort((a, b) => {
-          const weightA = typeWeight[a.mealType || 'snack'] || 1;
-          const weightB = typeWeight[b.mealType || 'snack'] || 1;
-          if (weightB !== weightA) {
-            return weightB - weightA; // 降順
-          }
-          // 重みが同じ場合は登録時間の降順
           return new Date(b.mealDate || b.date) - new Date(a.mealDate || a.date);
         });
         
@@ -1541,35 +1529,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // 体組成 (Weight / Body Composition) OCR & 記録ロジック
   // ==========================================================================
 
-  // 現在選択されている食事日付に対応する最新体重・基礎代謝サマリーの更新
+  // 最新体重・基礎代謝サマリーの更新（日付フィルターなしで常に最新値を表示）
   async function updateDailyWeightSummary() {
     try {
       const response = await fetch('/api/body-composition');
       if (!response.ok) throw new Error('データ取得失敗');
       
       const weightHistory = await response.json();
-      const targetDate = mealDateInput.value; // YYYY-MM-DD
       
-      // 同じ日付の測定データを抽出
-      const sameDayRecords = weightHistory.filter(item => {
-        const itemDate = item.date ? item.date.substring(0, 10) : '';
-        return itemDate === targetDate;
-      });
+      // 体重データが存在する全測定記録を日付の昇順（古い順）にソート
+      const validHistory = [...weightHistory]
+        .filter(item => item.weight !== null)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      if (sameDayRecords.length > 0) {
-        // ソート順（夜 -> 朝 -> 他）なので、最初の要素が最新（最も優先度が高い時間帯または最新）
-        const latest = sameDayRecords[0];
-        summaryWeightVal.textContent = latest.weight !== null ? latest.weight.toFixed(1) : '--.-';
+      if (validHistory.length > 0) {
+        // 一番最後の要素が最も新しい測定データ
+        const latest = validHistory[validHistory.length - 1];
+        summaryWeightVal.textContent = latest.weight.toFixed(1);
         
-        // 前日比 (前回の測定値との差) の算出
-        const sortedAll = [...weightHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
-        const latestTime = new Date(latest.date).getTime();
-        // 今回のレコードより過去で、体重データが存在する直近のレコードを検索
-        const prevRecord = sortedAll.find(r => new Date(r.date).getTime() < latestTime && r.weight !== null);
+        // 前日比（1つ前の測定値との差）の算出
         const diffEl = document.getElementById('daily-weight-diff');
-        
         if (diffEl) {
-          if (prevRecord && latest.weight !== null && prevRecord.weight !== null) {
+          if (validHistory.length > 1) {
+            const prevRecord = validHistory[validHistory.length - 2];
             const diff = latest.weight - prevRecord.weight;
             if (diff > 0) {
               diffEl.textContent = `(+${diff.toFixed(1)})`;
@@ -1582,7 +1564,7 @@ document.addEventListener('DOMContentLoaded', () => {
               diffEl.style.color = 'var(--text-muted)';
             }
           } else {
-            diffEl.textContent = ''; // 比較対象がない場合は何も表示しない
+            diffEl.textContent = ''; // 比較対象がない場合は表示しない
           }
         }
         
@@ -1596,7 +1578,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         dailyWeightSummaryBar.style.display = 'flex';
       } else {
-        // データがない場合は非表示
+        // 測定データが一件もない場合はデフォルト表示
+        summaryWeightVal.textContent = '--.-';
+        const diffEl = document.getElementById('daily-weight-diff');
+        if (diffEl) diffEl.textContent = '';
         if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
         dailyWeightSummaryBar.style.display = 'none';
       }
