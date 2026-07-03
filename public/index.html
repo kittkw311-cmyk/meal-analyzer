@@ -452,9 +452,6 @@
 
         <!-- 基本栄養素 (PFC) サマリー (詳細モーダル用チップス) -->
         <div class="modal-nutrition-chips-wrapper">
-          <div class="modal-nutrition-chip calorie">
-            <span id="modal-calories">0</span> kcal
-          </div>
           <div class="modal-nutrition-chip protein">
             <span class="label">P</span><span id="modal-protein" class="val">0</span>
           </div>
@@ -463,6 +460,9 @@
           </div>
           <div class="modal-nutrition-chip carbs">
             <span class="label">C</span><span id="modal-carbs" class="val">0</span>
+          </div>
+          <div class="modal-nutrition-chip calorie">
+            <span id="modal-calories" class="val">0</span> <span class="unit">kcal</span>
           </div>
         </div>
       </div>
@@ -478,10 +478,10 @@
           <div class="modal-inference-header"><svg class="icon-svg" style="margin-right: 6px; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>食材・調味料の推測と計算根拠</div>
           <p class="modal-inference-text" id="modal-inference"></p>
         </div>
+      </div>
 
-
-
-        <!-- ボタンアクションエリア -->
+      <!-- 固定フッター部 (スクロールなしで下部に固定表示) -->
+      <div class="modal-footer-fixed">
         <div class="modal-action-row" style="display: flex; gap: 8px; width: 100%;">
           <button type="button" class="btn btn-warning modal-preset-btn" id="btn-preset-modal" style="background: #fff8e1; border: 1.5px solid #ffe082; color: #b78103; padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; outline: none; cursor: pointer; transition: all 0.2s;">
             <svg class="icon-svg" style="width: 15px; height: 15px; color: #f5b041; vertical-align: middle; stroke-width: 2.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>定番に登録

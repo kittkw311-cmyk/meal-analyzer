@@ -1252,9 +1252,14 @@ body {
 .modal-nutrition-chip.calorie {
   background-color: #f2f4f3;
   color: var(--text-main);
-  width: 90px;
-  justify-content: center;
-  gap: 4px;
+  width: 95px;
+  justify-content: space-between;
+}
+
+.modal-nutrition-chip.calorie .unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 .modal-nutrition-chip .label {
@@ -1740,6 +1745,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.modal-footer-fixed {
+  padding: 16px 24px 20px 24px;
+  border-top: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 .modal-body-scrollable::-webkit-scrollbar {
@@ -2282,8 +2295,8 @@ body {
     justify-content: space-between !important;
   }
   .modal-nutrition-chip.calorie {
-    width: 78px !important;
-    justify-content: center !important;
+    width: 84px !important;
+    justify-content: space-between !important;
   }
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
