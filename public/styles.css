@@ -1937,11 +1937,11 @@ body {
   color: var(--text-muted);
 }
 
-/* 食事サマリーの中の体重・基礎代謝サマリー行 */
+/* 食事サマリーの中の体重サマリー行 */
 .daily-summary-weight-row {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 6px;
   width: 100%;
   margin-top: 8px;
@@ -1952,19 +1952,13 @@ body {
 
 .daily-summary-weight-row .daily-pfc-box {
   flex: 1;
-  max-width: 49%;
+  max-width: 100%;
 }
 
 .daily-pfc-box.weight-box {
   background-color: rgba(135, 110, 160, 0.08) !important;
   color: #5c3b7a !important;
   border: 1px solid rgba(135, 110, 160, 0.15) !important;
-}
-
-.daily-pfc-box.bmr-box {
-  background-color: rgba(156, 212, 176, 0.08) !important;
-  color: #2b8555 !important;
-  border: 1px solid rgba(156, 212, 176, 0.15) !important;
 }
 
 /* 体組成詳細モーダル内のインプット要素 */

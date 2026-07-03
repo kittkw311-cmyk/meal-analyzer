@@ -113,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 解析タブのサマリー要素
   const dailyWeightSummaryBar = document.getElementById('daily-weight-summary-bar');
   const summaryWeightVal = document.getElementById('summary-weight-val');
-  const summaryBmrVal = document.getElementById('summary-bmr-val');
+  const dailyBmrDivider = document.getElementById('daily-bmr-divider');
+  const dailyBmrCalories = document.getElementById('daily-bmr-calories');
 
   // 詳細モーダル内の値表示
   const wModalWeight = document.getElementById('w-modal-weight');
@@ -1055,14 +1056,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // ソート順（夜 -> 朝 -> 他）なので、最初の要素が最新（最も優先度が高い時間帯または最新）
         const latest = sameDayRecords[0];
         summaryWeightVal.textContent = latest.weight !== null ? latest.weight.toFixed(2) : '--.--';
-        summaryBmrVal.textContent = latest.bmr !== null ? latest.bmr : '----';
+        
+        // 基礎代謝を食事カロリー表示の横にマージする
+        if (latest.bmr !== null) {
+          if (dailyBmrCalories) dailyBmrCalories.textContent = latest.bmr;
+          if (dailyBmrDivider) dailyBmrDivider.style.display = 'inline';
+        } else {
+          if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
+        }
+        
         dailyWeightSummaryBar.style.display = 'flex';
       } else {
         // データがない場合は非表示
+        if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
         dailyWeightSummaryBar.style.display = 'none';
       }
     } catch (err) {
       console.error('Failed to update daily weight summary:', err);
+      if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
       dailyWeightSummaryBar.style.display = 'none';
     }
   }
