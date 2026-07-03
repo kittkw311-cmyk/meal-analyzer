@@ -1129,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <!-- 1行目: カロリーとPFCチップス、食事区分チップ -->
               <div class="history-info-row-top">
                 <div class="history-left-group">
-                  <div class="history-calories">${item.nutrition.calories} kcal</div>
+                  <div class="history-calories">${item.nutrition.calories} <span class="unit">kcal</span></div>
                     <div class="history-pfc-chip protein">P${item.nutrition.protein}</div>
                     <div class="history-pfc-chip fat">F${item.nutrition.fat}</div>
                     <div class="history-pfc-chip carbs">C${item.nutrition.carbohydrates}</div>
