@@ -866,19 +866,68 @@ app.patch('/api/presets/:id', async (req, res) => {
 });
 
 // 5. 定番メニューからの食事履歴登録 API
-app.post('/api/history/preset', async (req, res) => {
+app.post('/api/history/preset', upload.single('image'), async (req, res) => {
   try {
     const { name, calories, protein, fat, carbohydrates, mealDate, mealType } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '食事データの作成に失敗しました。値が正しくありません。' });
     }
+    
+    // 画像の保存処理 (画像が提供されている場合のみ)
+    let imageSource = '';
+    let imageId = '';
+
+    const mealDateParsed = mealDate ? new Date(mealDate).toISOString() : new Date().toISOString();
+    const actualMealType = mealType || 'snack';
+
+    if (req.file) {
+      imageSource = 'local';
+      // ファイル名の設計: meal_preset_YYYY-MM-DD_mealType_timestamp.jpg
+      const dateStr = mealDateParsed.substring(0, 10);
+      const filename = `meal_preset_${dateStr}_${actualMealType}_${Date.now()}.jpg`;
+
+      if (drive && folderId) {
+        try {
+          console.log('Uploading preset record image to Google Drive...');
+          const fileMetadata = {
+            name: filename,
+            parents: [folderId],
+          };
+          const media = {
+            mimeType: req.file.mimetype,
+            body: bufferToStream(req.file.buffer),
+          };
+          const driveResponse = await drive.files.create({
+            requestBody: fileMetadata,
+            media: media,
+            fields: 'id',
+          });
+          imageSource = 'drive';
+          imageId = driveResponse.data.id;
+          console.log('Successfully uploaded preset record image to Google Drive. File ID:', imageId);
+        } catch (err) {
+          console.error('Failed to upload preset record image to Google Drive, saving locally instead:', err.message);
+          imageSource = 'local';
+          const localPath = path.join(UPLOADS_DIR, filename);
+          fs.writeFileSync(localPath, req.file.buffer);
+          imageId = filename;
+        }
+      } else {
+        const localPath = path.join(UPLOADS_DIR, filename);
+        fs.writeFileSync(localPath, req.file.buffer);
+        imageId = filename;
+        console.log('Saved preset record image locally:', filename);
+      }
+    }
+
     const history = await readHistory();
     const newRecord = {
       id: `rec_${Date.now()}`,
       date: new Date().toISOString(),
-      mealDate: mealDate ? new Date(mealDate).toISOString() : new Date().toISOString(),
-      mealType: mealType || 'snack',
-      imageUrl: null,
+      mealDate: mealDateParsed,
+      mealType: actualMealType,
+      imageSource,
+      imageId,
       textInput: name,
       nutrition: {
         calories: Math.round(Number(calories)),
@@ -889,7 +938,9 @@ app.post('/api/history/preset', async (req, res) => {
         comment: '事前登録された定番メニューから登録されました。'
       }
     };
-    history.push(newRecord);
+    
+    // 通常の解析履歴登録と同様に unshift で先頭（最新）に配置
+    history.unshift(newRecord);
     await writeHistory(history);
     res.status(201).json(newRecord);
   } catch (err) {

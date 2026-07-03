@@ -431,17 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
     presetSelector.addEventListener('change', () => {
       const selectedId = presetSelector.value;
       if (selectedId !== "") {
-        // 定番メニューが選ばれたら、通常入力値をクリアしてボタンを切替
+        // 定番メニューが選ばれたらボタン表記を切替 (写真はクリアせず併用可能にする)
         btnAnalyze.textContent = "定番メニューで記録する";
         btnAnalyze.style.backgroundColor = "var(--primary-dark)";
         mealTextInput.value = "";
-        selectedFile = null;
-        const previewContainer = document.getElementById('preview-container');
-        const imagePreview = document.getElementById('image-preview');
-        if (previewContainer) previewContainer.style.display = 'none';
-        if (imagePreview) imagePreview.src = '#';
-        const mealUploadBadge = document.getElementById('meal-upload-badge');
-        if (mealUploadBadge) mealUploadBadge.style.display = 'none';
       } else {
         btnAnalyze.textContent = "食事を解析する";
         btnAnalyze.style.backgroundColor = "";
@@ -483,19 +476,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
       const mealDateToSend = new Date(fullDateTimeStr).toISOString();
 
+      const formData = new FormData();
+      formData.append('name', presetName);
+      formData.append('calories', cVal);
+      formData.append('protein', pVal);
+      formData.append('fat', fVal);
+      formData.append('carbohydrates', carbVal);
+      formData.append('mealDate', mealDateToSend);
+      formData.append('mealType', activeMealType);
+      if (selectedFile) {
+        formData.append('image', selectedFile);
+      }
+
       try {
         const response = await fetch('/api/history/preset', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: presetName,
-            calories: cVal,
-            protein: pVal,
-            fat: fVal,
-            carbohydrates: carbVal,
-            mealDate: mealDateToSend,
-            mealType: activeMealType
-          })
+          body: formData
         });
 
         if (!response.ok) throw new Error('定番メニューの記録に失敗しました。');
