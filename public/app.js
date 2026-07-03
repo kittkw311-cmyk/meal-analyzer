@@ -120,9 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const weightModalDateInput = document.getElementById('weight-modal-date-input');
   const weightModalTypeSelect = document.getElementById('weight-modal-type-select');
   const btnSaveWeightModal = document.getElementById('btn-save-weight-modal');
-  const weightModalImageContainer = document.getElementById('weight-modal-image-container');
-  const weightModalImage = document.getElementById('weight-modal-image');
-
   // 解析タブのサマリー要素
   const dailyWeightSummaryBar = document.getElementById('daily-weight-box');
   const summaryWeightVal = document.getElementById('summary-weight-val');
@@ -1963,18 +1960,6 @@ document.addEventListener('DOMContentLoaded', () => {
     wModalSubcutaneous.value = item.subcutaneousFat !== null ? item.subcutaneousFat.toFixed(1) : '';
     wModalBodyAge.value = item.bodyAge !== null ? item.bodyAge.toFixed(1) : '';
     wModalBodyType.value = item.bodyType || '';
-
-    // 画像があれば表示
-    if (item.imageId) {
-      const src = item.imageSource === 'drive' 
-        ? `/api/drive-image/${item.imageId}` 
-        : `/uploads/${item.imageId}`;
-      weightModalImage.src = src;
-      weightModalImageContainer.style.display = 'block';
-    } else {
-      weightModalImage.src = '';
-      weightModalImageContainer.style.display = 'none';
-    }
 
     // 前回との比較比の計算
     let prevRecord = null;

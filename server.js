@@ -1319,35 +1319,8 @@ app.post('/api/body-composition', upload.single('image'), async (req, res) => {
     const measurementType = req.body.measurementType || 'other'; // morning, night, other
     const textInput = req.body.textInput || '';
     
-    let imageId = null;
-    
-    // 画像ファイルが送信されていれば保存
-    if (req.file) {
-      if (drive && folderId) {
-        console.log('Uploading body composition image to Google Drive...');
-        const fileMetadata = {
-          name: `weight_${Date.now()}.jpg`,
-          parents: [folderId],
-        };
-        const media = {
-          mimeType: req.file.mimetype,
-          body: bufferToStream(req.file.buffer),
-        };
-        const driveResponse = await drive.files.create({
-          requestBody: fileMetadata,
-          media: media,
-          fields: 'id',
-        });
-        imageId = driveResponse.data.id;
-        console.log(`Uploaded body composition image to Google Drive. File ID: ${imageId}`);
-      } else {
-        const fileName = `weight_${Date.now()}.jpg`;
-        const localPath = path.join(UPLOADS_DIR, fileName);
-        fs.writeFileSync(localPath, req.file.buffer);
-        imageId = fileName;
-        console.log(`Saved body composition image locally: ${fileName}`);
-      }
-    }
+    // 体組成画像は読み取り完了後は保存しない (imageIdは常にnull)
+    const imageId = null;
     
     const weightHistory = await readWeight();
     
