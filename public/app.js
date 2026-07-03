@@ -475,9 +475,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       const msg = err.message || '';
       if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。\n\n詳細: ' + msg);
+        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。');
+      } else if (err.status === 503 || msg.includes('503') || msg.includes('UNAVAILABLE') || msg.includes('temporary') || msg.includes('high demand')) {
+        alert('【AIサーバー一時混雑】\n現在、GoogleのAIサーバーが非常に混み合っています。\n\n一時的な制限ですので、10秒〜15秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。');
       } else {
-        alert('解析に失敗しました。\n詳細: ' + msg);
+        alert('解析に失敗しました。\n\n少し時間をおいてからもう一度お試しください。\n詳細: ' + msg);
       }
     } finally {
       loadingOverlay.style.display = 'none';
@@ -1262,9 +1264,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       const msg = err.message || '';
       if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\n体組成解析が一時的に混み合っています。\n10秒〜20秒ほど待ってからもう一度お試しください。');
+        alert('【AIアクセス制限】\n体組成解析のアクセスが一時的に集中しています。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度お試しください。');
+      } else if (err.status === 503 || msg.includes('503') || msg.includes('UNAVAILABLE') || msg.includes('temporary') || msg.includes('high demand')) {
+        alert('【AIサーバー一時混雑】\n現在、GoogleのAIサーバーが非常に混み合っています。\n\n一時的な制限ですので、10秒〜15秒ほど待ってから、もう一度お試しください。');
       } else {
-        alert('登録に失敗しました。\n詳細: ' + msg);
+        alert('登録に失敗しました。\n\n少し時間をおいてからもう一度お試しください。\n詳細: ' + msg);
       }
     } finally {
       loadingOverlay.style.display = 'none';
