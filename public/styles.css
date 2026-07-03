@@ -1610,10 +1610,13 @@ body {
 
 /* 体重の増減差分表示 */
 .weight-diff {
+  display: inline-block;
+  vertical-align: middle;
   font-size: 11px;
   margin-left: 6px;
   font-weight: 700;
   font-family: 'Outfit', sans-serif;
+  line-height: 20px;
 }
 .weight-diff-up {
   color: #e15f5f; /* 増加（赤系） */
@@ -1718,8 +1721,24 @@ body {
   font-weight: 700;
   color: var(--text-main);
   border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-  padding: 10px 6px;
+  padding: 12px 6px;
   vertical-align: middle;
+  line-height: 20px;
+}
+
+/* 各セル内のインライン要素の垂直位置を middle で徹底統一 */
+.weight-history-table td .date-text,
+.weight-history-table td .badge {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 20px;
+}
+
+/* 削除用ゴミ箱ボタンも垂直中央に整列 */
+.weight-history-table td .btn-delete-weight {
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 20px;
 }
 
 .td-datetime {
