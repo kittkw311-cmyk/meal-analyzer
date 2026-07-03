@@ -36,23 +36,23 @@
             <!-- PFCW チップス (左右入れ替えにより左側に配置) -->
             <div class="summary-chips-capsule">
               <div class="summary-chip protein">
-                <span>P <span id="daily-total-protein">0</span></span>
+                <span class="label">P</span><span class="val" id="daily-total-protein">0.0</span>
               </div>
               <div class="summary-chip fat">
-                <span>F <span id="daily-total-fat">0</span></span>
+                <span class="label">F</span><span class="val" id="daily-total-fat">0.0</span>
               </div>
               <div class="summary-chip carbs">
-                <span>C <span id="daily-total-carbs">0</span></span>
+                <span class="label">C</span><span class="val" id="daily-total-carbs">0.0</span>
               </div>
-              <div class="summary-chip weight" id="daily-weight-box">
-                <span>W <span id="summary-weight-val">--.-</span></span>
-                <span id="daily-weight-diff" style="display: none;"></span>
+              <div class="summary-chip weight" id="daily-weight-box" style="position: relative;">
+                <span class="label">W</span><span class="val" id="summary-weight-val">--.-</span>
+                <span id="daily-weight-diff" class="weight-diff-badge" style="display: none;"></span>
               </div>
             </div>
 
             <!-- カロリー表示 (左右入れ替えにより右側に配置) -->
             <div class="summary-calorie-capsule">
-              <span id="daily-total-calories">0</span><span id="daily-bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit"> kcal</span>
+              <span id="daily-total-calories" class="calorie-num">0</span><span id="daily-bmr-divider" class="bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit">kcal</span>
             </div>
           </div>
         </div>

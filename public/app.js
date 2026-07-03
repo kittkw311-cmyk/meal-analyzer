@@ -1540,18 +1540,20 @@ document.addEventListener('DOMContentLoaded', () => {
           if (validHistory.length > 1) {
             const prevRecord = validHistory[validHistory.length - 2];
             const diff = latest.weight - prevRecord.weight;
+            diffEl.style.display = 'inline-block';
             if (diff > 0) {
-              diffEl.textContent = `(+${diff.toFixed(1)})`;
-              diffEl.style.color = '#ff7676'; // 上昇 (赤)
+              diffEl.textContent = `+${diff.toFixed(1)}`;
+              diffEl.className = 'weight-diff-badge up';
             } else if (diff < 0) {
-              diffEl.textContent = `(${diff.toFixed(1)})`;
-              diffEl.style.color = '#4dbf77'; // 下降 (緑)
+              diffEl.textContent = `${diff.toFixed(1)}`;
+              diffEl.className = 'weight-diff-badge down';
             } else {
-              diffEl.textContent = `(±0)`;
-              diffEl.style.color = 'var(--text-muted)';
+              diffEl.textContent = `±0`;
+              diffEl.className = 'weight-diff-badge same';
             }
           } else {
-            diffEl.textContent = ''; // 比較対象がない場合は表示しない
+            diffEl.textContent = '';
+            diffEl.style.display = 'none';
           }
         }
         
@@ -1568,7 +1570,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 測定データが一件もない場合はデフォルト表示
         summaryWeightVal.textContent = '--.-';
         const diffEl = document.getElementById('daily-weight-diff');
-        if (diffEl) diffEl.textContent = '';
+        if (diffEl) {
+          diffEl.textContent = '';
+          diffEl.style.display = 'none';
+        }
         if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
         dailyWeightSummaryBar.style.display = 'inline-flex';
       }

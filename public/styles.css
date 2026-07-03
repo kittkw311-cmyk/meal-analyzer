@@ -1077,13 +1077,26 @@ body {
 }
 
 .summary-calorie-capsule {
-  font-size: 19px;
-  font-weight: 800;
-  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
   font-family: 'Outfit', sans-serif;
   display: flex;
   align-items: baseline;
-  padding-left: 6px;
+  padding-right: 6px; /* 左右逆転したため右側のパディング調整 */
+}
+
+.summary-calorie-capsule .calorie-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.summary-calorie-capsule .bmr-divider {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .summary-calorie-capsule .calorie-unit {
@@ -1103,14 +1116,27 @@ body {
 .summary-chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
+  justify-content: space-between;
+  width: 64px;
+  height: 26px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+  box-sizing: border-box;
+  padding: 0 8px;
+}
+
+.summary-chip .label {
+  color: inherit;
+  opacity: 0.9;
+}
+
+.summary-chip .val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .summary-chip.protein {
@@ -1131,6 +1157,34 @@ body {
 .summary-chip.weight {
   background-color: rgba(180, 160, 220, 0.1);
   color: #63459c;
+}
+
+/* 体重差を知らせる右肩重ねの吹き出しバッジ */
+.weight-diff-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.weight-diff-badge.up {
+  background-color: #fbe9eb;
+  color: #da1e28;
+}
+
+.weight-diff-badge.down {
+  background-color: #e6f6ec;
+  color: #24a148;
+}
+
+.weight-diff-badge.same {
+  background-color: #f2f4f3;
+  color: var(--text-muted);
 }
 
 /* ==========================================================================
@@ -2155,16 +2209,24 @@ body {
     padding: 8px 12px !important;
   }
   .summary-calorie-capsule {
-    font-size: 16px !important;
-    padding-left: 2px !important;
+    font-size: 11px !important;
+    padding-right: 2px !important;
+    padding-left: 0 !important;
+  }
+  .summary-calorie-capsule .calorie-num {
+    font-size: 15px !important;
   }
   .summary-chips-capsule {
     gap: 4px !important;
   }
   .summary-chip {
-    padding: 4px 8px !important;
-    font-size: 11px !important;
+    width: 52px !important;
+    height: 22px !important;
+    padding: 0 4px !important;
+    font-size: 10px !important;
     border-radius: 6px !important;
+    letter-spacing: -0.5px !important;
+    justify-content: space-between !important;
   }
 
   /* スマホ幅での履歴カード調整 */
