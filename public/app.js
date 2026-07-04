@@ -228,13 +228,25 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDetailMeal = item;
     currentEditingHistoryId = item.id;
     
-    // 画像が無い場合のプレースホルダー対応
+    // 画像が無い場合のプレースホルダー対応 (ない場合は親コンテナごと非表示にしてスリム化)
     const modalImage = document.getElementById('modal-meal-image');
+    const modalImageContainer = modalImage.closest('.modal-image-container');
     if (item.imageId) {
       modalImage.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
+      if (modalImageContainer) modalImageContainer.style.display = 'block';
       modalImage.style.display = 'block';
     } else {
+      if (modalImageContainer) modalImageContainer.style.display = 'none';
       modalImage.style.display = 'none';
+    }
+    
+    // 根拠アコーディオンの表示状態を閉じた状態(初期状態)にリセット
+    const inferenceBody = document.getElementById('modal-inference-body');
+    const inferenceArrow = document.getElementById('modal-inference-arrow');
+    if (inferenceBody) inferenceBody.style.display = 'none';
+    if (inferenceArrow) {
+      inferenceArrow.textContent = '▼';
+      inferenceArrow.style.transform = 'rotate(0deg)';
     }
     
     // モーダル編集インプットのバインド処理
@@ -1222,6 +1234,26 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   btnCloseModal.addEventListener('click', closeModal);
+  
+  // 根拠アコーディオンの開閉イベントバインド
+  const inferenceTrigger = document.getElementById('modal-inference-trigger');
+  const inferenceBody = document.getElementById('modal-inference-body');
+  const inferenceArrow = document.getElementById('modal-inference-arrow');
+
+  if (inferenceTrigger && inferenceBody && inferenceArrow) {
+    inferenceTrigger.addEventListener('click', () => {
+      const isCollapsed = inferenceBody.style.display === 'none';
+      if (isCollapsed) {
+        inferenceBody.style.display = 'block';
+        inferenceArrow.textContent = '▲';
+        inferenceArrow.style.transform = 'rotate(180deg)';
+      } else {
+        inferenceBody.style.display = 'none';
+        inferenceArrow.textContent = '▼';
+        inferenceArrow.style.transform = 'rotate(0deg)';
+      }
+    });
+  }
   
   // モーダルの背景（黒枠）をクリックした際も閉じる
   historyDetailModal.addEventListener('click', (e) => {

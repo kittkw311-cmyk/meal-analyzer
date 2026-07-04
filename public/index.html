@@ -419,37 +419,11 @@
       <button class="modal-close-btn" id="btn-close-modal">✕</button>
       
       <!-- 固定ヘッダー部 -->
-      <div class="modal-header-fixed">
-        <h3 class="modal-title" id="modal-meal-title">食事詳細</h3>
+      <div class="modal-header-fixed" style="padding-bottom: 8px;">
+        <h3 class="modal-title" id="modal-meal-title" style="margin-bottom: 6px;">食事詳細</h3>
         
-        <!-- 編集用の食事内容テキストエリア -->
-        <div class="modal-text-edit-block">
-          <textarea id="modal-text-input" class="modal-textarea" rows="2" placeholder="食事内容を入力または修正..."></textarea>
-        </div>
-
-        <!-- 編集用の日付・時刻・区分インラインフォーム -->
-        <div class="modal-meta-edit">
-          <div class="edit-field">
-            <span class="edit-label">日付</span>
-            <input type="date" id="modal-date-input" class="modal-date-input">
-          </div>
-          <div class="edit-field">
-            <span class="edit-label">時刻</span>
-            <input type="time" id="modal-time-input" class="modal-time-input">
-          </div>
-          <div class="edit-field">
-            <span class="edit-label">区分</span>
-            <select id="modal-type-select" class="modal-type-select">
-              <option value="morning">朝</option>
-              <option value="noon">昼</option>
-              <option value="night">夕</option>
-              <option value="snack">間</option>
-            </select>
-          </div>
-        </div>
-
         <!-- 基本栄養素 (PFC) サマリー (詳細モーダル用チップス) -->
-        <div class="modal-nutrition-chips-wrapper">
+        <div class="modal-nutrition-chips-wrapper" style="margin-top: 0; margin-bottom: 0;">
           <div class="modal-nutrition-chip protein">
             <span class="label">P</span><span id="modal-protein" class="val">0</span>
           </div>
@@ -471,23 +445,57 @@
           <img id="modal-meal-image" src="" alt="食事画像">
         </div>
         
-        <!-- 食材・調味料の推測と計算根拠 -->
+        <!-- 食材・調味料の推測と計算根拠 (アコーディオン開閉式) -->
         <div class="modal-inference-card" id="modal-inference-card" style="display: none;">
-          <div class="modal-inference-header"><svg class="icon-svg" style="margin-right: 6px; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>食材・調味料の推測と計算根拠</div>
-          <p class="modal-inference-text" id="modal-inference"></p>
+          <div class="modal-inference-header" id="modal-inference-trigger" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+            <span style="display: flex; align-items: center; gap: 6px; font-weight: 800;">
+              <svg class="icon-svg" style="vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>食材・調味料の推測と計算根拠
+            </span>
+            <span id="modal-inference-arrow" style="transition: transform 0.2s; font-size: 12px; color: var(--text-muted);">▼</span>
+          </div>
+          <div class="modal-inference-body" id="modal-inference-body" style="display: none; border-top: 1px solid var(--border-color); margin-top: 10px; padding-top: 10px;">
+            <p class="modal-inference-text" id="modal-inference" style="margin: 0;"></p>
+          </div>
         </div>
       </div>
 
-      <!-- 固定フッター部 (スクロールなしで下部に固定表示) -->
-      <div class="modal-footer-fixed">
-        <div class="modal-action-row" style="display: flex; gap: 8px; width: 100%;">
-          <button type="button" class="btn btn-warning modal-preset-btn" id="btn-preset-modal" style="background: #fff8e1; border: 1.5px solid #ffe082; color: #b78103; padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; outline: none; cursor: pointer; transition: all 0.2s;">
+      <!-- 固定フッター部 (入力欄、日付欄、およびボタン群を下部に固定) -->
+      <div class="modal-footer-fixed" style="display: flex; flex-direction: column; gap: 10px; padding: 15px 20px; border-top: 1px solid var(--border-color); background: var(--card-bg); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-sizing: border-box;">
+        <!-- 編集用の食事内容テキストエリア -->
+        <div class="modal-text-edit-block" style="margin: 0; width: 100%;">
+          <textarea id="modal-text-input" class="modal-textarea" rows="2" placeholder="食事内容を入力または修正..." style="width: 100%; box-sizing: border-box;"></textarea>
+        </div>
+
+        <!-- 編集用の日付・時刻・区分インラインフォーム -->
+        <div class="modal-meta-edit" style="margin: 0; width: 100%; box-sizing: border-box;">
+          <div class="edit-field">
+            <span class="edit-label">日付</span>
+            <input type="date" id="modal-date-input" class="modal-date-input">
+          </div>
+          <div class="edit-field">
+            <span class="edit-label">時刻</span>
+            <input type="time" id="modal-time-input" class="modal-time-input">
+          </div>
+          <div class="edit-field">
+            <span class="edit-label">区分</span>
+            <select id="modal-type-select" class="modal-type-select">
+              <option value="morning">朝</option>
+              <option value="noon">昼</option>
+              <option value="night">夕</option>
+              <option value="snack">間</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- アクションボタン行 -->
+        <div class="modal-action-row" style="display: flex; gap: 8px; width: 100%; margin: 0;">
+          <button type="button" class="btn btn-warning modal-preset-btn" id="btn-preset-modal" style="background: #fff8e1; border: 1.5px solid #ffe082; color: #b78103; padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; outline: none; cursor: pointer; transition: all 0.2s; margin: 0;">
             <svg class="icon-svg" style="width: 15px; height: 15px; color: #f5b041; vertical-align: middle; stroke-width: 2.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>定番に登録
           </button>
-          <button type="button" class="btn btn-secondary modal-reanalyze-btn" id="btn-reanalyze-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+          <button type="button" class="btn btn-secondary modal-reanalyze-btn" id="btn-reanalyze-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; margin: 0;">
             <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px; vertical-align: middle;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>再計算
           </button>
-          <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px;">
+          <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; margin: 0;">
             保存する
           </button>
         </div>
