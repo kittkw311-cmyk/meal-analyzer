@@ -2107,9 +2107,8 @@ body {
 
 .weight-cell-container {
   display: inline-flex;
-  justify-content: space-between;
   align-items: center;
-  width: 96px;
+  gap: 6px;
   box-sizing: border-box;
 }
 
@@ -2119,7 +2118,7 @@ body {
   font-weight: 800;
   color: var(--text-main);
   font-variant-numeric: tabular-nums;
-  width: 44px;
+  width: 38px;
   text-align: left;
 }
 
@@ -2128,7 +2127,7 @@ body {
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  width: 42px;
+  width: 32px;
   text-align: right;
 }
 
@@ -2141,12 +2140,12 @@ body {
 }
 
 .weight-cell-container .weight-empty-placeholder:first-child {
-  width: 44px;
+  width: 38px;
   text-align: left;
 }
 
 .weight-cell-container .weight-empty-placeholder:last-child {
-  width: 42px;
+  width: 32px;
   text-align: right;
 }
 
