@@ -1099,6 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 日付の降順でソートして描画
       const sortedKeys = Object.keys(groups).sort().reverse();
+const todayKey = new Date().toISOString().slice(0,10);
       
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
@@ -1127,7 +1128,23 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <span class="history-date-title">${group.dateLabel}</span>
         `;
-        historyList.appendChild(headerEl);
+        // Create container for this date's cards
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'history-cards-container';
+        // Show only today by default
+        cardsContainer.style.display = (dateKey === todayKey) ? 'block' : 'none';
+        // Toggle visibility on header click
+        headerEl.style.cursor = 'pointer';
+        headerEl.addEventListener('click', () => {
+          const isHidden = cardsContainer.style.display === 'none';
+          cardsContainer.style.display = isHidden ? 'block' : 'none';
+        });
+        // グループラッパーにまとめて追加
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'history-group';
+        groupDiv.appendChild(headerEl);
+        groupDiv.appendChild(cardsContainer);
+        historyList.appendChild(groupDiv);
 
         // 2. その日の食事カードの生成
         group.meals.forEach(item => {
@@ -1229,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           card.querySelector('.history-info-row-bottom').appendChild(deleteBtn);
 
-          historyList.appendChild(card);
+          cardsContainer.appendChild(card);
         });
       });
 
