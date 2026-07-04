@@ -1003,11 +1003,11 @@ body {
    ========================================================================== */
 .history-date-header {
   display: grid;
-  grid-template-columns: 85px 85px 1fr;
+  grid-template-columns: 160px 85px 1fr;
   align-items: center;
   margin-top: 12px;
   margin-bottom: 4px;
-  padding: 6px 10px; /* 上下パディングをきゅっと縮める */
+  padding: 6px 10px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1017,19 +1017,19 @@ body {
 }
 
 .history-date-title {
-  font-size: 14.5px; /* 13.5px -> 14.5px へ拡大 */
+  font-size: 14.5px;
   font-weight: 800;
   color: var(--text-main);
-  text-align: left;
+  text-align: right;
 }
 
 .history-daily-calories {
-  font-weight: 900; /* より太字でくっきり */
+  font-weight: 900;
   color: var(--primary-dark);
   font-family: 'Outfit', sans-serif;
-  font-size: 14.5px; /* 13.5px -> 14.5px へ拡大 */
+  font-size: 14.5px;
   text-align: left;
-  padding-right: 0;
+  padding-left: 10px;
   box-sizing: border-box;
 }
 
@@ -2383,26 +2383,28 @@ body {
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
   .history-date-header {
-    grid-template-columns: 74px 72px 1fr !important;
+    grid-template-columns: 135px 72px 1fr !important;
     gap: 4px !important;
-    padding: 6px 8px !important; /* スマホでも縦パディングを 4px -> 6px に広げる */
+    padding: 6px 8px !important;
   }
   .history-date-title {
-    font-size: 13px !important; /* 11px -> 13px */
+    font-size: 13px !important;
+    text-align: right !important;
   }
   .history-daily-calories {
-    font-size: 13px !important; /* 11px -> 13px */
+    font-size: 13px !important;
     text-align: left !important;
+    padding-left: 6px !important;
     padding-right: 0 !important;
   }
   .history-daily-pfc {
-    font-size: 11.5px !important; /* 10px -> 11.5px */
-    gap: 4px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
     padding-left: 0 !important;
   }
   .history-pfc-diff {
-    font-size: 10px !important; /* 9px -> 10px */
-    padding: 3px 6px !important; /* 縦パディングを 2px -> 3px に */
+    font-size: 10px !important;
+    padding: 3px 6px !important;
     border-radius: 10px !important;
     margin-left: 2px !important;
   }

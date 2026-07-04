@@ -1100,18 +1100,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerEl = document.createElement('div');
         headerEl.className = 'history-date-header';
         
-        const pTotal = Math.round(group.totalProtein);
-        const fTotal = Math.round(group.totalFat);
-        const cTotal = Math.round(group.totalCarbs);
-
+        const pTotal = group.totalProtein.toFixed(1);
+        const fTotal = group.totalFat.toFixed(1);
+        const cTotal = group.totalCarbs.toFixed(1);
+ 
         headerEl.innerHTML = `
-          <span class="history-date-title">${group.dateLabel}</span>
-          <span class="history-daily-calories">${group.totalCalories} kcal</span>
           <div class="history-daily-pfc">
             <span class="p">P:${pTotal}</span>
             <span class="f">F:${fTotal}</span>
             <span class="c">C:${cTotal}</span>
           </div>
+          <span class="history-daily-calories">${group.totalCalories} kcal</span>
+          <span class="history-date-title">${group.dateLabel}</span>
         `;
         historyList.appendChild(headerEl);
 
