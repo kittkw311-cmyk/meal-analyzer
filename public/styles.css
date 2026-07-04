@@ -1002,12 +1002,12 @@ body {
    History Daily Grouping Header
    ========================================================================== */
 .history-date-header {
-  display: grid;
-  grid-template-columns: 160px 85px 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   margin-top: 12px;
   margin-bottom: 4px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1021,25 +1021,7 @@ body {
   font-weight: 800;
   color: var(--text-main);
   text-align: right;
-}
-
-.history-daily-calories {
-  font-weight: 900;
-  color: var(--primary-dark);
-  font-family: 'Outfit', sans-serif;
-  font-size: 14.5px;
-  text-align: left;
-  padding-left: 10px;
-  box-sizing: border-box;
-}
-
-.history-daily-pfc {
-  display: flex;
-  flex-direction: row;
-  gap: 12px;
-  font-size: 13.5px;
-  box-sizing: border-box;
-  padding-left: 2px;
+  flex: 1;
 }
 
 .history-daily-pfc span {
@@ -2383,30 +2365,11 @@ body {
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
   .history-date-header {
-    grid-template-columns: 135px 72px 1fr !important;
-    gap: 4px !important;
-    padding: 6px 8px !important;
+    padding: 6px 10px !important;
   }
   .history-date-title {
     font-size: 13px !important;
     text-align: right !important;
-  }
-  .history-daily-calories {
-    font-size: 13px !important;
-    text-align: left !important;
-    padding-left: 6px !important;
-    padding-right: 0 !important;
-  }
-  .history-daily-pfc {
-    font-size: 11px !important;
-    gap: 6px !important;
-    padding-left: 0 !important;
-  }
-  .history-pfc-diff {
-    font-size: 10px !important;
-    padding: 3px 6px !important;
-    border-radius: 10px !important;
-    margin-left: 2px !important;
   }
 }
 

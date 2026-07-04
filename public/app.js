@@ -1105,12 +1105,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const cTotal = group.totalCarbs.toFixed(1);
  
         headerEl.innerHTML = `
-          <div class="history-daily-pfc">
-            <span class="p">P:${pTotal}</span>
-            <span class="f">F:${fTotal}</span>
-            <span class="c">C:${cTotal}</span>
+          <div class="history-left-group">
+            <div class="history-pfc-chips">
+              <div class="history-pfc-chip protein"><span class="label">P</span><span class="val">${pTotal}</span></div>
+              <div class="history-pfc-chip fat"><span class="label">F</span><span class="val">${fTotal}</span></div>
+              <div class="history-pfc-chip carbs"><span class="label">C</span><span class="val">${cTotal}</span></div>
+            </div>
+            <div class="history-calories">${group.totalCalories} <span class="unit">kcal</span></div>
           </div>
-          <span class="history-daily-calories">${group.totalCalories} kcal</span>
           <span class="history-date-title">${group.dateLabel}</span>
         `;
         historyList.appendChild(headerEl);
