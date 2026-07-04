@@ -1069,26 +1069,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const fTotal = Math.round(group.totalFat);
         const cTotal = Math.round(group.totalCarbs);
 
-        // 理想PFC比率 (P:15%, F:25%, C:60% カロリーベース) との乖離の計算
-        const pCal = group.totalProtein * 4;
-        const fCal = group.totalFat * 9;
-        const cCal = group.totalCarbs * 4;
-        const totalPfcCal = pCal + fCal + cCal;
-        
-        let pfcDiffText = '';
-        if (totalPfcCal > 0) {
-          const pPct = Math.round((pCal / totalPfcCal) * 100);
-          const fPct = Math.round((fCal / totalPfcCal) * 100);
-          const cPct = 100 - pPct - fPct; // 合計が100%になるよう調整
-          
-          const pDiff = pPct - 15;
-          const fDiff = fPct - 25;
-          const cDiff = cPct - 60;
-          
-          const formatDiff = (val) => (val >= 0 ? `+${val}%` : `${val}%`);
-          pfcDiffText = `理想差 P:${formatDiff(pDiff)} F:${formatDiff(fDiff)} C:${formatDiff(cDiff)}`;
-        }
-
         headerEl.innerHTML = `
           <span class="history-date-title">${group.dateLabel}</span>
           <span class="history-daily-calories">${group.totalCalories} kcal</span>
@@ -1097,7 +1077,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="f">F:${fTotal}</span>
             <span class="c">C:${cTotal}</span>
           </div>
-          ${pfcDiffText ? `<span class="history-pfc-diff">${pfcDiffText}</span>` : '<span class="history-pfc-diff" style="visibility: hidden; pointer-events: none;">--</span>'}
         `;
         historyList.appendChild(headerEl);
 

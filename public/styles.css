@@ -1003,7 +1003,7 @@ body {
    ========================================================================== */
 .history-date-header {
   display: grid;
-  grid-template-columns: 78px 72px 115px 1fr;
+  grid-template-columns: 85px 85px 1fr;
   align-items: center;
   margin-top: 18px;
   margin-bottom: 8px;
@@ -1036,8 +1036,8 @@ body {
 .history-daily-pfc {
   display: flex;
   flex-direction: row;
-  gap: 8px;
-  font-size: 12.5px; /* 12px -> 12.5px へ拡大 */
+  gap: 12px;
+  font-size: 13.5px;
   box-sizing: border-box;
   padding-left: 2px;
 }
@@ -1045,6 +1045,7 @@ body {
 .history-daily-pfc span {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 .history-daily-pfc span.p { color: #2b5585; }
 .history-daily-pfc span.f { color: #8c701f; }
@@ -2322,7 +2323,7 @@ body {
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
   .history-date-header {
-    grid-template-columns: 74px 68px 110px 1fr !important;
+    grid-template-columns: 74px 72px 1fr !important;
     gap: 4px !important;
     padding: 6px 8px !important; /* スマホでも縦パディングを 4px -> 6px に広げる */
   }
