@@ -1927,6 +1927,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // 日付のフォーマット (例: 2026-07-03 -> 2026/07/03)
         const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
 
+        // 前後のレコードと比較して同日判定
+        let isDuplicateDate = false;
+        if (i > 0) {
+          const prevItem = weightHistory[i - 1];
+          const prevDateDisp = prevItem.date ? prevItem.date.replace(/-/g, '/') : '----/--/--';
+          if (dateDisp === prevDateDisp) {
+            isDuplicateDate = true;
+          }
+        }
+
+        let hasNextSameDay = false;
+        if (i < weightHistory.length - 1) {
+          const nextItem = weightHistory[i + 1];
+          const nextDateDisp = nextItem.date ? nextItem.date.replace(/-/g, '/') : '----/--/--';
+          if (dateDisp === nextDateDisp) {
+            hasNextSameDay = true;
+          }
+        }
+
+        const dateTextHTML = isDuplicateDate ? '' : dateDisp;
+
         // 朝の記録は前回の朝比、夜の記録は夜比、他は直前の同区分データ比を算出する
         const currentType = item.measurementType || 'other';
         let prevRecord = null;
@@ -1950,9 +1971,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(1) : '--.-'}</span>`;
 
         const tr = document.createElement('tr');
+        if (hasNextSameDay) {
+          tr.className = 'weight-row-same-day';
+        }
         tr.innerHTML = `
           <td class="td-date-only">
-            <span class="date-text">${dateDisp}</span>
+            <span class="date-text">${dateTextHTML}</span>
             <span class="badge ${item.measurementType || 'other'}" style="margin-left: 6px;">${typeJa}</span>
           </td>
           <td class="td-weight">${tdWeightHTML}</td>
