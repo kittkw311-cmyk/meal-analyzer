@@ -425,30 +425,52 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     contents.push(promptInstruction);
 
     // Gemini 2.5 Flash で解析（構造化JSON出力）
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: contents,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            mealName: { type: Type.STRING, description: '解析結果から読み取った食事内容や代表的なメニュー名、料理名（例：ジューシー若鶏グリル、レモン風味プロテイン、パンケーキとフルーツなど）。最大25文字程度。' },
-            calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
-            protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
-            fat: { type: Type.NUMBER, description: '脂質 (g)' },
-            carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
-            inference: { type: Type.STRING, description: '食材・調味料の推測リストおよび想定グラム数、計算根拠（改行を含む丁寧な箇条書き）' },
-            advice: { type: Type.STRING, description: '管理栄養士風の優しく丁寧な日本語による食事アドバイス・提案（箇条書きは使わず、自然な文章で改行を適度に入れたもの）' }
-          },
-          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
-        }
-      }
-    });
+    let nutritionData = null;
+    let isFailed = false;
+    let analysisErrorMsg = '';
 
-    const resultText = response.text;
-    console.log('Gemini raw response:', resultText);
-    const nutritionData = JSON.parse(resultText);
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: contents,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mealName: { type: Type.STRING, description: '解析結果から読み取った食事内容や代表的なメニュー名、料理名（例：ジューシー若鶏グリル、レモン風味プロテイン、パンケーキとフルーツなど）。最大25文字程度。' },
+              calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
+              protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
+              fat: { type: Type.NUMBER, description: '脂質 (g)' },
+              carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
+              inference: { type: Type.STRING, description: '食材・調味料の推測リストおよび想定グラム数、計算根拠（改行を含む丁寧な箇条書き）' },
+              advice: { type: Type.STRING, description: '管理栄養士風の優しく丁寧な日本語による食事アドバイス・提案（箇条書きは使わず、自然な文章で改行を適度に入れたもの）' }
+            },
+            required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
+          }
+        }
+      });
+
+      const resultText = response.text;
+      console.log('Gemini raw response:', resultText);
+      nutritionData = JSON.parse(resultText);
+    } catch (err) {
+      console.error('Gemini analysis error during analyze:', err);
+      analysisErrorMsg = err.message || 'AI解析中にエラーが発生しました。';
+      isFailed = true;
+    }
+
+    if (isFailed) {
+      nutritionData = {
+        mealName: textInput.trim() ? textInput.trim().substring(0, 25) : '食事データ (未解析)',
+        calories: 0,
+        protein: 0,
+        fat: 0,
+        carbohydrates: 0,
+        inference: `【AI解析未完了】\n解析中にエラーが発生しました。\n詳細: ${analysisErrorMsg}\n\n「再計算」ボタンを押して再試行してください。`,
+        advice: 'AI解析に失敗したため、アドバイスを生成できませんでした。詳細画面の「再計算」から再度解析を行ってください。'
+      };
+    }
 
     // 画像の保存処理 (画像が提供されている場合のみ)
     let imageSource = '';
@@ -502,10 +524,11 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       date: new Date().toISOString(), // システム登録日時
       mealDate,                        // ユーザー指定の食事日
       mealType,                        // ユーザー指定の食事区分
-      textInput,                       // ユーザー入力の料理名やURLテキスト
+      textInput,                       // ユーザー入力 of 料理名やURLテキスト
       mealName: nutritionData.mealName, // AIが読み取った食事メニュー名
       imageSource,
       imageId,
+      status: isFailed ? 'failed' : 'success', // ステータスを追加！
       nutrition: {
         calories: Number(nutritionData.calories),
         protein: Number(nutritionData.protein),
@@ -683,6 +706,7 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
     record.mealType = mealType || record.mealType;
     record.textInput = textInput !== undefined ? textInput : record.textInput;
     record.mealName = nutritionData.mealName;
+    record.status = 'success'; // ステータスをsuccessに更新！
     record.nutrition = {
       calories: Number(nutritionData.calories),
       protein: Number(nutritionData.protein),

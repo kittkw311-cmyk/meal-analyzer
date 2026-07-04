@@ -255,10 +255,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const displayTitle = item.mealName || item.nutrition.mealName || (item.textInput && item.textInput.trim() ? item.textInput.trim() : '食事詳細');
     document.getElementById('modal-meal-title').textContent = displayTitle;
 
-    document.getElementById('modal-calories').textContent = item.nutrition.calories;
-    document.getElementById('modal-protein').textContent = Number(item.nutrition.protein).toFixed(1);
-    document.getElementById('modal-fat').textContent = Number(item.nutrition.fat).toFixed(1);
-    document.getElementById('modal-carbs').textContent = Number(item.nutrition.carbohydrates).toFixed(1);
+    const caloriesEl = document.getElementById('modal-calories');
+    const proteinEl = document.getElementById('modal-protein');
+    const fatEl = document.getElementById('modal-fat');
+    const carbsEl = document.getElementById('modal-carbs');
+
+    if (item.status === 'failed') {
+      caloriesEl.textContent = '--';
+      proteinEl.textContent = '--';
+      fatEl.textContent = '--';
+      carbsEl.textContent = '--';
+      
+      btnReanalyzeModal.classList.add('pulse-highlight');
+      btnReanalyzeModal.innerHTML = '✨ AI解析を再実行（再計算）';
+    } else {
+      caloriesEl.textContent = item.nutrition.calories;
+      proteinEl.textContent = Number(item.nutrition.protein).toFixed(1);
+      fatEl.textContent = Number(item.nutrition.fat).toFixed(1);
+      carbsEl.textContent = Number(item.nutrition.carbohydrates).toFixed(1);
+      
+      btnReanalyzeModal.classList.remove('pulse-highlight');
+      btnReanalyzeModal.innerHTML = '🔄 再計算する';
+    }
     
     const modalInference = document.getElementById('modal-inference');
     const modalInferenceCard = document.getElementById('modal-inference-card');
@@ -584,6 +602,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 解析画面の入力値を初期化
       resetAnalyzeForm();
+
+      // AI解析に失敗して一時保存された場合のアラート
+      if (record.status === 'failed') {
+        alert('【AI解析失敗 - 履歴保存】\n一時的なエラーによりAI解析に失敗しましたが、入力データ（画像・テキスト）は履歴に保存されました。\n\n詳細画面から「再計算」ボタンを押すことで、再度解析を実行できます。');
+      }
 
     } catch (err) {
       console.error(err);
@@ -1090,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }[item.mealType || 'snack'];
 
           const card = document.createElement('div');
-          card.className = 'card history-card';
+          card.className = `card history-card ${item.status === 'failed' ? 'failed-analysis' : ''}`;
           
           // 履歴カードクリックで単独モーダルを開く
           card.addEventListener('click', () => {
@@ -1101,7 +1124,30 @@ document.addEventListener('DOMContentLoaded', () => {
           const displayText = item.textInput && item.textInput.trim() 
             ? item.textInput.trim() 
             : (item.imageId ? '📸 画像から解析' : '🍽️ 食事データ');
-          const displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
+          let displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
+
+          if (item.status === 'failed') {
+            displayMealName = `⚠️ ${displayMealName} (解析未完了)`;
+          }
+
+          let leftGroupHtml = '';
+          if (item.status === 'failed') {
+            leftGroupHtml = `
+              <div class="history-failed-badge">
+                <span class="warning-icon">⚠️</span>
+                <span class="badge-text">解析未完了 (クリックして再計算)</span>
+              </div>
+            `;
+          } else {
+            leftGroupHtml = `
+              <div class="history-pfc-chips">
+                <div class="history-pfc-chip protein"><span class="label">P</span><span class="val">${Number(item.nutrition.protein).toFixed(1)}</span></div>
+                <div class="history-pfc-chip fat"><span class="label">F</span><span class="val">${Number(item.nutrition.fat).toFixed(1)}</span></div>
+                <div class="history-pfc-chip carbs"><span class="label">C</span><span class="val">${Number(item.nutrition.carbohydrates).toFixed(1)}</span></div>
+              </div>
+              <div class="history-calories">${item.nutrition.calories} <span class="unit">kcal</span></div>
+            `;
+          }
 
           // 写真なし：カロリー+PFCと食事区分が1行目、料理名とゴミ箱ボタンが2行目
           card.innerHTML = `
@@ -1109,12 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <!-- 1行目: カロリーとPFCチップス、食事区分チップ -->
               <div class="history-info-row-top">
                 <div class="history-left-group">
-                    <div class="history-pfc-chips">
-                      <div class="history-pfc-chip protein"><span class="label">P</span><span class="val">${Number(item.nutrition.protein).toFixed(1)}</span></div>
-                      <div class="history-pfc-chip fat"><span class="label">F</span><span class="val">${Number(item.nutrition.fat).toFixed(1)}</span></div>
-                      <div class="history-pfc-chip carbs"><span class="label">C</span><span class="val">${Number(item.nutrition.carbohydrates).toFixed(1)}</span></div>
-                    </div>
-                    <div class="history-calories">${item.nutrition.calories} <span class="unit">kcal</span></div>
+                  ${leftGroupHtml}
                 </div>
                 <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
               </div>
@@ -1297,6 +1338,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const updatedRecord = await response.json();
 
       // モーダル内の表示値をリアルタイムで上書き（アニメーション反映）
+      activeDetailMeal = updatedRecord;
+      btnReanalyzeModal.classList.remove('pulse-highlight');
+      btnReanalyzeModal.innerHTML = '🔄 再計算する';
+
       document.getElementById('modal-meal-title').textContent = updatedRecord.mealName || updatedRecord.textInput || '食事詳細';
       document.getElementById('modal-calories').textContent = updatedRecord.nutrition.calories;
       document.getElementById('modal-protein').textContent = Number(updatedRecord.nutrition.protein).toFixed(1);
@@ -1679,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // B. 取得した解析結果をそのまま自動でGoogle Driveに保存する
       const selectedDate = weightDateInput.value; // YYYY-MM-DD
       const activeChip = document.querySelector('#weight-type-chips .weight-chip.active');
-      const measurementType = activeChip ? activeChip.getAttribute('data-type') : 'other';
+      const measurementType = activeChip ? activeChip.getAttribute('data-type') : 'morning';
 
       const saveFormData = new FormData();
       saveFormData.append('date', selectedDate);
@@ -1991,7 +2036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 測定日と区分をモーダル上部フォームにセット
     weightModalDateInput.value = item.date ? item.date.substring(0, 10) : '';
-    weightModalTypeSelect.value = item.measurementType || 'other';
+    weightModalTypeSelect.value = item.measurementType || 'morning';
 
     // 各インプットに数値をバインド
     // 各インプットに数値をバインド (小数点1桁に統一して小数点を揃える)

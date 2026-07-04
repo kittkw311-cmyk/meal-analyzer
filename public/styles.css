@@ -485,18 +485,18 @@ body {
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 2px;
 }
 
 .history-card {
   display: flex;
   flex-direction: row;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 16px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-  margin-bottom: 8px !important;
+  margin-bottom: 5px !important;
   align-items: center;
   position: relative;
   cursor: pointer;
@@ -527,7 +527,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px; /* 1行目と2行目の間隔を画像に合わせて適度に広げる */
+  gap: 6px; /* 1行目と2行目の間隔をきゅっと縮める */
   min-width: 0;
 }
 
@@ -1005,9 +1005,9 @@ body {
   display: grid;
   grid-template-columns: 85px 85px 1fr;
   align-items: center;
-  margin-top: 18px;
-  margin-bottom: 8px;
-  padding: 8px 10px; /* 上下パディングを広げて縦幅に余裕をもたせる */
+  margin-top: 12px;
+  margin-bottom: 4px;
+  padding: 6px 10px; /* 上下パディングをきゅっと縮める */
   width: 100%;
   box-sizing: border-box;
 }
@@ -2266,7 +2266,7 @@ body {
 
   /* スマホ幅での履歴カード調整 */
   .history-card {
-    padding: 10px 12px !important;
+    padding: 6px 10px !important;
   }
   .history-left-group {
     gap: 6px !important;
@@ -2643,12 +2643,57 @@ body {
   box-sizing: border-box;
 }
 
+/* ==========================================================================
+   AI解析失敗時の履歴カードのスタイル
+   ========================================================================== */
+.history-card.failed-analysis {
+  border: 1.5px dashed #f5a623;
+  background-color: rgba(245, 166, 35, 0.05);
+}
 
+.history-card.failed-analysis:hover {
+  background-color: rgba(245, 166, 35, 0.08);
+}
 
+/* 失敗時バッジ */
+.history-failed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fff6e5;
+  border: 1px solid #ffe8cc;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #c77c02;
+}
 
+.history-failed-badge .warning-icon {
+  font-size: 12px;
+}
 
+/* 再計算ボタンの強調明滅アニメーション */
+.pulse-highlight {
+  background: linear-gradient(135deg, #f5a623, #e28400) !important;
+  color: white !important;
+  font-weight: bold !important;
+  border: none !important;
+  box-shadow: 0 4px 10px rgba(245, 166, 35, 0.3) !important;
+  animation: btnPulse 2s infinite ease-in-out;
+}
 
-
-
-
-
+@keyframes btnPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 10px rgba(245, 166, 35, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 10px rgba(245, 166, 35, 0.3);
+  }
+}
