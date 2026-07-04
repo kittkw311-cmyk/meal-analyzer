@@ -2091,6 +2091,14 @@ body {
   flex-shrink: 0;
 }
 
+.td-weight-diff {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .td-type-only {
   white-space: nowrap;
 }

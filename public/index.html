@@ -239,15 +239,14 @@
         <div class="body-composition-section" style="margin-top: 0;">
           <!-- 体組成の簡易履歴リスト -->
           <div class="card body-comp-history-card">
-            <h3 class="history-card-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>直近の測定履歴</h3>
             <div class="table-wrapper">
               <table class="weight-history-table">
                 <thead>
                   <tr>
                     <th>日付</th>
                     <th>体重 (kg)</th>
+                    <th>前回比 (kg)</th>
                     <th>基礎代謝 (kcal)</th>
-                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody id="weight-history-tbody">
@@ -613,10 +612,13 @@
         </div>
       </div>
 
-      <!-- 保存ボタンを下部固定 (スクロール外) -->
-      <div class="modal-action-row weight-modal-action-fixed" style="margin: 0; padding: 15px 20px; border-top: 1px solid var(--border-color); background: var(--card-bg); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-sizing: border-box;">
-        <button type="button" class="btn btn-primary modal-save-btn w-full" id="btn-save-weight-modal" style="margin: 0;">
+      <!-- アクションボタンを下部固定 (スクロール外) -->
+      <div class="modal-action-row weight-modal-action-fixed" style="margin: 0; padding: 15px 20px; border-top: 1px solid var(--border-color); background: var(--card-bg); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-sizing: border-box; display: flex; gap: 8px; width: 100%;">
+        <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-weight-modal" style="margin: 0; flex: 3;">
           変更を保存する
+        </button>
+        <button type="button" class="btn btn-danger modal-delete-btn" id="btn-delete-weight-modal" style="margin: 0; flex: 1; background-color: #fce8eb; border: 1.5px solid #f7a8b8; color: #ba546a; padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; outline: none; cursor: pointer; transition: all 0.2s;">
+          削除
         </button>
       </div>
     </div>

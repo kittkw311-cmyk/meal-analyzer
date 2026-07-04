@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const weightModalDateInput = document.getElementById('weight-modal-date-input');
   const weightModalTypeSelect = document.getElementById('weight-modal-type-select');
   const btnSaveWeightModal = document.getElementById('btn-save-weight-modal');
+  const btnDeleteWeightModal = document.getElementById('btn-delete-weight-modal');
   // 解析タブのサマリー要素
   const dailyWeightSummaryBar = document.getElementById('daily-weight-box');
   const summaryWeightVal = document.getElementById('summary-weight-val');
@@ -1926,19 +1927,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // 日付のフォーマット (例: 2026-07-03 -> 2026/07/03)
         const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
 
-        // 体重の増減差分の計算 (過去実績 i + 1 との比較)
-        let diffStr = '';
-        if (i < weightHistory.length - 1) {
-          const prevItem = weightHistory[i + 1];
-          if (item.weight !== null && prevItem.weight !== null) {
-            const diff = item.weight - prevItem.weight;
-            const sign = diff > 0 ? '+' : '';
-            const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
-            diffStr = `<span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(1)})</span>`;
+        // 朝の記録は前回の朝比、夜の記録は夜比、他は直前の同区分データ比を算出する
+        const currentType = item.measurementType || 'other';
+        let prevRecord = null;
+        for (let j = i + 1; j < weightHistory.length; j++) {
+          const compareType = weightHistory[j].measurementType || 'other';
+          if (compareType === currentType && weightHistory[j].weight !== null) {
+            prevRecord = weightHistory[j];
+            break;
           }
         }
 
-        const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(1) : '--.-'}</span> ${diffStr}`;
+        let typeDiffStr = '--';
+        let typeDiffClass = 'weight-diff-stable';
+        if (item.weight !== null && prevRecord !== null) {
+          const diff = item.weight - prevRecord.weight;
+          const sign = diff > 0 ? '+' : '';
+          typeDiffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
+          typeDiffStr = `<span class="weight-diff ${typeDiffClass}">${sign}${diff.toFixed(1)}</span>`;
+        }
+
+        const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(1) : '--.-'}</span>`;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1947,40 +1956,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="badge ${item.measurementType || 'other'}" style="margin-left: 6px;">${typeJa}</span>
           </td>
           <td class="td-weight">${tdWeightHTML}</td>
+          <td class="td-weight-diff">${typeDiffStr}</td>
           <td class="td-bmr-only"><span class="bmr-num">${item.bmr !== null ? item.bmr : '----'}</span></td>
-          <td class="td-action">
-            <button class="btn-delete-weight" data-id="${item.id}">🗑️</button>
-          </td>
         `;
 
         // 行自体をクリックした際の遷移（詳細モーダル起動）
         tr.addEventListener('click', () => {
           openWeightDetailModal(item);
-        });
-
-        // 削除ボタンイベント (イベント伝播を防止して詳細画面が開くのを防ぐ)
-        tr.querySelector('.btn-delete-weight').addEventListener('click', async (e) => {
-          e.stopPropagation();
-          if (!confirm('この測定データを削除しますか？')) return;
-
-          const loadingTextEl = loadingOverlay.querySelector('p');
-          const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-          loadingTextEl.textContent = '体組成データを削除しています...';
-          loadingSubTextEl.textContent = 'データをGoogleドライブから消去中';
-          loadingOverlay.style.display = 'flex';
-
-          try {
-            const delRes = await fetch(`/api/body-composition/${item.id}`, { method: 'DELETE' });
-            if (!delRes.ok) throw new Error('削除に失敗しました。');
-            
-            await loadWeightHistory();
-            await updateDailyWeightSummary();
-          } catch (err) {
-            console.error(err);
-            alert(err.message);
-          } finally {
-            loadingOverlay.style.display = 'none';
-          }
         });
 
         weightHistoryTbody.appendChild(tr);
@@ -2145,6 +2127,32 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       loadingOverlay.style.display = 'none';
       btnSaveWeightModal.disabled = false;
+    }
+  });
+
+  // モーダル内の「削除」ボタンの処理
+  btnDeleteWeightModal.addEventListener('click', async () => {
+    if (!currentEditingWeightId) return;
+    if (!confirm('この測定データを削除しますか？')) return;
+
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '体組成データを削除しています...';
+    loadingSubTextEl.textContent = 'データをGoogleドライブから消去中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const delRes = await fetch(`/api/body-composition/${currentEditingWeightId}`, { method: 'DELETE' });
+      if (!delRes.ok) throw new Error('削除に失敗しました。');
+      
+      weightDetailModal.style.display = 'none';
+      await loadWeightHistory();
+      await updateDailyWeightSummary();
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      loadingOverlay.style.display = 'none';
     }
   });
 
