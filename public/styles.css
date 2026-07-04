@@ -1954,7 +1954,7 @@ body {
   font-weight: 700;
 }
 
-.td-datetime .badge, .td-type-only .badge, .modal-meta-edit .badge {
+.td-datetime .badge, .td-type-only .badge, .modal-meta-edit .badge, .td-date-only .badge {
   font-size: 9px;
   font-weight: 800;
   padding: 2px 6px;
@@ -2076,10 +2076,19 @@ body {
 /* 各列のスタイル */
 .td-date-only {
   font-family: 'Outfit', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+.td-date-only .date-text {
+  width: 82px;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .td-type-only {
