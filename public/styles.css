@@ -1042,13 +1042,11 @@ body {
   flex: 1;
 }
 
-/* ヘッダー内専用のPFCチップおよびカロリーの差別化デザイン */
+/* ヘッダー内専用のPFCチップ：明細と同じボックスデザインで統一 */
 .history-date-header .history-pfc-chip {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
+  font-size: 12px;
 }
+
 
 .history-date-header .history-calories {
   font-size: 16px !important;

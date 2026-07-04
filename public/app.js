@@ -1099,7 +1099,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 日付の降順でソートして描画
       const sortedKeys = Object.keys(groups).sort().reverse();
-const todayKey = new Date().toISOString().slice(0,10);
+const _today = new Date();
+const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padStart(2, '0')}-${String(_today.getDate()).padStart(2, '0')}`;
+
       
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
