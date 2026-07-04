@@ -2061,18 +2061,28 @@ body {
   padding: 20px 0;
 }
 
-/* テーブルの行をクリック可能にするスタイル */
-.weight-history-table tbody tr {
+/* 各セルのインタラクティブスタイル */
+.weight-history-table td.clickable-cell {
   cursor: pointer;
   transition: background-color 0.2s cubic-bezier(0.1, 0.8, 0.2, 1);
 }
 
-.weight-history-table tbody tr:hover {
-  background-color: rgba(43, 85, 133, 0.05);
+.weight-history-table td.clickable-cell[data-has-data="true"]:hover {
+  background-color: rgba(43, 85, 133, 0.08);
 }
 
-.weight-history-table tbody tr:active {
-  background-color: rgba(43, 85, 133, 0.1);
+.weight-history-table td.clickable-cell[data-has-data="true"]:active {
+  background-color: rgba(43, 85, 133, 0.15);
+}
+
+.weight-history-table td.td-date-only:hover,
+.weight-history-table td.td-bmr-only:hover {
+  background-color: rgba(43, 85, 133, 0.03);
+}
+
+.weight-history-table td.td-date-only:active,
+.weight-history-table td.td-bmr-only:active {
+  background-color: rgba(43, 85, 133, 0.06);
 }
 
 /* 各列のスタイル */
@@ -2082,31 +2092,17 @@ body {
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
 }
 
 .td-date-only .date-text {
-  width: 82px;
-  display: inline-block;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
 }
 
-.td-weight-diff {
+.weight-empty-placeholder {
+  color: var(--text-muted);
+  opacity: 0.45;
+  font-weight: 500;
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.weight-row-same-day td {
-  border-bottom: none !important;
-}
-
-.td-type-only {
-  white-space: nowrap;
 }
 
 .td-bmr-only {

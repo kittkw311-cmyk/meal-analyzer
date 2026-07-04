@@ -1941,77 +1941,132 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      weightHistory.forEach((item, i) => {
-        const typeJa = {
-          morning: '朝',
-          night: '夜',
-          other: '他'
-        }[item.measurementType || 'other'];
-
-        // 日付のフォーマット (例: 2026-07-03 -> 2026/07/03)
-        const dateDisp = item.date ? item.date.replace(/-/g, '/') : '----/--/--';
-
-        // 前後のレコードと比較して同日判定
-        let isDuplicateDate = false;
-        if (i > 0) {
-          const prevItem = weightHistory[i - 1];
-          const prevDateDisp = prevItem.date ? prevItem.date.replace(/-/g, '/') : '----/--/--';
-          if (dateDisp === prevDateDisp) {
-            isDuplicateDate = true;
-          }
-        }
-
-        let hasNextSameDay = false;
-        if (i < weightHistory.length - 1) {
-          const nextItem = weightHistory[i + 1];
-          const nextDateDisp = nextItem.date ? nextItem.date.replace(/-/g, '/') : '----/--/--';
-          if (dateDisp === nextDateDisp) {
-            hasNextSameDay = true;
-          }
-        }
-
-        const dateTextHTML = isDuplicateDate ? '' : dateDisp;
-
-        // 朝の記録は前回の朝比、夜の記録は夜比、他は直前の同区分データ比を算出する
+      // 1. 各レコードについて、同区分（朝・夜）での前回比差分をあらかじめ計算して付与する
+      weightHistory.forEach((item, idx) => {
         const currentType = item.measurementType || 'other';
         let prevRecord = null;
-        for (let j = i + 1; j < weightHistory.length; j++) {
+        for (let j = idx + 1; j < weightHistory.length; j++) {
           const compareType = weightHistory[j].measurementType || 'other';
           if (compareType === currentType && weightHistory[j].weight !== null) {
             prevRecord = weightHistory[j];
             break;
           }
         }
-
-        let typeDiffStr = '--';
-        let typeDiffClass = 'weight-diff-stable';
+        
         if (item.weight !== null && prevRecord !== null) {
-          const diff = item.weight - prevRecord.weight;
-          const sign = diff > 0 ? '+' : '';
-          typeDiffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
-          typeDiffStr = `<span class="weight-diff ${typeDiffClass}">${sign}${diff.toFixed(1)}</span>`;
+          item.typeDiff = item.weight - prevRecord.weight;
+        } else {
+          item.typeDiff = null;
+        }
+      });
+
+      // 2. 日付ごとにレコードを集約する
+      const dailyGroups = {};
+      weightHistory.forEach(item => {
+        const dateKey = item.date ? item.date.substring(0, 10) : '-----';
+        if (!dailyGroups[dateKey]) {
+          dailyGroups[dateKey] = {
+            date: dateKey,
+            morning: null,
+            night: null
+          };
+        }
+        if (item.measurementType === 'morning') {
+          dailyGroups[dateKey].morning = item;
+        } else if (item.measurementType === 'night') {
+          dailyGroups[dateKey].night = item;
+        } else {
+          if (!dailyGroups[dateKey].morning) {
+            dailyGroups[dateKey].morning = item;
+          } else if (!dailyGroups[dateKey].night) {
+            dailyGroups[dateKey].night = item;
+          }
+        }
+      });
+
+      // 3. 日付の降順でソートして描画
+      const sortedDates = Object.keys(dailyGroups).sort((a, b) => new Date(b) - new Date(a));
+
+      sortedDates.forEach(dateKey => {
+        const dayGroup = dailyGroups[dateKey];
+        const morningItem = dayGroup.morning;
+        const nightItem = dayGroup.night;
+
+        // 朝の体重・差分HTML
+        let morningWeightHTML = '<span class="weight-empty-placeholder">--.-</span>';
+        if (morningItem && morningItem.weight !== null) {
+          let diffStr = '';
+          if (morningItem.typeDiff !== null) {
+            const diff = morningItem.typeDiff;
+            const sign = diff > 0 ? '+' : '';
+            const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
+            diffStr = ` <span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(1)})</span>`;
+          }
+          morningWeightHTML = `<span class="weight-num">${morningItem.weight.toFixed(1)}</span>${diffStr}`;
         }
 
-        const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(1) : '--.-'}</span>`;
+        // 夜の体重・差分HTML
+        let nightWeightHTML = '<span class="weight-empty-placeholder">--.-</span>';
+        if (nightItem && nightItem.weight !== null) {
+          let diffStr = '';
+          if (nightItem.typeDiff !== null) {
+            const diff = nightItem.typeDiff;
+            const sign = diff > 0 ? '+' : '';
+            const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
+            diffStr = ` <span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(1)})</span>`;
+          }
+          nightWeightHTML = `<span class="weight-num">${nightItem.weight.toFixed(1)}</span>${diffStr}`;
+        }
+
+        // 基礎代謝の決定 (夜データ優先、無ければ朝データ)
+        let bmrVal = '----';
+        if (nightItem && nightItem.bmr !== null) {
+          bmrVal = nightItem.bmr;
+        } else if (morningItem && morningItem.bmr !== null) {
+          bmrVal = morningItem.bmr;
+        }
+
+        const dateDisp = dateKey.replace(/-/g, '/');
 
         const tr = document.createElement('tr');
-        if (hasNextSameDay) {
-          tr.className = 'weight-row-same-day';
-        }
         tr.innerHTML = `
-          <td class="td-date-only">
-            <span class="date-text">${dateTextHTML}</span>
-            <span class="badge ${item.measurementType || 'other'}" style="margin-left: 6px;">${typeJa}</span>
+          <td class="td-date-only clickable-cell">
+            <span class="date-text">${dateDisp}</span>
           </td>
-          <td class="td-weight">${tdWeightHTML}</td>
-          <td class="td-weight-diff">${typeDiffStr}</td>
-          <td class="td-bmr-only"><span class="bmr-num">${item.bmr !== null ? item.bmr : '----'}</span></td>
+          <td class="td-weight morning-cell clickable-cell" data-has-data="${!!morningItem}">${morningWeightHTML}</td>
+          <td class="td-weight night-cell clickable-cell" data-has-data="${!!nightItem}">${nightWeightHTML}</td>
+          <td class="td-bmr-only clickable-cell"><span class="bmr-num">${bmrVal}</span></td>
         `;
 
-        // 行自体をクリックした際の遷移（詳細モーダル起動）
-        tr.addEventListener('click', () => {
-          openWeightDetailModal(item);
+        // 各セルへの個別クリックイベントの適用 (朝・夜を個別に編集できるようにする)
+        const morningCell = tr.querySelector('.morning-cell');
+        morningCell.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (morningItem) {
+            openWeightDetailModal(morningItem);
+          }
         });
+
+        const nightCell = tr.querySelector('.night-cell');
+        nightCell.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (nightItem) {
+            openWeightDetailModal(nightItem);
+          }
+        });
+
+        // 日付・基礎代謝セルのクリック時のフォールバック
+        const dateCell = tr.querySelector('.td-date-only');
+        const bmrCell = tr.querySelector('.td-bmr-only');
+        const openFallbackModal = () => {
+          if (nightItem) {
+            openWeightDetailModal(nightItem);
+          } else if (morningItem) {
+            openWeightDetailModal(morningItem);
+          }
+        };
+        dateCell.addEventListener('click', openFallbackModal);
+        bmrCell.addEventListener('click', openFallbackModal);
 
         weightHistoryTbody.appendChild(tr);
       });
