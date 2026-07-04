@@ -1226,20 +1226,21 @@ body {
 .modal-nutrition-chips-wrapper {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
   width: 100%;
   margin-top: 12px;
   margin-bottom: 12px;
+  box-sizing: border-box;
 }
 
 .modal-nutrition-chip {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  width: 58px;
-  height: 26px;
+  flex: 1;
+  height: 32px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 800;
@@ -1247,13 +1248,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
   box-sizing: border-box;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .modal-nutrition-chip.calorie {
   background-color: #f2f4f3;
   color: var(--text-main);
-  width: 95px;
+  flex: 1.4;
   justify-content: space-between;
 }
 
@@ -2308,16 +2309,18 @@ body {
     margin-bottom: 8px !important;
   }
   .modal-nutrition-chip {
-    width: 56px !important;
-    height: 22px !important;
-    padding: 0 6px !important;
+    width: auto !important;
+    flex: 1 !important;
+    height: 28px !important;
+    padding: 0 8px !important;
     font-size: 11px !important;
     border-radius: 8px !important;
     letter-spacing: -0.5px !important;
     justify-content: space-between !important;
   }
   .modal-nutrition-chip.calorie {
-    width: 84px !important;
+    width: auto !important;
+    flex: 1.4 !important;
     justify-content: space-between !important;
   }
 
