@@ -25,6 +25,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+input[type="number"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #e8efe9; /* アプリ外背景（デスクトップ表示用） */
@@ -1880,6 +1885,8 @@ body {
   width: 100%;
   outline: none;
   padding: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 簡易履歴カード */
@@ -1908,6 +1915,15 @@ body {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+}
+
+.weight-history-table th:nth-child(2),
+.weight-history-table td:nth-child(2),
+.weight-history-table th:nth-child(3),
+.weight-history-table td:nth-child(3),
+.weight-history-table th:nth-child(4),
+.weight-history-table td:nth-child(4) {
+  text-align: right;
 }
 
 .weight-history-table th {
@@ -2118,7 +2134,7 @@ body {
   color: var(--text-main);
   font-variant-numeric: tabular-nums;
   width: 38px;
-  text-align: left;
+  text-align: right;
 }
 
 .weight-cell-container .weight-diff {
@@ -2140,7 +2156,7 @@ body {
 
 .weight-cell-container .weight-empty-placeholder:first-child {
   width: 38px;
-  text-align: left;
+  text-align: right;
 }
 
 .weight-cell-container .weight-empty-placeholder:last-child {
@@ -2235,10 +2251,11 @@ body {
   font-weight: 800;
   color: var(--text-main);
   width: 60px;
-  text-align: center;
+  text-align: right;
   outline: none;
   padding: 2px 0;
   transition: border-bottom-color 0.2s;
+  font-variant-numeric: tabular-nums;
 }
 
 .weight-modal-input:focus {

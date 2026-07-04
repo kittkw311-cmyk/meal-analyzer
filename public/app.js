@@ -329,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 初期実行
   initializeSelectors();
+  validateWeightInputs();
 
   // ==========================================================================
   // Navigation (Tab Switch)
@@ -456,6 +457,14 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAnalyze.disabled = !(hasPreset || hasImage || hasText);
   }
 
+  function validateWeightInputs() {
+    const hasImage = !!selectedWeightFile;
+    const hasText = weightTextInput && weightTextInput.value.trim().length > 0;
+    if (btnAnalyzeWeight) {
+      btnAnalyzeWeight.disabled = !(hasImage || hasText);
+    }
+  }
+
   if (presetSelector) {
     presetSelector.addEventListener('change', () => {
       const selectedId = presetSelector.value;
@@ -473,6 +482,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   mealTextInput.addEventListener('input', validateInputs);
+  if (weightTextInput) {
+    weightTextInput.addEventListener('input', validateWeightInputs);
+  }
 
   // ==========================================================================
   // Analyze Meal Execution
@@ -1677,6 +1689,7 @@ document.addEventListener('DOMContentLoaded', () => {
       weightUploadBadge.style.display = 'inline-flex'; // 件数バッジを表示
     };
     reader.readAsDataURL(file);
+    validateWeightInputs();
   };
 
   weightCameraInput.addEventListener('change', (e) => handleWeightFileSelect(e.target.files[0]));
@@ -1689,6 +1702,7 @@ document.addEventListener('DOMContentLoaded', () => {
     weightPreviewContainer.style.display = 'none';
     weightImagePreview.src = '';
     weightUploadBadge.style.display = 'none'; // バッジを非表示
+    validateWeightInputs();
   };
 
   btnRemoveWeightImage.addEventListener('click', (e) => {
@@ -1721,11 +1735,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. 体組成データの登録 (自動解析＆保存)
   btnAnalyzeWeight.addEventListener('click', async () => {
-    if (!selectedWeightFile && !weightTextInput.value.trim()) {
-      alert('画像を選択するか、または数値を入力してください。');
-      return;
-    }
-
     const loadingTextEl = loadingOverlay.querySelector('p');
     const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
     loadingTextEl.textContent = 'AIが体組成データを解析しています...';
@@ -1800,6 +1809,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearWeightImage();
       weightTextInput.value = '';
       weightResultEditContainer.style.display = 'none';
+      validateWeightInputs();
 
       // 測定日は本日の日付、測定区分は現在時刻に応じたデフォルトへ自動再設定
       const today = new Date();

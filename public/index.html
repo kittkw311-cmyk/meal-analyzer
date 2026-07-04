@@ -141,7 +141,7 @@
               </div>
             </div>
 
-            <button class="btn btn-primary btn-block" id="btn-analyze-weight">体組成データを登録する</button>
+            <button class="btn btn-primary btn-block" id="btn-analyze-weight" disabled>体組成データを登録する</button>
           </div>
 
           <!-- 解析結果確認・編集フォーム (最初は非表示) -->
@@ -355,19 +355,19 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
-                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
+                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
                 </div>
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
-                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
+                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
                 </div>
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
-                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
+                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
                 </div>
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
-                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
+                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
                 </div>
               </div>
               <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
