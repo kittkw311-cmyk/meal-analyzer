@@ -231,7 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 画像が無い場合のプレースホルダー対応 (ない場合は親コンテナごと非表示にしてスリム化)
     const modalImage = document.getElementById('modal-meal-image');
     const modalImageContainer = modalImage.closest('.modal-image-container');
-    if (item.imageId) {
+    const hasImage = item.imageId && 
+                     item.imageId !== 'null' && 
+                     item.imageId !== 'undefined' && 
+                     item.imageId !== 'none' && 
+                     String(item.imageId).trim() !== '';
+                     
+    if (hasImage) {
       modalImage.src = `/api/image?source=${item.imageSource}&id=${item.imageId}`;
       if (modalImageContainer) modalImageContainer.style.display = 'block';
       modalImage.style.display = 'block';
