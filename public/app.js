@@ -1993,29 +1993,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const nightItem = dayGroup.night;
 
         // 朝の体重・差分HTML
-        let morningWeightHTML = '<span class="weight-empty-placeholder">--.-</span>';
+        let morningWeightHTML = '<div class="weight-cell-container"><span class="weight-empty-placeholder">--.-</span><span class="weight-empty-placeholder">--</span></div>';
         if (morningItem && morningItem.weight !== null) {
-          let diffStr = '';
+          let diffStr = '<span class="weight-diff weight-diff-stable">±0</span>';
           if (morningItem.typeDiff !== null) {
             const diff = morningItem.typeDiff;
             const sign = diff > 0 ? '+' : '';
             const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
-            diffStr = ` <span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(1)})</span>`;
+            diffStr = `<span class="weight-diff ${diffClass}">${sign}${diff.toFixed(1)}</span>`;
+          } else {
+            diffStr = '<span class="weight-diff weight-diff-stable">--</span>';
           }
-          morningWeightHTML = `<span class="weight-num">${morningItem.weight.toFixed(1)}</span>${diffStr}`;
+          morningWeightHTML = `
+            <div class="weight-cell-container">
+              <span class="weight-num">${morningItem.weight.toFixed(1)}</span>
+              ${diffStr}
+            </div>
+          `;
         }
 
         // 夜の体重・差分HTML
-        let nightWeightHTML = '<span class="weight-empty-placeholder">--.-</span>';
+        let nightWeightHTML = '<div class="weight-cell-container"><span class="weight-empty-placeholder">--.-</span><span class="weight-empty-placeholder">--</span></div>';
         if (nightItem && nightItem.weight !== null) {
-          let diffStr = '';
+          let diffStr = '<span class="weight-diff weight-diff-stable">±0</span>';
           if (nightItem.typeDiff !== null) {
             const diff = nightItem.typeDiff;
             const sign = diff > 0 ? '+' : '';
             const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
-            diffStr = ` <span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(1)})</span>`;
+            diffStr = `<span class="weight-diff ${diffClass}">${sign}${diff.toFixed(1)}</span>`;
+          } else {
+            diffStr = '<span class="weight-diff weight-diff-stable">--</span>';
           }
-          nightWeightHTML = `<span class="weight-num">${nightItem.weight.toFixed(1)}</span>${diffStr}`;
+          nightWeightHTML = `
+            <div class="weight-cell-container">
+              <span class="weight-num">${nightItem.weight.toFixed(1)}</span>
+              ${diffStr}
+            </div>
+          `;
         }
 
         // 基礎代謝の決定 (夜データ優先、無ければ朝データ)

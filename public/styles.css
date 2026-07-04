@@ -2105,6 +2105,51 @@ body {
   font-family: 'Outfit', sans-serif;
 }
 
+.weight-cell-container {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 96px;
+  box-sizing: border-box;
+}
+
+.weight-cell-container .weight-num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  width: 44px;
+  text-align: left;
+}
+
+.weight-cell-container .weight-diff {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  width: 42px;
+  text-align: right;
+}
+
+.weight-cell-container .weight-empty-placeholder {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  opacity: 0.35;
+}
+
+.weight-cell-container .weight-empty-placeholder:first-child {
+  width: 44px;
+  text-align: left;
+}
+
+.weight-cell-container .weight-empty-placeholder:last-child {
+  width: 42px;
+  text-align: right;
+}
+
 .td-bmr-only {
   font-family: 'Outfit', sans-serif;
   font-size: 13px !important;
