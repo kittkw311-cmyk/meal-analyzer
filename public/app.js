@@ -1934,11 +1934,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const diff = item.weight - prevItem.weight;
             const sign = diff > 0 ? '+' : '';
             const diffClass = diff > 0 ? 'weight-diff-up' : diff < 0 ? 'weight-diff-down' : 'weight-diff-stable';
-            diffStr = `<span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(2)})</span>`;
+            diffStr = `<span class="weight-diff ${diffClass}">(${sign}${diff.toFixed(1)})</span>`;
           }
         }
 
-        const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(2) : '--.--'}</span> ${diffStr}`;
+        const tdWeightHTML = `<span class="weight-num">${item.weight !== null ? item.weight.toFixed(1) : '--.-'}</span> ${diffStr}`;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
