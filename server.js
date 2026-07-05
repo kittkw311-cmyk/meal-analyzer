@@ -1489,6 +1489,114 @@ app.put('/api/body-composition/:id', async (req, res) => {
   }
 });
 
+// ==========================================================================
+// 総括AI分析エンドポイント
+// ==========================================================================
+app.post('/api/analyze-summary', async (req, res) => {
+  try {
+    const { date, comment } = req.body;
+    if (!date) return res.status(400).json({ error: '日付が指定されていません。' });
+    if (!ai) return res.status(500).json({ error: 'Gemini APIが初期化されていません。' });
+
+    // 該当日の食事データを取得
+    const historyData = await readHistory();
+    const dayMeals = historyData.filter(item => {
+      const d = new Date(item.mealDate || item.date);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}` === date;
+    });
+
+    // 該当日の体組成データを取得（±1日以内で最も近いもの）
+    const weightData = await readWeight();
+    const targetMs = new Date(date).getTime();
+    const nearbyWeight = weightData
+      .filter(w => Math.abs(new Date(w.date).getTime() - targetMs) <= 86400000 * 1.5)
+      .sort((a, b) => Math.abs(new Date(a.date).getTime() - targetMs) - Math.abs(new Date(b.date).getTime() - targetMs));
+    const bodyComp = nearbyWeight.length > 0 ? nearbyWeight[0] : null;
+
+    // プロンプト構築
+    const mealsText = dayMeals.length > 0
+      ? dayMeals.map(m => {
+          const typeJa = { morning: '朝食', noon: '昼食', night: '夕食', snack: '間食' }[m.mealType || 'snack'];
+          const name = m.mealName || m.nutrition?.mealName || m.textInput || '不明';
+          const cal = m.nutrition?.calories ?? '-';
+          const p = m.nutrition?.protein ?? '-';
+          const f = m.nutrition?.fat ?? '-';
+          const c = m.nutrition?.carbohydrates ?? '-';
+          return `・${typeJa}「${name}」: ${cal}kcal (P:${p}g / F:${f}g / C:${c}g)`;
+        }).join('\n')
+      : '（この日の食事記録なし）';
+
+    const bodyText = bodyComp
+      ? [
+          bodyComp.weight != null ? `体重: ${bodyComp.weight}kg` : null,
+          bodyComp.bmi != null ? `BMI: ${bodyComp.bmi}` : null,
+          bodyComp.bodyFat != null ? `体脂肪率: ${bodyComp.bodyFat}%` : null,
+          bodyComp.muscleMass != null ? `筋肉量: ${bodyComp.muscleMass}kg` : null,
+          bodyComp.bmr != null ? `基礎代謝: ${bodyComp.bmr}kcal` : null,
+          bodyComp.visceralFat != null ? `内臓脂肪: ${bodyComp.visceralFat}` : null,
+        ].filter(Boolean).join(' / ')
+      : '（体組成データなし）';
+
+    const commentText = comment && comment.trim() ? comment.trim() : '（コメントなし）';
+
+    const prompt = `あなたはプロのダイエットトレーナーです。以下のデータをもとに、${date}（1日分）の総括分析を日本語で行ってください。
+
+【食事内容】
+${mealsText}
+
+【体組成データ】
+${bodyText}
+
+【ユーザーコメント・メモ】
+${commentText}
+
+以下の観点で具体的にアドバイスしてください（マークダウン記号は使わず、読みやすいプレーンテキストで）：
+1. この日の食事評価（カロリー・栄養バランス）
+2. 体組成の状態コメント（データがある場合）
+3. 良かった点・改善すべき点
+4. 明日以降への具体的なアドバイス（食事・生活習慣）
+
+200〜400文字程度でまとめてください。`;
+
+    // 429対策: 最大2回リトライ
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        });
+        break; // 成功したらループ脱出
+      } catch (retryErr) {
+        const is429 = retryErr.message?.includes('429') || retryErr.status === 429;
+        if (is429 && attempt < 2) {
+          const waitMs = (attempt + 1) * 3000; // 3秒 → 6秒
+          console.warn(`Gemini 429 rate limit. Retrying in ${waitMs}ms... (attempt ${attempt + 1})`);
+          await new Promise(r => setTimeout(r, waitMs));
+        } else {
+          throw retryErr;
+        }
+      }
+    }
+
+    const analysisText = response?.candidates?.[0]?.content?.parts?.[0]?.text || '分析結果を取得できませんでした。';
+    res.json({ analysis: analysisText, date });
+
+  } catch (err) {
+    console.error('analyze-summary error:', err);
+    const is429 = err.message?.includes('429') || err.status === 429;
+    const msg = is429
+      ? 'APIの利用制限に達しました。しばらく待ってから再試行してください。'
+      : 'AI分析中にエラーが発生しました: ' + err.message;
+    res.status(is429 ? 429 : 500).json({ error: msg });
+  }
+
+});
+
+
 // サーバー起動処理 (非担当初期化後に起動)
 (async () => {
   if (drive && folderId) {

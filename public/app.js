@@ -69,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let caloriesChart = null;
   let pfcChart = null;
   let weightTrendChart = null;
+  let bmiTrendChart = null;
+
 
   // Selected file reference
   let selectedFile = null;
@@ -1450,157 +1452,94 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   // ==========================================================================
   async function loadStats() {
     try {
-      const response = await fetch('/api/stats');
-      const stats = await response.json();
+      // 体組成データを取得して体重・BMI推移を描画
+      const weightRes = await fetch('/api/body-composition');
+      if (!weightRes.ok) throw new Error('データ取得失敗');
+      const weightHistory = await weightRes.json();
 
-      statsTotalMeals.textContent = stats.totalMeals;
-      statsAvgCalories.textContent = stats.averageCalories;
+      // 古い順にソート（時系列）
+      const validHistory = [...weightHistory]
+        .filter(d => d.weight !== null && d.weight > 0)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // 1. カロリー推移グラフの描画
-      const caloriesCtx = document.getElementById('calories-chart').getContext('2d');
-      if (caloriesChart) {
-        caloriesChart.destroy();
-      }
-      
-      const labels = stats.dailyCalories.map(d => d.label);
-      const calorieValues = stats.dailyCalories.map(d => d.calories);
+      // 直近30件のみ
+      const slicedHistory = validHistory.slice(-30);
 
-      caloriesChart = new Chart(caloriesCtx, {
+      const weightLabels = slicedHistory.map(d => {
+        const dateObj = new Date(d.date);
+        return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+      });
+      const weightValues = slicedHistory.map(d => d.weight);
+      const bmiValues = slicedHistory.map(d => d.bmi ?? null);
+
+      // 1. 体重推移グラフ
+      const weightCtx = document.getElementById('weight-trend-chart').getContext('2d');
+      if (weightTrendChart) weightTrendChart.destroy();
+
+      weightTrendChart = new Chart(weightCtx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels: weightLabels,
           datasets: [{
-            label: '摂取エネルギー (kcal)',
-            data: calorieValues,
-            borderColor: '#80c498',
-            backgroundColor: 'rgba(156, 212, 176, 0.2)',
+            label: '体重 (kg)',
+            data: weightValues,
+            borderColor: '#4a90e2',
+            backgroundColor: 'rgba(74, 144, 226, 0.1)',
             borderWidth: 3,
             fill: true,
-            tension: 0.3,
-            pointBackgroundColor: '#80c498',
+            tension: 0.2,
+            pointBackgroundColor: '#4a90e2',
             pointRadius: 4
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: 'rgba(200, 220, 210, 0.3)' }
-            },
-            x: {
-              grid: { display: false }
-            }
+            y: { grace: '5%', grid: { color: 'rgba(200, 220, 210, 0.3)' } },
+            x: { grid: { display: false } }
           }
         }
       });
 
-      // 2. PFCバランス比率グラフの描画
-      const pfcCtx = document.getElementById('pfc-chart').getContext('2d');
-      if (pfcChart) {
-        pfcChart.destroy();
-      }
+      // 2. BMI推移グラフ
+      const bmiCtx = document.getElementById('bmi-trend-chart').getContext('2d');
+      if (typeof bmiTrendChart !== 'undefined' && bmiTrendChart) bmiTrendChart.destroy();
 
-      const pfcData = stats.pfcAverage;
-      const totalPfc = pfcData.protein + pfcData.fat + pfcData.carbohydrates;
-
-      pfcChart = new Chart(pfcCtx, {
-        type: 'doughnut',
+      bmiTrendChart = new Chart(bmiCtx, {
+        type: 'line',
         data: {
-          labels: ['タンパク質 (g)', '脂質 (g)', '炭水化物 (g)'],
+          labels: weightLabels,
           datasets: [{
-            data: totalPfc > 0 ? [pfcData.protein, pfcData.fat, pfcData.carbohydrates] : [0, 0, 0],
-            backgroundColor: ['#9ac2f4', '#fbd87f', '#f7a8b8'],
-            borderWidth: 2,
-            borderColor: '#ffffff'
+            label: 'BMI',
+            data: bmiValues,
+            borderColor: '#a06cc1',
+            backgroundColor: 'rgba(160, 108, 193, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.2,
+            pointBackgroundColor: '#a06cc1',
+            pointRadius: 4,
+            spanGaps: true
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                font: { family: 'Noto Sans JP', size: 11 },
-                boxWidth: 12
-              }
-            }
-          },
-          cutout: '65%'
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grace: '5%', grid: { color: 'rgba(200, 220, 210, 0.3)' } },
+            x: { grid: { display: false } }
+          }
         }
       });
-
-      // 3. 体重推移グラフの描画
-      const weightCtx = document.getElementById('weight-trend-chart').getContext('2d');
-      if (weightTrendChart) {
-        weightTrendChart.destroy();
-      }
-
-      try {
-        const weightRes = await fetch('/api/body-composition');
-        if (weightRes.ok) {
-          const weightHistory = await weightRes.json();
-          // 古い順にソート (時系列)
-          const validHistory = [...weightHistory]
-            .filter(d => d.weight !== null && d.weight > 0)
-            .sort((a, b) => new Date(a.date) - new Date(b.date));
-          
-          // 直近30件のみ
-          const slicedHistory = validHistory.slice(-30);
-          
-          const weightLabels = slicedHistory.map(d => {
-            const dateObj = new Date(d.date);
-            return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
-          });
-          const weightValues = slicedHistory.map(d => d.weight);
-
-          weightTrendChart = new Chart(weightCtx, {
-            type: 'line',
-            data: {
-              labels: weightLabels,
-              datasets: [{
-                label: '体重 (kg)',
-                data: weightValues,
-                borderColor: '#4a90e2',
-                backgroundColor: 'rgba(74, 144, 226, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.2,
-                pointBackgroundColor: '#4a90e2',
-                pointRadius: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false }
-              },
-              scales: {
-                y: {
-                  grace: '5%',
-                  grid: { color: 'rgba(200, 220, 210, 0.3)' }
-                },
-                x: {
-                  grid: { display: false }
-                }
-              }
-            }
-          });
-        }
-      } catch (weightErr) {
-        console.error('Failed to load weight trend chart:', weightErr);
-      }
 
     } catch (err) {
       console.error('Failed to load stats:', err);
     }
   }
+
 
   // ==========================================================================
   // 体組成 (Weight / Body Composition) OCR & 記録ロジック
@@ -2344,6 +2283,78 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   weightDetailModal.addEventListener('click', (e) => {
     if (e.target === weightDetailModal) {
       weightDetailModal.style.display = 'none';
+    }
+  });
+
+  // ==========================================================================
+  // 総括タブ - AI分析ロジック
+  // ==========================================================================
+  const summaryDateInput = document.getElementById('summary-date-input');
+  const summaryCommentInput = document.getElementById('summary-comment-input');
+  const btnAnalyzeSummary = document.getElementById('btn-analyze-summary');
+  const summaryResultContainer = document.getElementById('summary-result-container');
+  const summaryResultText = document.getElementById('summary-result-text');
+  const summaryResultDate = document.getElementById('summary-result-date');
+  const summaryLoading = document.getElementById('summary-loading');
+
+  // 総括タブ表示時に今日の日付をセット
+  const initSummaryDate = () => {
+    const t = new Date();
+    summaryDateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  };
+  initSummaryDate();
+
+  // タブ切り替え時にも日付を初期化
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.getAttribute('data-tab') === 'tab-summary') {
+        if (!summaryDateInput.value) initSummaryDate();
+      }
+    });
+  });
+
+  // AI分析ボタン
+  btnAnalyzeSummary.addEventListener('click', async () => {
+    const date = summaryDateInput.value;
+    if (!date) {
+      alert('分析する日付を指定してください。');
+      return;
+    }
+    const comment = summaryCommentInput.value.trim();
+
+    // ローディング表示
+    btnAnalyzeSummary.disabled = true;
+    summaryResultContainer.style.display = 'none';
+    summaryLoading.style.display = 'block';
+
+    try {
+      const res = await fetch('/api/analyze-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, comment })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = res.status === 429
+          ? 'APIの利用制限に達しました。\n少し時間をおいてから再度お試しください。'
+          : (data.error || '分析に失敗しました。');
+        throw new Error(msg);
+      }
+
+      // 結果表示
+      const dateObj = new Date(date + 'T00:00:00');
+      const wday = ['日','月','火','水','木','金','土'][dateObj.getDay()];
+      summaryResultDate.textContent = `${dateObj.getMonth()+1}/${dateObj.getDate()}(${wday}) の分析結果`;
+      summaryResultText.textContent = data.analysis;
+      summaryResultContainer.style.display = 'block';
+
+    } catch (err) {
+      console.error('Summary analysis error:', err);
+      alert('AI分析中にエラーが発生しました: ' + err.message);
+    } finally {
+      summaryLoading.style.display = 'none';
+      btnAnalyzeSummary.disabled = false;
     }
   });
 

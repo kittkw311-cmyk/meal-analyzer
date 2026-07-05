@@ -262,32 +262,7 @@
 
       <!-- 3. 統計タブ -->
       <section id="tab-stats" class="tab-content">
-        <h2 class="section-title"><svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>栄養統計</h2>
-        
-        <div class="stats-summary-grid">
-          <div class="card stats-summary-card">
-            <span class="summary-label">総解析数</span>
-            <span class="summary-value" id="stats-total-meals">0</span>
-          </div>
-          <div class="card stats-summary-card">
-            <span class="summary-label">1食平均</span>
-            <span class="summary-value"><span id="stats-avg-calories">0</span> <span class="unit">kcal</span></span>
-          </div>
-        </div>
-
-        <div class="card chart-card">
-          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>カロリー推移 (直近7日間)</h3>
-          <div class="chart-container">
-            <canvas id="calories-chart"></canvas>
-          </div>
-        </div>
-
-        <div class="card chart-card">
-          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>平均PFCバランス</h3>
-          <div class="chart-container">
-            <canvas id="pfc-chart"></canvas>
-          </div>
-        </div>
+        <h2 class="section-title"><svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体組成推移</h2>
 
         <div class="card chart-card">
           <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体重推移 (直近30回測定)</h3>
@@ -295,7 +270,15 @@
             <canvas id="weight-trend-chart"></canvas>
           </div>
         </div>
+
+        <div class="card chart-card">
+          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>BMI推移 (直近30回測定)</h3>
+          <div class="chart-container">
+            <canvas id="bmi-trend-chart"></canvas>
+          </div>
+        </div>
       </section>
+
 
       <!-- 4. 定番タブ -->
       <section id="tab-presets" class="tab-content">
@@ -385,6 +368,47 @@
           </div>
         </div>
       </section>
+      <!-- 5. 総括タブ -->
+      <section id="tab-summary" class="tab-content">
+        <h2 class="section-title">
+          <svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          AI総括
+        </h2>
+
+        <div class="card upload-card" style="margin-bottom: 14px;">
+          <!-- 日付指定 -->
+          <div class="selectors-inline-row" style="margin-bottom: 12px;">
+            <input type="date" id="summary-date-input" class="date-input" style="flex: 1;">
+          </div>
+
+          <!-- コメント入力 -->
+          <div class="text-input-area" style="margin-bottom: 12px;">
+            <textarea id="summary-comment-input" class="meal-textarea" placeholder="体調、目標、気になること、トレーナーへのメモなど自由に入力..." rows="3"></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="btn-analyze-summary">
+            <svg class="icon-svg" style="margin-right: 6px; vertical-align: -2px; width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            AIダイエット分析
+          </button>
+        </div>
+
+        <!-- 分析結果表示エリア -->
+        <div id="summary-result-container" style="display: none;">
+          <div class="card" style="padding: 16px; border-radius: 14px; border-left: 4px solid var(--primary);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+              <svg class="icon-svg" style="color: var(--primary); width: 18px; height: 18px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span id="summary-result-date" style="font-size: 12px; color: var(--text-muted); font-weight: 700;"></span>
+            </div>
+            <div id="summary-result-text" style="font-size: 14px; line-height: 1.8; color: var(--text-main); white-space: pre-wrap;"></div>
+          </div>
+        </div>
+
+        <!-- ローディング -->
+        <div id="summary-loading" style="display: none; text-align: center; padding: 32px 0;">
+          <div class="summary-spinner"></div>
+          <p style="margin-top: 12px; color: var(--text-muted); font-size: 13px;">AIがダイエットトレーナーとして分析中...</p>
+        </div>
+      </section>
 
     </main>
 
@@ -409,6 +433,10 @@
       <button class="nav-item" data-tab="tab-presets">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
         <span class="nav-label">定番</span>
+      </button>
+      <button class="nav-item" data-tab="tab-summary">
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+        <span class="nav-label">総括</span>
       </button>
     </nav>
   </div>
