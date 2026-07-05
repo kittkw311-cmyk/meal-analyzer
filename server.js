@@ -20,6 +20,7 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
 const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
+const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
@@ -35,6 +36,9 @@ if (!fs.existsSync(WEIGHT_FILE)) {
 }
 if (!fs.existsSync(PRESETS_FILE)) {
   fs.writeFileSync(PRESETS_FILE, JSON.stringify([], null, 2));
+}
+if (!fs.existsSync(SUMMARY_FILE)) {
+  fs.writeFileSync(SUMMARY_FILE, JSON.stringify([], null, 2));
 }
 
 // Multer設定（メモリ上にバッファとして保存）
@@ -83,6 +87,7 @@ if (clientId && clientSecret && refreshToken) {
 let driveHistoryFileId = null;
 let driveWeightFileId = null;
 let drivePresetsFileId = null;
+let driveSummaryFileId = null;
 
 // 体組成ファイルを検索または新規作成してファイルIDを設定する
 async function initDriveWeight() {
@@ -1583,7 +1588,24 @@ ${commentText}
     }
 
     const analysisText = response?.candidates?.[0]?.content?.parts?.[0]?.text || '分析結果を取得できませんでした。';
-    res.json({ analysis: analysisText, date });
+
+    // 分析結果をJSONに保存
+    const summaryRecord = {
+      id: `summary-${Date.now()}`,
+      date,
+      comment: commentText !== '（コメントなし）' ? commentText : '',
+      analysis: analysisText,
+      createdAt: new Date().toISOString(),
+      mealCount: dayMeals.length,
+      totalCalories: dayMeals.reduce((s, m) => s + (m.nutrition?.calories || 0), 0),
+      hasBodyComp: !!bodyComp,
+    };
+    const summaryHistory = await readSummary();
+    summaryHistory.push(summaryRecord);
+    await writeSummary(summaryHistory);
+
+    res.json({ analysis: analysisText, date, id: summaryRecord.id });
+
 
   } catch (err) {
     console.error('analyze-summary error:', err);
@@ -1597,12 +1619,93 @@ ${commentText}
 });
 
 
-// サーバー起動処理 (非担当初期化後に起動)
+// ==========================================================================
+// 総括履歴 Drive初期化・読み書き
+// ==========================================================================
+async function initDriveSummary() {
+  if (!drive || !folderId) return;
+  try {
+    console.log('Searching for summary_history.json in Google Drive...');
+    const res = await drive.files.list({
+      q: `name = 'summary_history.json' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    if (res.data.files && res.data.files.length > 0) {
+      driveSummaryFileId = res.data.files[0].id;
+      console.log(`Found summary_history.json. File ID: ${driveSummaryFileId}`);
+    } else {
+      const driveResponse = await drive.files.create({
+        requestBody: { name: 'summary_history.json', parents: [folderId], mimeType: 'application/json' },
+        media: { mimeType: 'application/json', body: Readable.from(JSON.stringify([], null, 2)) },
+        fields: 'id',
+      });
+      driveSummaryFileId = driveResponse.data.id;
+      console.log(`Created summary_history.json. File ID: ${driveSummaryFileId}`);
+    }
+  } catch (err) {
+    console.error('Failed to initialize summary_history.json:', err.message);
+  }
+}
+
+async function readSummary() {
+  if (drive && driveSummaryFileId) {
+    try {
+      const res = await drive.files.get({ fileId: driveSummaryFileId, alt: 'media' }, { responseType: 'text' });
+      const text = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      return JSON.parse(text);
+    } catch (err) {
+      console.error('Error reading summary_history from Drive:', err.message);
+      return [];
+    }
+  }
+  try { return JSON.parse(fs.readFileSync(SUMMARY_FILE, 'utf8')); } catch { return []; }
+}
+
+async function writeSummary(data) {
+  if (drive && driveSummaryFileId) {
+    try {
+      await drive.files.update({
+        fileId: driveSummaryFileId,
+        media: { mimeType: 'application/json', body: Readable.from(JSON.stringify(data, null, 2)) },
+      });
+    } catch (err) {
+      console.error('Error writing summary_history to Drive:', err.message);
+    }
+  } else {
+    fs.writeFileSync(SUMMARY_FILE, JSON.stringify(data, null, 2));
+  }
+}
+
+// GET 総括履歴一覧
+app.get('/api/summary-history', async (req, res) => {
+  try {
+    const data = await readSummary();
+    res.json(data.slice().reverse()); // 新しい順
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE 総括履歴削除
+app.delete('/api/summary-history/:id', async (req, res) => {
+  try {
+    const data = await readSummary();
+    const filtered = data.filter(d => d.id !== req.params.id);
+    await writeSummary(filtered);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// サーバー起動処理
 (async () => {
   if (drive && folderId) {
     await initDriveHistory();
     await initDriveWeight();
     await initDrivePresets();
+    await initDriveSummary();
   }
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);

@@ -2296,6 +2296,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   const summaryResultText = document.getElementById('summary-result-text');
   const summaryResultDate = document.getElementById('summary-result-date');
   const summaryLoading = document.getElementById('summary-loading');
+  const summaryHistoryList = document.getElementById('summary-history-list');
 
   // 総括タブ表示時に今日の日付をセット
   const initSummaryDate = () => {
@@ -2359,7 +2360,84 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   });
 
   // 初期ロードに体組成履歴のロードとサマリーのロードを追加
+  const renderSummaryHistoryRecord = (record) => {
+    const dateObj = new Date(`${record.date}T00:00:00`);
+    const wday = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
+    const dateLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${wday})`;
+    const analysisPreview = (record.analysis || '').trim().slice(0, 120) || '分析結果はありません。';
+    const createdAt = record.createdAt ? new Date(record.createdAt).toLocaleString('ja-JP') : '';
+
+    const item = document.createElement('div');
+    item.className = 'summary-history-card';
+    item.innerHTML = `
+      <div class="summary-history-card-top">
+        <div>
+          <div class="summary-history-date">${dateLabel}</div>
+          <div class="summary-history-meta">
+            ${record.mealCount ?? 0} 食 / ${Number(record.totalCalories || 0)} kcal${record.hasBodyComp ? ' / 体組成あり' : ''}
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-danger summary-history-delete">削除</button>
+      </div>
+      <div class="summary-history-preview">${analysisPreview}${(record.analysis || '').length > 120 ? '…' : ''}</div>
+      <div class="summary-history-created">${createdAt}</div>
+    `;
+
+    item.addEventListener('click', () => {
+      summaryResultDate.textContent = `${dateLabel} の分析結果`;
+      summaryResultText.textContent = record.analysis || '';
+      summaryResultContainer.style.display = 'block';
+      summaryResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    const deleteBtn = item.querySelector('.summary-history-delete');
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('この分析履歴を削除しますか？')) return;
+      try {
+        const res = await fetch(`/api/summary-history/${record.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('削除に失敗しました');
+        await loadSummaryHistory();
+        if (summaryResultText.textContent === record.analysis) {
+          summaryResultContainer.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Failed to delete summary history:', err);
+        alert(err.message);
+      }
+    });
+
+    return item;
+  };
+
+  async function loadSummaryHistory() {
+    if (!summaryHistoryList) return;
+    try {
+      const res = await fetch('/api/summary-history');
+      if (!res.ok) throw new Error('履歴の取得に失敗しました');
+      const history = await res.json();
+
+      if (!history.length) {
+        summaryHistoryList.innerHTML = `
+          <div class="summary-history-empty">
+            まだ分析履歴がありません。AI邱乗峡を実行すると、ここに保存されます。
+          </div>
+        `;
+        return;
+      }
+
+      summaryHistoryList.innerHTML = '';
+      history.forEach(record => {
+        summaryHistoryList.appendChild(renderSummaryHistoryRecord(record));
+      });
+    } catch (err) {
+      console.error('Failed to load summary history:', err);
+      summaryHistoryList.innerHTML = `<p class="error-text">分析履歴の読み込みに失敗しました。</p>`;
+    }
+  }
+
   loadWeightHistory();
   updateDailyWeightSummary();
   loadPresets();
+  loadSummaryHistory();
 });
