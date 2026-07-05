@@ -22,6 +22,34 @@ const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
 const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
 const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
 
+function getJstDateKey(dateLike) {
+  const date = new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function getJstDateParts(dateLike) {
+  const date = new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return { year: 0, month: 0, day: 0 };
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return {
+    year: Number(map.year || 0),
+    month: Number(map.month || 0),
+    day: Number(map.day || 0),
+  };
+}
+
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
 }
@@ -1052,7 +1080,7 @@ app.get('/api/stats', async (req, res) => {
     const dateString = d.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' });
     last7Days.push({
       dateLabel: dateString,
-      dateKey: d.toDateString(),
+      dateKey: getJstDateKey(d),
       calories: 0,
       count: 0
     });
@@ -1066,8 +1094,7 @@ app.get('/api/stats', async (req, res) => {
 
   history.forEach(record => {
     // ユーザー指定の食事日を優先
-    const recordDate = new Date(record.mealDate || record.date);
-    const recordDateKey = recordDate.toDateString();
+    const recordDateKey = getJstDateKey(record.mealDate || record.date);
     
     // 直近7日間のカロリー集計
     const dayObj = last7Days.find(day => day.dateKey === recordDateKey);
@@ -1505,17 +1532,11 @@ app.post('/api/analyze-summary', async (req, res) => {
 
     // 該当日の食事データを取得
     const historyData = await readHistory();
-    const dayMeals = historyData.filter(item => {
-      const d = new Date(item.mealDate || item.date);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}` === date;
-    });
+    const dayMeals = historyData.filter(item => getJstDateKey(item.mealDate || item.date) === date);
 
     // 該当日の体組成データを取得（±1日以内で最も近いもの）
     const weightData = await readWeight();
-    const targetMs = new Date(date).getTime();
+    const targetMs = new Date(`${date}T00:00:00+09:00`).getTime();
     const nearbyWeight = weightData
       .filter(w => Math.abs(new Date(w.date).getTime() - targetMs) <= 86400000 * 1.5)
       .sort((a, b) => Math.abs(new Date(a.date).getTime() - targetMs) - Math.abs(new Date(b.date).getTime() - targetMs));
