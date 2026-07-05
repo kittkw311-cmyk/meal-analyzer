@@ -1224,8 +1224,8 @@ app.get('/api/body-composition', async (req, res) => {
     // 日付 (YYYY-MM-DD) の降順、および区分の降順 (夜 -> 朝 -> 他) でソート
     const priority = { night: 3, morning: 2, other: 1 };
     weightHistory.sort((a, b) => {
-      const dateA = a.date ? a.date.substring(0, 10) : '';
-      const dateB = b.date ? b.date.substring(0, 10) : '';
+      const dateA = getJstDateKey(a.date);
+      const dateB = getJstDateKey(b.date);
       if (dateA !== dateB) {
         return dateB.localeCompare(dateA); // 日付降順
       }

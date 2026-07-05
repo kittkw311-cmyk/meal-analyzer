@@ -1077,10 +1077,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!groups[dateKey]) {
           groups[dateKey] = {
             dateLabel: (() => {
+              const yyyyStr = dateObj.getFullYear();
               const mmStr = String(dateObj.getMonth() + 1).padStart(2, '0');
               const ddStr = String(dateObj.getDate()).padStart(2, '0');
-              const wday = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
-              return `${mmStr}/${ddStr}(${wday})`;
+              return `${yyyyStr}/${mmStr}/${ddStr}`;
             })(),
             meals: [],
             totalCalories: 0,
@@ -1460,14 +1460,23 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       // 古い順にソート（時系列）
       const validHistory = [...weightHistory]
         .filter(d => d.weight !== null && d.weight > 0)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+        .sort((a, b) => {
+          const dateA = jstDateKey(a.date);
+          const dateB = jstDateKey(b.date);
+          if (dateA !== dateB) return dateA.localeCompare(dateB);
+          const priority = { night: 3, morning: 2, other: 1 };
+          return (priority[a.measurementType] || 0) - (priority[b.measurementType] || 0);
+        });
 
       // 直近30件のみ
       const slicedHistory = validHistory.slice(-30);
 
       const weightLabels = slicedHistory.map(d => {
-        const dateObj = new Date(d.date);
-        return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+        const dateObj = new Date(`${jstDateKey(d.date)}T00:00:00+09:00`);
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${yyyy}/${mm}/${dd}`;
       });
       const weightValues = slicedHistory.map(d => d.weight);
       const bmiValues = slicedHistory.map(d => d.bmi ?? null);
@@ -1557,8 +1566,8 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       const validHistory = [...weightHistory]
         .filter(item => item.weight !== null)
         .sort((a, b) => {
-          const dateA = a.date ? a.date.substring(0, 10) : '';
-          const dateB = b.date ? b.date.substring(0, 10) : '';
+          const dateA = jstDateKey(a.date);
+          const dateB = jstDateKey(b.date);
           if (dateA !== dateB) {
             return dateA.localeCompare(dateB);
           }
@@ -1965,7 +1974,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       // 2. 日付ごとにレコードを集約する
       const dailyGroups = {};
       weightHistory.forEach(item => {
-        const dateKey = item.date ? item.date.substring(0, 10) : '-----';
+        const dateKey = jstDateKey(item.date) || '-----';
         if (!dailyGroups[dateKey]) {
           dailyGroups[dateKey] = {
             date: dateKey,
@@ -1987,7 +1996,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       });
 
       // 3. 日付の降順でソートして描画
-      const sortedDates = Object.keys(dailyGroups).sort((a, b) => new Date(b) - new Date(a));
+      const sortedDates = Object.keys(dailyGroups).sort((a, b) => b.localeCompare(a));
 
       sortedDates.forEach(dateKey => {
         const dayGroup = dailyGroups[dateKey];
@@ -2135,7 +2144,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       if (response.ok) {
         const weightHistory = await response.json();
         // 日付順 (新しい順) にソート
-        const sortedHistory = [...weightHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sortedHistory = [...weightHistory].sort((a, b) => {
+          const dateA = jstDateKey(a.date);
+          const dateB = jstDateKey(b.date);
+          if (dateA !== dateB) return dateB.localeCompare(dateA);
+          const priority = { night: 3, morning: 2, other: 1 };
+          return (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
+        });
         // 今回のレコードの位置を探す
         const currentIdx = sortedHistory.findIndex(r => r.id === item.id);
         if (currentIdx !== -1 && currentIdx < sortedHistory.length - 1) {
@@ -2298,6 +2313,17 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   const summaryLoading = document.getElementById('summary-loading');
   const summaryHistoryList = document.getElementById('summary-history-list');
 
+  const jstDateKey = (dateLike) => {
+    const date = new Date(dateLike);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  };
+
   // 総括タブ表示時に今日の日付をセット
   const initSummaryDate = () => {
     const t = new Date();
@@ -2345,8 +2371,10 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
       // 結果表示
       const dateObj = new Date(date + 'T00:00:00');
-      const wday = ['日','月','火','水','木','金','土'][dateObj.getDay()];
-      summaryResultDate.textContent = `${dateObj.getMonth()+1}/${dateObj.getDate()}(${wday}) の分析結果`;
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      summaryResultDate.textContent = `${yyyy}/${mm}/${dd} の分析結果`;
       summaryResultText.textContent = data.analysis;
       summaryResultContainer.style.display = 'block';
 
@@ -2362,8 +2390,10 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   // 初期ロードに体組成履歴のロードとサマリーのロードを追加
   const renderSummaryHistoryRecord = (record) => {
     const dateObj = new Date(`${record.date}T00:00:00`);
-    const wday = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
-    const dateLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${wday})`;
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const dateLabel = `${yyyy}/${mm}/${dd}`;
     const analysisPreview = (record.analysis || '').trim().slice(0, 120) || '分析結果はありません。';
     const createdAt = record.createdAt ? new Date(record.createdAt).toLocaleString('ja-JP') : '';
 
