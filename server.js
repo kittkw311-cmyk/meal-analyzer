@@ -1536,11 +1536,11 @@ app.post('/api/analyze-summary', async (req, res) => {
 
     // 該当日の体組成データを取得（±1日以内で最も近いもの）
     const weightData = await readWeight();
-    const targetMs = new Date(`${date}T00:00:00+09:00`).getTime();
-    const nearbyWeight = weightData
-      .filter(w => Math.abs(new Date(w.date).getTime() - targetMs) <= 86400000 * 1.5)
-      .sort((a, b) => Math.abs(new Date(a.date).getTime() - targetMs) - Math.abs(new Date(b.date).getTime() - targetMs));
-    const bodyComp = nearbyWeight.length > 0 ? nearbyWeight[0] : null;
+    const dayWeights = weightData.filter(w => getJstDateKey(w.date) === date);
+    const weightPriority = { night: 3, morning: 2, other: 1 };
+    const bodyComp = dayWeights
+      .slice()
+      .sort((a, b) => (weightPriority[b.measurementType] || 0) - (weightPriority[a.measurementType] || 0))[0] || null;
 
     // プロンプト構築
     const mealsText = dayMeals.length > 0
