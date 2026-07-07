@@ -484,15 +484,14 @@
           <img id="modal-meal-image" src="" alt="食事画像">
         </div>
         
-        <!-- 食材・調味料の推測と計算根拠 (アコーディオン開閉式) -->
+        <!-- 食材・調味料の推測と計算根拠 -->
         <div class="modal-inference-card" id="modal-inference-card" style="display: none;">
-          <div class="modal-inference-header" id="modal-inference-trigger" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+          <div class="modal-inference-header" style="display: flex; justify-content: space-between; align-items: center; user-select: none;">
             <span style="display: flex; align-items: center; gap: 6px; font-weight: 800;">
               <svg class="icon-svg" style="vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>食材・調味料の推測と計算根拠
             </span>
-            <span id="modal-inference-arrow" style="transition: transform 0.2s; font-size: 12px; color: var(--text-muted);">▼</span>
           </div>
-          <div class="modal-inference-body" id="modal-inference-body" style="display: none; border-top: 1px solid var(--border-color); margin-top: 10px; padding-top: 10px;">
+          <div class="modal-inference-body" id="modal-inference-body" style="border-top: 1px solid var(--border-color); margin-top: 10px; padding-top: 10px;">
             <p class="modal-inference-text" id="modal-inference" style="margin: 0;"></p>
           </div>
         </div>

@@ -1796,7 +1796,7 @@ body {
 
 .modal-inference-body {
   padding: 0 16px 14px 16px;
-  max-height: 32vh;
+  max-height: 56vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -2403,7 +2403,7 @@ body {
   }
 
   .modal-inference-body {
-    max-height: 40vh;
+    max-height: 58vh;
   }
 
   .daily-summary-capsule {

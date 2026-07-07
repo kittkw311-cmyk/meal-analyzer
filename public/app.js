@@ -244,12 +244,7 @@
     
     // 根拠アコーディオンの表示状態を閉じた状態(初期状態)にリセット
     const inferenceBody = document.getElementById('modal-inference-body');
-    const inferenceArrow = document.getElementById('modal-inference-arrow');
-    if (inferenceBody) inferenceBody.style.display = 'none';
-    if (inferenceArrow) {
-      inferenceArrow.textContent = '▼';
-      inferenceArrow.style.transform = 'rotate(0deg)';
-    }
+    if (inferenceBody) inferenceBody.style.display = 'block';
     
     // モーダル編集インプットのバインド処理
     const dateObj = new Date(item.mealDate || item.date);
@@ -1270,25 +1265,8 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
   btnCloseModal.addEventListener('click', closeModal);
   
-  // 根拠アコーディオンの開閉イベントバインド
-  const inferenceTrigger = document.getElementById('modal-inference-trigger');
   const inferenceBody = document.getElementById('modal-inference-body');
-  const inferenceArrow = document.getElementById('modal-inference-arrow');
-
-  if (inferenceTrigger && inferenceBody && inferenceArrow) {
-    inferenceTrigger.addEventListener('click', () => {
-      const isCollapsed = inferenceBody.style.display === 'none';
-      if (isCollapsed) {
-        inferenceBody.style.display = 'block';
-        inferenceArrow.textContent = '▲';
-        inferenceArrow.style.transform = 'rotate(180deg)';
-      } else {
-        inferenceBody.style.display = 'none';
-        inferenceArrow.textContent = '▼';
-        inferenceArrow.style.transform = 'rotate(0deg)';
-      }
-    });
-  }
+  if (inferenceBody) inferenceBody.style.display = 'block';
   
   // モーダルの背景（黒枠）をクリックした際も閉じる
   historyDetailModal.addEventListener('click', (e) => {
