@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   // DOM Elements
   // ==========================================================================
@@ -2312,10 +2312,6 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   const summaryResultDate = document.getElementById('summary-result-date');
   const summaryLoading = document.getElementById('summary-loading');
   const summaryHistoryList = document.getElementById('summary-history-list');
-  const summaryResultKpis = document.getElementById('summary-result-kpis');
-  const summaryResultMeals = document.getElementById('summary-result-meals');
-  const summaryResultChartCanvas = document.getElementById('summary-result-chart');
-  let summaryResultChart = null;
 
   const jstDateKey = (dateLike) => {
     const date = new Date(dateLike);
@@ -2400,7 +2396,6 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       summaryResultDate.textContent = `${yyyy}/${mm}/${dd} の分析結果`;
       summaryResultText.textContent = data.analysis;
       summaryResultContainer.style.display = 'block';
-      await renderSummaryAnalysisDetails(date);
 
     } catch (err) {
       console.error('Summary analysis error:', err);
@@ -2410,73 +2405,6 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       btnAnalyzeSummary.disabled = false;
     }
   });
-
-  // 初期ロードに体組成履歴のロードとサマリーのロードを追加
-  async function renderSummaryAnalysisDetails(date) {
-    if (!summaryResultKpis || !summaryResultMeals || !summaryResultChartCanvas) return;
-
-    try {
-      const historyRes = await fetch('/api/history');
-      if (!historyRes.ok) return;
-
-      const history = await historyRes.json();
-      const meals = history
-        .filter(item => jstDateKey(item.mealDate || item.date) === date)
-        .sort((a, b) => new Date(b.mealDate || b.date) - new Date(a.mealDate || a.date));
-
-      const totalCalories = meals.reduce((sum, item) => sum + Number(item.nutrition?.calories || 0), 0);
-      const totalProtein = meals.reduce((sum, item) => sum + Number(item.nutrition?.protein || 0), 0);
-      const totalFat = meals.reduce((sum, item) => sum + Number(item.nutrition?.fat || 0), 0);
-      const totalCarbs = meals.reduce((sum, item) => sum + Number(item.nutrition?.carbohydrates || 0), 0);
-
-      summaryResultKpis.innerHTML = `
-        <div class="summary-kpi"><span class="label">食数</span><span class="value">${meals.length}</span></div>
-        <div class="summary-kpi"><span class="label">kcal</span><span class="value">${Math.round(totalCalories)}</span></div>
-        <div class="summary-kpi"><span class="label">P</span><span class="value">${totalProtein.toFixed(1)}g</span></div>
-        <div class="summary-kpi"><span class="label">F</span><span class="value">${totalFat.toFixed(1)}g</span></div>
-        <div class="summary-kpi"><span class="label">C</span><span class="value">${totalCarbs.toFixed(1)}g</span></div>
-      `;
-
-      summaryResultMeals.innerHTML = meals.map(item => {
-        const mealTypeJa = { morning: '朝', noon: '昼', night: '夜', snack: '間食' }[item.mealType || 'snack'] || '不明';
-        const name = item.mealName || item.nutrition?.mealName || item.textInput || '未入力';
-        return `
-          <tr>
-            <td>${mealTypeJa}</td>
-            <td>${name}</td>
-            <td>${Number(item.nutrition?.calories || 0)}</td>
-            <td>${Number(item.nutrition?.protein || 0).toFixed(1)}</td>
-            <td>${Number(item.nutrition?.fat || 0).toFixed(1)}</td>
-            <td>${Number(item.nutrition?.carbohydrates || 0).toFixed(1)}</td>
-          </tr>
-        `;
-      }).join('') || '<tr><td colspan="6" class="empty-row">食事データがありません。</td></tr>';
-
-      if (summaryResultChart) summaryResultChart.destroy();
-      summaryResultChart = new Chart(summaryResultChartCanvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: ['kcal', 'P', 'F', 'C'],
-          datasets: [{
-            data: [Math.round(totalCalories), totalProtein, totalFat, totalCarbs],
-            backgroundColor: ['#9cd4b0', '#86b7f2', '#f7a8b8', '#fbd87f'],
-            borderRadius: 10,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: true, grid: { color: 'rgba(200, 220, 210, 0.3)' } },
-            x: { grid: { display: false } },
-          },
-        },
-      });
-    } catch (err) {
-      console.error('Failed to render summary details:', err);
-    }
-  }
 
   const renderSummaryHistoryRecord = (record) => {
     const dateObj = new Date(`${record.date}T00:00:00`);

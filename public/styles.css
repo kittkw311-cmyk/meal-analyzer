@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    CSS Variables & Reset
    ========================================================================== */
 :root {
@@ -405,95 +405,6 @@ body {
   font-size: 12px;
   text-align: center;
   background: rgba(255, 255, 255, 0.65);
-}
-
-.summary-result-panels {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.summary-result-panel {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  padding: 12px;
-}
-
-.summary-panel-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
-
-.summary-kpis {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.summary-kpi {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 10px;
-}
-
-.summary-kpi .label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.summary-kpi .value {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-main);
-}
-
-.summary-chart-wrap {
-  height: 180px;
-}
-
-.summary-table-wrap {
-  overflow-x: auto;
-}
-
-.summary-result-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.summary-result-table th,
-.summary-result-table td {
-  padding: 8px 6px;
-  border-bottom: 1px solid rgba(220, 230, 224, 0.8);
-  text-align: left;
-  white-space: nowrap;
-}
-
-.summary-result-table th {
-  color: var(--text-muted);
-  font-weight: 800;
-}
-
-@media (max-width: 480px) {
-  .summary-result-panels {
-    grid-template-columns: 1fr;
-  }
-  .summary-chart-wrap {
-    height: 220px;
-  }
-}
-
-/* ==========================================================================
-   Result Screen
-   ========================================================================== */
-.result-card {
-  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.95) 100%);
 }
 
 .calorie-summary {
