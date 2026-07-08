@@ -110,7 +110,6 @@
   const btnCloseWeightModal = document.getElementById('btn-close-weight-modal');
   const weightModalDateInput = document.getElementById('weight-modal-date-input');
   const weightModalTypeSelect = document.getElementById('weight-modal-type-select');
-  const btnSaveWeightModal = document.getElementById('btn-save-weight-modal');
   const btnDeleteWeightModal = document.getElementById('btn-delete-weight-modal');
   // 解析タブのサマリー要素
   const dailyWeightSummaryBar = document.getElementById('daily-weight-box');
@@ -724,10 +723,10 @@
                 </span>
               </div>
               <div class="preset-card-macros">
-                <span class="macro-badge calories">${p.calories} kcal</span>
-                <span class="macro-badge p">P: ${p.protein}g</span>
-                <span class="macro-badge f">F: ${p.fat}g</span>
-                <span class="macro-badge c">C: ${p.carbohydrates}g</span>
+                <button type="button" class="macro-badge macro-editable calories" data-id="${p.id}" data-field="calories" data-value="${p.calories}" title="カロリーを編集">${p.calories} kcal</button>
+                <button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">P: ${p.protein}g</button>
+                <button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">F: ${p.fat}g</button>
+                <button type="button" class="macro-badge macro-editable c" data-id="${p.id}" data-field="carbohydrates" data-value="${p.carbohydrates}" title="炭水化物を編集">C: ${p.carbohydrates}g</button>
               </div>
             </div>
             <button class="btn-delete-preset" data-id="${p.id}" title="定番メニューから削除">
@@ -758,6 +757,91 @@
           });
         });
 
+        // カロリー・PFC編集のリスナー追加
+        document.querySelectorAll('.macro-editable').forEach(badge => {
+          badge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (badge.querySelector('.preset-macro-edit-input')) return;
+
+            const id = badge.getAttribute('data-id');
+            const field = badge.getAttribute('data-field');
+            const currentValue = badge.getAttribute('data-value');
+            const originalText = badge.textContent;
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'preset-macro-edit-input';
+            input.value = currentValue;
+            input.min = '0';
+            input.step = field === 'calories' ? '1' : '0.1';
+
+            badge.textContent = '';
+            badge.appendChild(input);
+            input.focus();
+            input.select();
+
+            const restoreBadge = () => {
+              badge.classList.remove('is-saving');
+              badge.disabled = false;
+              badge.textContent = originalText;
+            };
+
+            const saveMacroEdit = async () => {
+              if (badge.classList.contains('is-saving')) return;
+              const rawValue = input.value;
+              const numericValue = Number(rawValue);
+              if (rawValue === '' || !Number.isFinite(numericValue) || numericValue < 0) {
+                restoreBadge();
+                return;
+              }
+
+              const nextValue = field === 'calories'
+                ? Math.round(numericValue)
+                : Math.round(numericValue * 10) / 10;
+
+              if (Number(currentValue) === nextValue) {
+                restoreBadge();
+                return;
+              }
+
+              try {
+                badge.classList.add('is-saving');
+                badge.disabled = true;
+                badge.innerHTML = '<span class="preset-macro-spinner" aria-hidden="true"></span><span>更新中</span>';
+
+                const res = await fetch(`/api/presets/${id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ [field]: nextValue })
+                });
+
+                if (res.ok) {
+                  loadPresets();
+                } else {
+                  alert('栄養素の更新に失敗しました。');
+                  restoreBadge();
+                }
+              } catch (err) {
+                console.error(err);
+                alert('更新中に通信エラーが発生しました。');
+                restoreBadge();
+              }
+            };
+
+            input.addEventListener('keydown', (event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                input.blur();
+              } else if (event.key === 'Escape') {
+                event.preventDefault();
+                restoreBadge();
+              }
+            });
+
+            input.addEventListener('blur', saveMacroEdit);
+          });
+        });
+
         // 名前編集のリスナー追加
         document.querySelectorAll('.preset-card-name-wrapper').forEach(wrapper => {
           wrapper.addEventListener('click', (e) => {
@@ -785,6 +869,7 @@
 
             // 保存処理
             const saveNameEdit = async () => {
+              if (wrapper.classList.contains('is-saving')) return;
               const newName = input.value.trim();
               if (newName === '' || newName === currentName) {
                 // 空、または変更なしなら元に戻す
@@ -794,7 +879,24 @@
                 return;
               }
 
+              const showNameSaving = () => {
+                wrapper.classList.add('is-saving');
+                wrapper.innerHTML = '<span class="preset-macro-spinner" aria-hidden="true"></span><span class="preset-name-saving-text">更新中</span>';
+              };
+
+              const restoreNameEdit = () => {
+                wrapper.classList.remove('is-saving');
+                wrapper.innerHTML = `
+                  <span class="preset-card-name">${currentName}</span>
+                  <span class="preset-edit-icon" title="名前を編集">
+                    <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </span>
+                `;
+              };
+
               try {
+                showNameSaving();
+
                 const res = await fetch(`/api/presets/${id}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
@@ -806,16 +908,12 @@
                   loadPresets();
                 } else {
                   alert('名前の更新に失敗しました。');
-                  nameSpan.style.display = '';
-                  if (editIcon) editIcon.style.display = '';
-                  input.remove();
+                  restoreNameEdit();
                 }
               } catch (err) {
                 console.error(err);
                 alert('更新中に通信エラーが発生しました。');
-                nameSpan.style.display = '';
-                if (editIcon) editIcon.style.display = '';
-                input.remove();
+                restoreNameEdit();
               }
             };
 
@@ -824,6 +922,11 @@
               if (event.key === 'Enter') {
                 event.preventDefault();
                 input.blur();
+              } else if (event.key === 'Escape') {
+                event.preventDefault();
+                nameSpan.style.display = '';
+                if (editIcon) editIcon.style.display = '';
+                input.remove();
               }
             });
 
@@ -1972,6 +2075,152 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
   // 現在編集中の体組成データのIDを保持する変数
   let currentEditingWeightId = null;
+  let isBindingWeightModalPatchHandlers = false;
+
+  const weightModalFieldConfigs = [
+    { field: 'date', input: weightModalDateInput, type: 'string' },
+    { field: 'measurementType', input: weightModalTypeSelect, type: 'string' },
+    { field: 'weight', input: wModalWeight, type: 'number', decimals: 1 },
+    { field: 'bmi', input: wModalBmi, type: 'number', decimals: 1 },
+    { field: 'fatRate', input: wModalFat, type: 'number', decimals: 1 },
+    { field: 'heartRate', input: wModalHeart, type: 'integer' },
+    { field: 'muscleMass', input: wModalMuscle, type: 'number', decimals: 1 },
+    { field: 'bmr', input: wModalBmr, type: 'integer' },
+    { field: 'waterRate', input: wModalWater, type: 'number', decimals: 1 },
+    { field: 'fatMass', input: wModalFatMass, type: 'number', decimals: 1 },
+    { field: 'leanBodyMass', input: wModalLeanBody, type: 'number', decimals: 1 },
+    { field: 'boneMass', input: wModalBone, type: 'number', decimals: 1 },
+    { field: 'visceralFat', input: wModalVisceralFat, type: 'number', decimals: 1 },
+    { field: 'proteinRate', input: wModalProteinRate, type: 'number', decimals: 1 },
+    { field: 'skeletalMuscleMass', input: wModalSkeletalMuscle, type: 'number', decimals: 1 },
+    { field: 'subcutaneousFat', input: wModalSubcutaneous, type: 'number', decimals: 1 },
+    { field: 'bodyAge', input: wModalBodyAge, type: 'integer' },
+    { field: 'bodyType', input: wModalBodyType, type: 'string' }
+  ];
+
+  const parseWeightModalValue = (config) => {
+    const rawValue = config.input.value.trim();
+    if (rawValue === '') return null;
+    if (config.type === 'integer') {
+      const value = Number(rawValue);
+      return Number.isFinite(value) ? Math.round(value) : null;
+    }
+    if (config.type === 'number') {
+      const value = Number(rawValue);
+      if (!Number.isFinite(value)) return null;
+      const factor = 10 ** (config.decimals ?? 1);
+      return Math.round(value * factor) / factor;
+    }
+    return rawValue;
+  };
+
+  const formatWeightModalValue = (config, value) => {
+    if (value === null || value === undefined || value === '') return '';
+    if (config.type === 'integer') return String(Math.round(Number(value)));
+    if (config.type === 'number') return Number(value).toFixed(config.decimals ?? 1);
+    return String(value);
+  };
+
+  const setWeightModalSaving = (input, isSaving) => {
+    const parent = input.parentElement;
+    if (!parent) return;
+    input.classList.toggle('is-saving', isSaving);
+    input.disabled = isSaving;
+    let spinner = parent.querySelector('.weight-field-spinner');
+    if (isSaving && !spinner) {
+      spinner = document.createElement('span');
+      spinner.className = 'weight-field-spinner';
+      spinner.setAttribute('aria-hidden', 'true');
+      parent.appendChild(spinner);
+    } else if (!isSaving && spinner) {
+      spinner.remove();
+    }
+  };
+
+  const setWeightModalEditing = (input, isEditing) => {
+    input.classList.toggle('is-editing', isEditing);
+    input.readOnly = !isEditing;
+    if (input.tagName === 'SELECT') input.disabled = false;
+  };
+
+  const patchWeightModalField = async (config) => {
+    if (!currentEditingWeightId || config.input.classList.contains('is-saving')) return;
+    const nextValue = parseWeightModalValue(config);
+    const previousValue = config.input.dataset.originalValue ?? '';
+    const formattedNextValue = formatWeightModalValue(config, nextValue);
+    if (formattedNextValue === previousValue) {
+      config.input.value = previousValue;
+      return;
+    }
+
+    try {
+      setWeightModalSaving(config.input, true);
+      const response = await fetch(`/api/body-composition/${currentEditingWeightId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [config.field]: nextValue })
+      });
+
+      if (!response.ok) throw new Error('体組成データの更新に失敗しました。');
+      const updatedRecord = await response.json();
+      const updatedValue = updatedRecord[config.field];
+      const formattedUpdatedValue = formatWeightModalValue(config, updatedValue);
+      config.input.value = formattedUpdatedValue;
+      config.input.dataset.originalValue = formattedUpdatedValue;
+      setWeightModalEditing(config.input, false);
+      await loadWeightHistory();
+      await updateDailyWeightSummary();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || '更新中に通信エラーが発生しました。');
+      config.input.value = previousValue;
+    } finally {
+      setWeightModalSaving(config.input, false);
+      setWeightModalEditing(config.input, false);
+    }
+  };
+
+  const bindWeightModalPatchHandlers = () => {
+    if (isBindingWeightModalPatchHandlers) return;
+    isBindingWeightModalPatchHandlers = true;
+
+    weightModalFieldConfigs.forEach(config => {
+      if (!config.input) return;
+      const save = () => patchWeightModalField(config);
+      const restore = () => {
+        config.input.value = config.input.dataset.originalValue ?? '';
+        setWeightModalEditing(config.input, false);
+      };
+      if (config.input.tagName === 'SELECT' || config.input.type === 'date') {
+        config.input.addEventListener('focus', () => setWeightModalEditing(config.input, true));
+        config.input.addEventListener('change', save);
+        config.input.addEventListener('blur', () => setWeightModalEditing(config.input, false));
+      } else {
+        config.input.addEventListener('focus', () => {
+          setWeightModalEditing(config.input, true);
+          config.input.select();
+        });
+        config.input.addEventListener('click', () => {
+          if (!config.input.classList.contains('is-editing')) {
+            setWeightModalEditing(config.input, true);
+            config.input.focus();
+            config.input.select();
+          }
+        });
+        config.input.addEventListener('blur', save);
+        config.input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            config.input.blur();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            restore();
+            config.input.blur();
+          }
+        });
+      }
+    });
+  };
 
   // 体組成詳細モーダルの開閉とバインド (スパンからインプット要素への変更に伴う調整)
   // 体組成詳細モーダルの開閉とバインド (スパンからインプット要素への変更に伴う調整)
@@ -2000,6 +2249,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     wModalSubcutaneous.value = item.subcutaneousFat !== null ? item.subcutaneousFat.toFixed(1) : '';
     wModalBodyAge.value = item.bodyAge !== null ? item.bodyAge.toFixed(1) : '';
     wModalBodyType.value = item.bodyType || '';
+    weightModalFieldConfigs.forEach(config => {
+      if (!config.input) return;
+      config.input.dataset.originalValue = formatWeightModalValue(config, item[config.field]);
+      config.input.value = config.input.dataset.originalValue;
+      setWeightModalEditing(config.input, false);
+    });
+    bindWeightModalPatchHandlers();
 
     // 前回との比較比の計算
     let prevRecord = null;
@@ -2071,62 +2327,6 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
     weightDetailModal.style.display = 'flex';
   };
-
-  // モーダル内の「変更を保存する」ボタンの処理
-  btnSaveWeightModal.addEventListener('click', async () => {
-    if (!currentEditingWeightId) return;
-
-    const loadingTextEl = loadingOverlay.querySelector('p');
-    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-    loadingTextEl.textContent = '体組成データを更新しています...';
-    loadingSubTextEl.textContent = '修正された測定記録を保存中';
-    loadingOverlay.style.display = 'flex';
-    btnSaveWeightModal.disabled = true;
-
-    // 入力された数値を収集
-    const updatedData = {
-      date: weightModalDateInput.value,
-      measurementType: weightModalTypeSelect.value,
-      weight: wModalWeight.value ? parseFloat(wModalWeight.value) : null,
-      bmi: wModalBmi.value ? parseFloat(wModalBmi.value) : null,
-      fatRate: wModalFat.value ? parseFloat(wModalFat.value) : null,
-      heartRate: wModalHeart.value ? parseInt(wModalHeart.value, 10) : null,
-      muscleMass: wModalMuscle.value ? parseFloat(wModalMuscle.value) : null,
-      bmr: wModalBmr.value ? parseInt(wModalBmr.value, 10) : null,
-      waterRate: wModalWater.value ? parseFloat(wModalWater.value) : null,
-      fatMass: wModalFatMass.value ? parseFloat(wModalFatMass.value) : null,
-      leanBodyMass: wModalLeanBody.value ? parseFloat(wModalLeanBody.value) : null,
-      boneMass: wModalBone.value ? parseFloat(wModalBone.value) : null,
-      visceralFat: wModalVisceralFat.value ? parseFloat(wModalVisceralFat.value) : null,
-      proteinRate: wModalProteinRate.value ? parseFloat(wModalProteinRate.value) : null,
-      skeletalMuscleMass: wModalSkeletalMuscle.value ? parseFloat(wModalSkeletalMuscle.value) : null,
-      subcutaneousFat: wModalSubcutaneous.value ? parseFloat(wModalSubcutaneous.value) : null,
-      bodyAge: wModalBodyAge.value ? parseInt(wModalBodyAge.value, 10) : null,
-      bodyType: wModalBodyType.value || null
-    };
-
-    try {
-      const response = await fetch(`/api/body-composition/${currentEditingWeightId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData)
-      });
-
-      if (!response.ok) throw new Error('体組成データの更新に失敗しました。');
-
-      weightDetailModal.style.display = 'none';
-      await loadWeightHistory();
-      await updateDailyWeightSummary();
-      alert('変更を保存しました。');
-
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
-    } finally {
-      loadingOverlay.style.display = 'none';
-      btnSaveWeightModal.disabled = false;
-    }
-  });
 
   // モーダル内の「削除」ボタンの処理
   btnDeleteWeightModal.addEventListener('click', async () => {

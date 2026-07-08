@@ -948,8 +948,15 @@ app.delete('/api/presets/:id', async (req, res) => {
 app.patch('/api/presets/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
-    if (!name || name.trim() === '') {
+    const { name, calories, protein, fat, carbohydrates } = req.body;
+    const hasMacroUpdate = [calories, protein, fat, carbohydrates].some(value => value !== undefined);
+    const hasInvalidMacroUpdate = [calories, protein, fat, carbohydrates]
+      .filter(value => value !== undefined)
+      .some(value => !Number.isFinite(Number(value)) || Number(value) < 0);
+    if (hasInvalidMacroUpdate) {
+      return res.status(400).json({ error: 'Preset nutrition values must be zero or greater.' });
+    }
+    if ((!name || name.trim() === '') && !hasMacroUpdate) {
       return res.status(400).json({ error: 'メニュー名を入力してください。' });
     }
 
@@ -959,7 +966,22 @@ app.patch('/api/presets/:id', async (req, res) => {
       return res.status(404).json({ error: '指定された定番メニューが見つかりません。' });
     }
 
-    preset.name = name.trim();
+    if (name && name.trim() !== '') {
+      preset.name = name.trim();
+    }
+
+    const applyMacroUpdate = (field, value, decimals = 1) => {
+      if (value === undefined) return;
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue) || numericValue < 0) return;
+      const factor = 10 ** decimals;
+      preset[field] = Math.round(numericValue * factor) / factor;
+    };
+
+    applyMacroUpdate('calories', calories, 0);
+    applyMacroUpdate('protein', protein);
+    applyMacroUpdate('fat', fat);
+    applyMacroUpdate('carbohydrates', carbohydrates);
     await writePresets(presets);
 
     res.json({ success: true, preset });
@@ -1461,7 +1483,7 @@ app.delete('/api/body-composition/:id', async (req, res) => {
 });
 
 // 5. 体組成データの更新
-app.put('/api/body-composition/:id', async (req, res) => {
+async function updateBodyCompositionRecord(req, res) {
   try {
     const id = req.params.id;
     const weightHistory = await readWeight();
@@ -1519,7 +1541,10 @@ app.put('/api/body-composition/:id', async (req, res) => {
     console.error('Update weight record error:', err);
     res.status(500).json({ error: '体組成データの更新中にエラーが発生しました。: ' + err.message });
   }
-});
+}
+
+app.patch('/api/body-composition/:id', updateBodyCompositionRecord);
+app.put('/api/body-composition/:id', updateBodyCompositionRecord);
 
 // ==========================================================================
 // 総括AI分析エンドポイント
