@@ -5,17 +5,23 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 import fs from 'fs';
 import path from 'path';
-import 'dotenv/config';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // JSONパーサーと静的ファイル配信の設定
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // データ保存用ディレクトリの初期化 (ローカル用)
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');

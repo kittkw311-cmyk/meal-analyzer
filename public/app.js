@@ -1653,6 +1653,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     if (config.input.tagName === 'SELECT' || config.input.type === 'date') {
       config.input.addEventListener('change', () => saveProfileField(config));
     } else {
+      config.input.addEventListener('change', () => saveProfileField(config));
       config.input.addEventListener('blur', () => saveProfileField(config));
       config.input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
