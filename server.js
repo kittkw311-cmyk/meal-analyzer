@@ -824,6 +824,10 @@ app.patch('/api/profile', (req, res) => {
       const allowed = ['male', 'female', 'other', ''];
       next.gender = allowed.includes(req.body.gender) ? req.body.gender : '';
     }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'activityLevel')) {
+      const allowed = ['low', 'normal', 'high'];
+      next.activityLevel = allowed.includes(req.body.activityLevel) ? req.body.activityLevel : 'normal';
+    }
     if (Object.prototype.hasOwnProperty.call(req.body, 'birthDate')) {
       next.birthDate = typeof req.body.birthDate === 'string' ? req.body.birthDate : '';
     }

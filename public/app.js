@@ -117,6 +117,7 @@
   const weightHistoryTbody = document.getElementById('weight-history-tbody');
   const profileHeightInput = document.getElementById('profile-height-input');
   const profileGenderSelect = document.getElementById('profile-gender-select');
+  const profileActivitySelect = document.getElementById('profile-activity-select');
   const profileBirthDateInput = document.getElementById('profile-birth-date-input');
   const profileAgeOutput = document.getElementById('profile-age-output');
   const profileTargetWeightInput = document.getElementById('profile-target-weight-input');
@@ -133,6 +134,9 @@
   const summaryWeightVal = document.getElementById('summary-weight-val');
   const dailyBmrDivider = document.getElementById('daily-bmr-divider');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
+  const overviewEnergyCard = document.getElementById('overview-energy-card');
+  const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
+  const overviewTargetCalories = document.getElementById('overview-target-calories');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -350,6 +354,8 @@
       if (targetTabId === 'tab-history') {
         loadHistory();
       } else if (targetTabId === 'tab-stats') {
+        loadProfile();
+      } else if (targetTabId === 'tab-overview') {
         loadStats();
       } else if (targetTabId === 'tab-weight') {
         loadWeightHistory();
@@ -1432,14 +1438,16 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   });
 
   // ==========================================================================
-  // Load Stats Tab (Chart.js Integration)
+  // Load Overview Weight Trend Chart
   // ==========================================================================
   async function loadStats() {
     try {
-      // 体組成データを取得して体重・BMI推移を描画
+      // 体組成データを取得して体重推移を描画
       const weightRes = await fetch('/api/body-composition');
       if (!weightRes.ok) throw new Error('データ取得失敗');
       const weightHistory = await weightRes.json();
+      const weightChartCanvas = document.getElementById('weight-trend-chart');
+      if (!weightChartCanvas) return;
 
       // 古い順にソート（時系列）
       const validHistory = [...weightHistory]
@@ -1454,22 +1462,15 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
       // 直近30件のみ
       const slicedHistory = validHistory.slice(-30);
-
-      const weightLabels = slicedHistory.map(d => {
-        const dateObj = new Date(`${jstDateKey(d.date)}T00:00:00+09:00`);
-        const yyyy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        return `${yyyy}/${mm}/${dd}`;
-      });
+      const weightLabels = slicedHistory.map(d => jstDateKey(d.date).replace(/-/g, '/'));
       const weightValues = slicedHistory.map(d => d.weight);
-      const bmiValues = slicedHistory.map(d => d.bmi ?? null);
-
-      // 1. 体重推移グラフ
-      const weightCtx = document.getElementById('weight-trend-chart').getContext('2d');
       if (weightTrendChart) weightTrendChart.destroy();
+      if (bmiTrendChart) {
+        bmiTrendChart.destroy();
+        bmiTrendChart = null;
+      }
 
-      weightTrendChart = new Chart(weightCtx, {
+      weightTrendChart = new Chart(weightChartCanvas.getContext('2d'), {
         type: 'line',
         data: {
           labels: weightLabels,
@@ -1477,53 +1478,39 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
             label: '体重 (kg)',
             data: weightValues,
             borderColor: '#4a90e2',
-            backgroundColor: 'rgba(74, 144, 226, 0.1)',
+            backgroundColor: 'rgba(74, 144, 226, 0.12)',
             borderWidth: 3,
             fill: true,
-            tension: 0.2,
+            tension: 0.25,
             pointBackgroundColor: '#4a90e2',
-            pointRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { grace: '5%', grid: { color: 'rgba(200, 220, 210, 0.3)' } },
-            x: { grid: { display: false } }
-          }
-        }
-      });
-
-      // 2. BMI推移グラフ
-      const bmiCtx = document.getElementById('bmi-trend-chart').getContext('2d');
-      if (typeof bmiTrendChart !== 'undefined' && bmiTrendChart) bmiTrendChart.destroy();
-
-      bmiTrendChart = new Chart(bmiCtx, {
-        type: 'line',
-        data: {
-          labels: weightLabels,
-          datasets: [{
-            label: 'BMI',
-            data: bmiValues,
-            borderColor: '#a06cc1',
-            backgroundColor: 'rgba(160, 108, 193, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.2,
-            pointBackgroundColor: '#a06cc1',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
             pointRadius: 4,
-            spanGaps: true
+            pointHoverRadius: 6
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false }
+          },
           scales: {
-            y: { grace: '5%', grid: { color: 'rgba(200, 220, 210, 0.3)' } },
-            x: { grid: { display: false } }
+            y: {
+              grace: '5%',
+              grid: { color: 'rgba(200, 220, 210, 0.3)' },
+              ticks: { color: '#6f7b72', font: { size: 10, weight: '700' } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: '#6f7b72',
+                font: { size: 10, weight: '700' },
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 6
+              }
+            }
           }
         }
       });
@@ -1541,6 +1528,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   const profileFields = [
     { input: profileHeightInput, field: 'height', type: 'number' },
     { input: profileGenderSelect, field: 'gender', type: 'string' },
+    { input: profileActivitySelect, field: 'activityLevel', type: 'string' },
     { input: profileBirthDateInput, field: 'birthDate', type: 'string' },
     { input: profileTargetWeightInput, field: 'targetWeight', type: 'number' },
     { input: profileTargetDateInput, field: 'targetDate', type: 'string' }
@@ -1597,6 +1585,10 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       if (profileGenderSelect) {
         profileGenderSelect.value = profile.gender || '';
         profileGenderSelect.dataset.originalValue = profileGenderSelect.value;
+      }
+      if (profileActivitySelect) {
+        profileActivitySelect.value = profile.activityLevel || 'normal';
+        profileActivitySelect.dataset.originalValue = profileActivitySelect.value;
       }
       if (profileBirthDateInput) {
         profileBirthDateInput.value = profile.birthDate || '';
@@ -1698,7 +1690,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     return (11.322 * weight) + (3.949 * heightCm) + 267.978;
   };
 
-  const calculateTargetCalories = (profile, latestWeightKg) => {
+  const calculateEnergyTargets = (profile, latestWeightKg) => {
     const estimatedBmr = estimateBmrFromProfile(profile, latestWeightKg);
     if (estimatedBmr === null) return null;
     const activityFactors = {
@@ -1708,7 +1700,10 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     };
     const activityFactor = activityFactors[profile?.activityLevel] || activityFactors.normal;
     const tdee = estimatedBmr * activityFactor;
-    return Math.round(tdee * 0.8);
+    return {
+      tdee: Math.round(tdee),
+      targetCalories: Math.round(tdee * 0.8)
+    };
   };
 
   // 最新体重・基礎代謝サマリーの更新（日付フィルターなしで常に最新値を表示）
@@ -1762,13 +1757,17 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           }
         }
         
-        // プロフィールと最新体重から推定した目標摂取カロリーを表示する
-        const targetCalories = calculateTargetCalories(currentProfile, latest.weight);
-        if (targetCalories !== null) {
-          if (dailyBmrCalories) dailyBmrCalories.textContent = targetCalories;
+        // プロフィールと最新体重から推定したTDEE/目標摂取カロリーを表示する
+        const energyTargets = calculateEnergyTargets(currentProfile, latest.weight);
+        if (energyTargets !== null) {
+          if (dailyBmrCalories) dailyBmrCalories.textContent = energyTargets.targetCalories;
           if (dailyBmrDivider) dailyBmrDivider.style.display = 'inline';
+          if (overviewTdeeCalories) overviewTdeeCalories.textContent = energyTargets.tdee;
+          if (overviewTargetCalories) overviewTargetCalories.textContent = energyTargets.targetCalories;
+          if (overviewEnergyCard) overviewEnergyCard.style.display = 'grid';
         } else {
           if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
+          if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
         }
         
         dailyWeightSummaryBar.style.display = 'inline-flex';
@@ -1781,11 +1780,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           diffEl.style.display = 'none';
         }
         if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
+        if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
         dailyWeightSummaryBar.style.display = 'inline-flex';
       }
     } catch (err) {
       console.error('Failed to update daily weight summary:', err);
       if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
+      if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
       dailyWeightSummaryBar.style.display = 'inline-flex';
     }
   }
@@ -2561,7 +2562,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     'tab-analyze': '解析',
     'tab-history': '履歴',
     'tab-weight': '体重',
-    'tab-stats': '統計',
+    'tab-stats': '情報',
     'tab-presets': '定番',
   };
   navItems.forEach(item => {
@@ -2572,5 +2573,6 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
   loadWeightHistory();
   updateDailyWeightSummary();
+  loadStats();
   loadPresets();
 });

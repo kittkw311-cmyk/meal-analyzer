@@ -56,6 +56,67 @@
             </div>
           </div>
         </div>
+        <div class="overview-energy-card" id="overview-energy-card" style="display: none;">
+          <div class="overview-energy-item">
+            <span class="overview-energy-label">TDEE</span>
+            <span class="overview-energy-value"><span id="overview-tdee-calories">----</span><span class="overview-energy-unit">kcal</span></span>
+          </div>
+          <div class="overview-energy-item target">
+            <span class="overview-energy-label">目標TDEE</span>
+            <span class="overview-energy-value"><span id="overview-target-calories">----</span><span class="overview-energy-unit">kcal</span></span>
+          </div>
+        </div>
+        <div class="card overview-trend-card">
+          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体重推移 (直近30回測定)</h3>
+          <div class="chart-container overview-trend-chart-container">
+            <canvas id="weight-trend-chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. 情報タブ -->
+      <section id="tab-stats" class="tab-content">
+        <div class="card profile-goal-card">
+          <div class="profile-goal-grid">
+            <label class="profile-goal-field">
+              <span>身長 (cm)</span>
+              <input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0">
+            </label>
+            <label class="profile-goal-field">
+              <span>性別</span>
+              <select id="profile-gender-select">
+                <option value="">未設定</option>
+                <option value="male">男性</option>
+                <option value="female">女性</option>
+                <option value="other">その他</option>
+              </select>
+            </label>
+            <label class="profile-goal-field">
+              <span>活動量</span>
+              <select id="profile-activity-select">
+                <option value="low">低め</option>
+                <option value="normal">標準</option>
+                <option value="high">高め</option>
+              </select>
+            </label>
+            <label class="profile-goal-field">
+              <span>生年月日</span>
+              <input type="date" id="profile-birth-date-input">
+            </label>
+            <label class="profile-goal-field">
+              <span>年齢</span>
+              <output id="profile-age-output" class="profile-age-output">-- 歳</output>
+            </label>
+            <label class="profile-goal-field">
+              <span>目標体重 (kg)</span>
+              <input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0">
+            </label>
+            <label class="profile-goal-field">
+              <span>目標期限</span>
+              <input type="date" id="profile-target-date-input">
+            </label>
+          </div>
+        </div>
       </section>
 
       <!-- 2. 解析タブ -->
@@ -276,40 +337,6 @@
 
       <!-- 3. 体組成タブ -->
       <section id="tab-weight" class="tab-content">
-        <div class="card profile-goal-card">
-          <div class="profile-goal-grid">
-            <label class="profile-goal-field">
-              <span>身長 (cm)</span>
-              <input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0">
-            </label>
-            <label class="profile-goal-field">
-              <span>性別</span>
-              <select id="profile-gender-select">
-                <option value="">未設定</option>
-                <option value="male">男性</option>
-                <option value="female">女性</option>
-                <option value="other">その他</option>
-              </select>
-            </label>
-            <label class="profile-goal-field">
-              <span>生年月日</span>
-              <input type="date" id="profile-birth-date-input">
-            </label>
-            <label class="profile-goal-field">
-              <span>年齢</span>
-              <output id="profile-age-output" class="profile-age-output">-- 歳</output>
-            </label>
-            <label class="profile-goal-field">
-              <span>目標体重 (kg)</span>
-              <input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0">
-            </label>
-            <label class="profile-goal-field">
-              <span>目標期限</span>
-              <input type="date" id="profile-target-date-input">
-            </label>
-          </div>
-        </div>
-
         <!-- 体組成データの記録セクション (履歴のみ) -->
         <div class="body-composition-section" style="margin-top: 0;">
           <!-- 体組成の簡易履歴リスト -->
@@ -335,26 +362,6 @@
           </div>
         </div>
       </section>
-
-      <!-- 3. 統計タブ -->
-      <section id="tab-stats" class="tab-content">
-        <h2 class="section-title"><svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体組成推移</h2>
-
-        <div class="card chart-card">
-          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体重推移 (直近30回測定)</h3>
-          <div class="chart-container">
-            <canvas id="weight-trend-chart"></canvas>
-          </div>
-        </div>
-
-        <div class="card chart-card">
-          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>BMI推移 (直近30回測定)</h3>
-          <div class="chart-container">
-            <canvas id="bmi-trend-chart"></canvas>
-          </div>
-        </div>
-      </section>
-
 
       <!-- 4. 定番タブ -->
       <section id="tab-presets" class="tab-content">
@@ -388,7 +395,7 @@
       </button>
       <button class="nav-item" data-tab="tab-stats">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
-        <span class="nav-label">統計</span>
+        <span class="nav-label">情報</span>
       </button>
       <button class="nav-item" data-tab="tab-presets">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
