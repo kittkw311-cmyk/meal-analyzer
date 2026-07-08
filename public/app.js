@@ -1531,6 +1531,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     { input: profileTargetWeightInput, field: 'targetWeight', type: 'number' },
     { input: profileTargetDateInput, field: 'targetDate', type: 'string' }
   ];
+  let currentProfile = null;
 
   const setProfileFieldSaving = (input, isSaving) => {
     if (!input) return;
@@ -1555,6 +1556,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       const response = await fetch('/api/profile');
       if (!response.ok) throw new Error('プロフィールの読み込みに失敗しました。');
       const profile = await response.json();
+      currentProfile = profile;
       if (profileHeightInput) {
         profileHeightInput.value = formatProfileValue(profile.height);
         profileHeightInput.dataset.originalValue = profileHeightInput.value;
@@ -1571,6 +1573,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
         profileTargetDateInput.value = profile.targetDate || '';
         profileTargetDateInput.dataset.originalValue = profileTargetDateInput.value;
       }
+      await updateDailyWeightSummary();
     } catch (err) {
       console.error(err);
     }
@@ -1600,9 +1603,11 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       });
       if (!response.ok) throw new Error('プロフィールの保存に失敗しました。');
       const profile = await response.json();
+      currentProfile = profile;
       const savedValue = formatProfileValue(profile[config.field]);
       config.input.value = savedValue;
       config.input.dataset.originalValue = savedValue;
+      await updateDailyWeightSummary();
     } catch (err) {
       console.error(err);
       alert(err.message || 'プロフィール保存中に通信エラーが発生しました。');
@@ -1632,6 +1637,34 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   });
 
   loadProfile();
+
+  const estimateBmrFromProfile = (profile, weightKg) => {
+    const heightCm = Number(profile?.height);
+    const weight = Number(weightKg);
+    const gender = profile?.gender;
+    if (!Number.isFinite(heightCm) || heightCm <= 0 || !Number.isFinite(weight) || weight <= 0) return null;
+
+    if (gender === 'male') {
+      return (13.397 * weight) + (4.799 * heightCm) + 88.362;
+    }
+    if (gender === 'female') {
+      return (9.247 * weight) + (3.098 * heightCm) + 447.593;
+    }
+    return (11.322 * weight) + (3.949 * heightCm) + 267.978;
+  };
+
+  const calculateTargetCalories = (profile, latestWeightKg) => {
+    const estimatedBmr = estimateBmrFromProfile(profile, latestWeightKg);
+    if (estimatedBmr === null) return null;
+    const activityFactors = {
+      low: 1.2,
+      normal: 1.55,
+      high: 1.725
+    };
+    const activityFactor = activityFactors[profile?.activityLevel] || activityFactors.normal;
+    const tdee = estimatedBmr * activityFactor;
+    return Math.round(tdee * 0.8);
+  };
 
   // 最新体重・基礎代謝サマリーの更新（日付フィルターなしで常に最新値を表示）
   async function updateDailyWeightSummary() {
@@ -1684,9 +1717,10 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           }
         }
         
-        // 基礎代謝を食事カロリー表示の横にマージする
-        if (latest.bmr !== null) {
-          if (dailyBmrCalories) dailyBmrCalories.textContent = latest.bmr;
+        // プロフィールと最新体重から推定した目標摂取カロリーを表示する
+        const targetCalories = calculateTargetCalories(currentProfile, latest.weight);
+        if (targetCalories !== null) {
+          if (dailyBmrCalories) dailyBmrCalories.textContent = targetCalories;
           if (dailyBmrDivider) dailyBmrDivider.style.display = 'inline';
         } else {
           if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';

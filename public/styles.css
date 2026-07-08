@@ -103,6 +103,21 @@ body {
   letter-spacing: 0.5px;
 }
 
+.app-version {
+  background: rgba(107, 184, 132, 0.12);
+  border: 1px solid rgba(107, 184, 132, 0.2);
+  border-radius: 999px;
+  color: #4b8f65;
+  display: inline-block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-left: 5px;
+  padding: 1px 6px;
+  vertical-align: 1px;
+}
+
 /* ==========================================================================
    Main Content Area
    ========================================================================== */
