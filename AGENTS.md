@@ -74,3 +74,23 @@
 - 秘密情報をログや差分に出さない
 - テスト未実施で完了扱いにしない
 - 参照優先順位を暗黙に変えない
+
+## Design Tokens
+- Primary: #0f172a（ダークネイビー）
+- Accent: #38bdf8（スカイブルー）
+- Background: #f8fafc（オフホワイト）
+- Text: #1e293b（チャコール）
+- Font-family: 'Zen Kaku Gothic New', sans-serif
+- Heading-font: 'Outfit', sans-serif
+- Base spacing: 8px grid
+- Border-radius: 4px（角丸は控えめに）
+- Max-width: 800px（コンテンツ幅）
+
+## Design Anti-patterns（禁止）
+- ❌ 青→紫のグラデーション背景を使わない
+- ❌ Interフォントを使わない
+- ❌ 角丸を12px以上にしない
+- ❌ shadcn/uiのデフォルトスタイルをそのまま使わない
+- ❌ ダミーテキスト（Lorem ipsum）を残さない
+- ❌ 影（box-shadow）を多用しない
+- ❌ 装飾のないプレーンなボタンを使わない

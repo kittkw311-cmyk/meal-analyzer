@@ -2,6 +2,14 @@
    CSS Variables & Reset
    ========================================================================== */
 :root {
+  --design-primary: #0f172a;
+  --design-accent: #38bdf8;
+  --design-bg: #f8fafc;
+  --design-text: #1e293b;
+  --design-border: #e2e8f0;
+  --design-muted: #64748b;
+  --design-radius: 4px;
+  --design-space: 8px;
   --bg-color: #f7f9f6;
   --card-bg: rgba(255, 255, 255, 0.9);
   --text-main: #3a473e;
@@ -14,7 +22,8 @@
   --border-color: rgba(220, 230, 224, 0.8);
   --shadow-color: rgba(150, 180, 160, 0.12);
   
-  --font-sans: 'Noto Sans JP', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -32,8 +41,8 @@ input[type="number"] {
 
 body {
   font-family: var(--font-sans);
-  background-color: #e8efe9; /* アプリ外背景（デスクトップ表示用） */
-  color: var(--text-main);
+  background-color: var(--design-bg);
+  color: var(--design-text);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -46,10 +55,10 @@ body {
    ========================================================================== */
 .app-container {
   width: 100%;
-  max-width: 480px; /* スマホ幅に制限 */
+  max-width: 800px;
   height: 100vh;
-  background-color: var(--bg-color);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  background-color: var(--design-bg);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -59,8 +68,8 @@ body {
 @media (min-width: 481px) {
   .app-container {
     height: 90vh;
-    border-radius: 32px;
-    border: 8px solid #ffffff;
+    border-radius: var(--design-radius);
+    border: 1px solid var(--design-border);
   }
 }
 
@@ -707,7 +716,7 @@ body {
   font-size: 14px;
   font-weight: 800;
   color: var(--text-main);
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: var(--font-sans);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -723,7 +732,7 @@ body {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 800;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: var(--font-sans);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
 }
@@ -1135,135 +1144,186 @@ body {
 /* ==========================================================================
    Daily Summary Card (Always Visible on Analyze Tab - スリム版)
    ========================================================================== */
+#tab-overview {
+  color: var(--design-text);
+}
+
 .daily-summary-card {
   margin-top: 0;
-  margin-bottom: 16px;
-  border: none;
+  margin-bottom: calc(var(--design-space) * 2);
   background: transparent;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
   padding: 0;
 }
 
 .daily-summary-capsule {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--card-bg);
-  border: 1.5px solid rgba(156, 212, 176, 0.35);
-  border-radius: 9999px;
-  padding: 10px 16px;
-  box-shadow: 0 4px 15px rgba(156, 212, 176, 0.04);
-  width: 100%;
+  align-items: stretch;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   box-sizing: border-box;
+  display: grid;
+  gap: var(--design-space);
+  grid-template-columns: 1fr;
+  padding: 0;
+  width: 100%;
 }
 
 .summary-calorie-capsule {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  font-family: 'Outfit', sans-serif;
+  align-items: flex-start;
+  background: var(--design-bg);
+  border: 1px solid var(--design-border);
+  border-left: 4px solid var(--design-accent);
+  border-radius: var(--design-radius);
+  box-sizing: border-box;
+  color: var(--design-muted);
   display: flex;
+  flex-direction: column;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 72px;
+  padding: calc(var(--design-space) * 2);
+}
+
+.summary-calorie-label {
+  color: var(--design-muted);
+  font-size: 10px;
+  font-weight: 900;
+  margin-bottom: var(--design-space);
+}
+
+.summary-calorie-value {
   align-items: baseline;
-  padding-right: 6px; /* 左右逆転したため右側のパディング調整 */
+  display: flex;
 }
 
 .summary-calorie-capsule .calorie-num {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 800;
-  color: var(--text-main);
+  color: var(--design-primary);
   line-height: 1;
 }
 
 .summary-calorie-capsule .bmr-divider {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--design-muted);
   font-weight: 500;
 }
 
 .summary-calorie-capsule .calorie-unit {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--design-muted);
   font-weight: 700;
   margin-left: 3px;
 }
 
 .summary-chips-capsule {
-  display: flex;
-  flex-direction: row;
-  gap: 6px;
-  align-items: center;
+  align-items: stretch;
+  display: grid;
+  gap: var(--design-space);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .summary-chip {
-  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  width: 72px;
-  height: 30px;
-  border-radius: 8px;
+  border-radius: var(--design-radius);
+  border: 1px solid var(--design-border);
+  box-shadow: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 800;
-  font-family: 'Outfit', sans-serif;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
-  box-sizing: border-box;
-  padding: 0 9px;
+  justify-content: space-between;
+  min-height: 88px;
+  overflow: hidden;
+  padding: calc(var(--design-space) * 1.5) var(--design-space);
+  text-align: center;
+  width: 100%;
+}
+
+.summary-chip-target {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 0;
+  opacity: 0.7;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .summary-chip .label {
-  color: inherit;
-  opacity: 0.9;
+  color: var(--design-primary);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 1;
 }
 
 .summary-chip .val {
-  text-align: right;
+  color: var(--design-text);
+  font-size: 14px;
+  line-height: 1;
+  text-align: center;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .summary-chip.protein {
-  background-color: rgba(154, 194, 244, 0.12);
-  color: #2b5585;
+  background-color: #f0f9ff;
+  border-color: #bae6fd;
+  color: var(--design-primary);
 }
 
 .summary-chip.fat {
-  background-color: rgba(251, 216, 127, 0.16);
-  color: #8c701f;
+  background-color: #ffffff;
+  border-color: var(--design-border);
+  color: var(--design-primary);
 }
 
 .summary-chip.carbs {
-  background-color: rgba(247, 168, 184, 0.12);
-  color: #a04859;
+  background-color: #f8fafc;
+  border-color: var(--design-border);
+  color: var(--design-primary);
 }
 
 .summary-chip.weight {
-  background-color: rgba(180, 160, 220, 0.1);
-  color: #63459c;
+  background-color: #ffffff;
+  border-color: #bae6fd;
+  color: var(--design-primary);
 }
 
 .overview-energy-card {
   display: grid;
-  gap: 8px;
+  gap: var(--design-space);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 10px;
+  margin-top: 0;
+  margin-bottom: calc(var(--design-space) * 2);
 }
 
 .overview-energy-item {
-  background: #f8faf9;
-  border: 1px solid #e5ece7;
-  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--design-border);
+  border-radius: var(--design-radius);
+  box-shadow: none;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: calc(var(--design-space) * 2);
   text-align: left;
 }
 
 .overview-energy-item.target {
-  background: rgba(107, 184, 132, 0.1);
-  border-color: rgba(107, 184, 132, 0.22);
+  background: #f0f9ff;
+  border-color: #bae6fd;
 }
 
 .overview-energy-label {
-  color: var(--text-muted);
+  color: var(--design-muted);
   display: block;
   font-size: 10.5px;
   font-weight: 800;
@@ -1271,23 +1331,27 @@ body {
 }
 
 .overview-energy-value {
-  color: var(--text-main);
-  font-family: 'Outfit', sans-serif;
+  color: var(--design-primary);
+  font-family: var(--font-heading);
   font-size: 20px;
   font-weight: 800;
   line-height: 1;
 }
 
 .overview-energy-unit {
-  color: var(--text-muted);
+  color: var(--design-muted);
   font-size: 11px;
   font-weight: 700;
   margin-left: 3px;
 }
 
 .overview-trend-card {
-  margin-top: 10px;
-  padding: 12px;
+  margin-top: var(--design-space);
+  background: #ffffff;
+  border: 1px solid var(--design-border);
+  border-radius: var(--design-radius);
+  box-shadow: none;
+  padding: calc(var(--design-space) * 2);
 }
 
 .overview-trend-chart-container {
@@ -2558,28 +2622,47 @@ body {
     max-height: 58vh;
   }
 
+  .daily-summary-card {
+    padding: 12px !important;
+  }
   .daily-summary-capsule {
-    padding: 8px 12px !important;
+    grid-template-columns: 1fr !important;
+    padding: 0 !important;
   }
   .summary-calorie-capsule {
     font-size: 11px !important;
-    padding-right: 2px !important;
-    padding-left: 0 !important;
+    min-height: 64px !important;
+    padding: 10px !important;
   }
   .summary-calorie-capsule .calorie-num {
-    font-size: 15px !important;
+    font-size: 24px !important;
   }
   .summary-chips-capsule {
-    gap: 4px !important;
+    gap: 6px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
   .summary-chip {
-    width: 58px !important;
-    height: 22px !important;
-    padding: 0 4px !important;
-    font-size: 10px !important;
-    border-radius: 6px !important;
-    letter-spacing: -0.5px !important;
+    font-size: 12px !important;
+    min-height: 76px !important;
+    padding: 8px !important;
+    border-radius: var(--design-radius) !important;
+    letter-spacing: 0 !important;
     justify-content: space-between !important;
+  }
+  .summary-chip.has-target {
+    justify-content: space-between !important;
+  }
+  .summary-chip-target {
+    font-size: 12px !important;
+  }
+  .summary-chip .label {
+    font-size: 11px !important;
+  }
+  .summary-chip .val {
+    font-size: 12px !important;
+  }
+  .overview-energy-card {
+    grid-template-columns: 1fr !important;
   }
 
   /* スマホ幅での履歴カード調整 */

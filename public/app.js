@@ -137,6 +137,9 @@
   const overviewEnergyCard = document.getElementById('overview-energy-card');
   const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
   const overviewTargetCalories = document.getElementById('overview-target-calories');
+  const dailyTargetProtein = document.getElementById('daily-target-protein');
+  const dailyTargetFat = document.getElementById('daily-target-fat');
+  const dailyTargetCarbs = document.getElementById('daily-target-carbs');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -1477,12 +1480,12 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           datasets: [{
             label: '体重 (kg)',
             data: weightValues,
-            borderColor: '#4a90e2',
-            backgroundColor: 'rgba(74, 144, 226, 0.12)',
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.12)',
             borderWidth: 3,
             fill: true,
             tension: 0.25,
-            pointBackgroundColor: '#4a90e2',
+            pointBackgroundColor: '#38bdf8',
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             pointRadius: 4,
@@ -1707,6 +1710,28 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     };
   };
 
+  const calculateTargetPfcGrams = (targetCalories) => {
+    if (!Number.isFinite(targetCalories) || targetCalories <= 0) return null;
+    return {
+      protein: Math.round((targetCalories * 0.2) / 4),
+      fat: Math.round((targetCalories * 0.25) / 9),
+      carbs: Math.round((targetCalories * 0.55) / 4)
+    };
+  };
+
+  const updateTargetPfcSummary = (targetCalories) => {
+    const pfcTargets = calculateTargetPfcGrams(targetCalories);
+    if (!pfcTargets) {
+      if (dailyTargetProtein) dailyTargetProtein.textContent = '--g';
+      if (dailyTargetFat) dailyTargetFat.textContent = '--g';
+      if (dailyTargetCarbs) dailyTargetCarbs.textContent = '--g';
+      return;
+    }
+    if (dailyTargetProtein) dailyTargetProtein.textContent = `${pfcTargets.protein}g`;
+    if (dailyTargetFat) dailyTargetFat.textContent = `${pfcTargets.fat}g`;
+    if (dailyTargetCarbs) dailyTargetCarbs.textContent = `${pfcTargets.carbs}g`;
+  };
+
   // 最新体重・基礎代謝サマリーの更新（日付フィルターなしで常に最新値を表示）
   async function updateDailyWeightSummary() {
     try {
@@ -1766,9 +1791,11 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           if (overviewTdeeCalories) overviewTdeeCalories.textContent = energyTargets.tdee;
           if (overviewTargetCalories) overviewTargetCalories.textContent = energyTargets.targetCalories;
           if (overviewEnergyCard) overviewEnergyCard.style.display = 'grid';
+          updateTargetPfcSummary(energyTargets.targetCalories);
         } else {
           if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
           if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
+          updateTargetPfcSummary(null);
         }
         
         dailyWeightSummaryBar.style.display = 'inline-flex';
@@ -1782,12 +1809,14 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
         }
         if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
         if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
+        updateTargetPfcSummary(null);
         dailyWeightSummaryBar.style.display = 'inline-flex';
       }
     } catch (err) {
       console.error('Failed to update daily weight summary:', err);
       if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
       if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
+      updateTargetPfcSummary(null);
       dailyWeightSummaryBar.style.display = 'inline-flex';
     }
   }
