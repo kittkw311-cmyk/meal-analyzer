@@ -2705,6 +2705,24 @@ body {
 /* ==========================================================================
    Presets Tab & Predefined Meals Section Styles
    ========================================================================== */
+#tab-presets.active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.presets-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  max-height: none;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 12px;
+}
+
 .preset-card {
   display: flex;
   justify-content: space-between;
