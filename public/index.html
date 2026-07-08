@@ -103,6 +103,45 @@
           <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
         </div>
 
+        <!-- 手動で数値を入力して定番登録 -->
+        <div class="card accordion-card" style="margin-bottom: 16px; padding: 12px 14px; text-align: left; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px;">
+          <div class="accordion-header" id="presets-manual-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+            <h3 class="card-title-v2" style="font-size: 13.5px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center;">
+              <svg class="icon-svg" style="margin-right: 6px; color: var(--text-muted); width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>手動で数値を入力して定番登録
+            </h3>
+            <span class="accordion-arrow" id="presets-manual-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+          </div>
+          <div class="accordion-content" id="presets-manual-content" style="display: none; margin-top: 12px; border-top: 1.5px solid var(--border-color); padding-top: 12px;">
+            <form id="form-presets-manual">
+              <div class="form-group-compact" style="margin-bottom: 10px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">メニュー名 / 商品名</label>
+                <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
+                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                </div>
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
+                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                </div>
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
+                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                </div>
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
+                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
+                手動入力で定番に保存
+              </button>
+            </form>
+          </div>
+        </div>
+
 
         
         <!-- 体組成データの記録セクション (食事解析の下に追加) -->
@@ -286,85 +325,11 @@
           <svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>定番メニュー登録
         </h2>
 
-        <!-- AI解析で定番登録するカード -->
-        <div class="card upload-card" style="margin-bottom: 16px; text-align: left;">
-          <h3 class="card-title-v2" style="font-size: 14px; margin-bottom: 8px; color: var(--primary-dark); font-weight: 800; text-align: left;">✨ AI解析で定番に登録</h3>
-          <p class="upload-help-text" style="margin-bottom: 12px; font-size: 11px; color: var(--text-muted); text-align: left;">写真や料理テキストからAIが自動で栄養素を抽出して定番に登録します。</p>
-          
-          <form id="form-presets-ai-analyze">
-            <!-- 写真選択/撮影エリア -->
-            <div class="upload-action-buttons" id="presets-drop-zone" style="gap: 8px; margin-bottom: 10px; display: flex;">
-              <button type="button" class="btn upload-action-btn" id="btn-presets-camera-trigger" style="flex: 1; padding: 10px; font-size: 12.5px; border-radius: 8px;">
-                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: -2px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
-              </button>
-              <button type="button" class="btn upload-action-btn" id="btn-presets-gallery-trigger" style="flex: 1; padding: 10px; font-size: 12.5px; border-radius: 8px;">
-                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: -2px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>ライブラリ
-              </button>
-              <input type="file" id="presets-camera-input" accept="image/*" capture="environment" style="display: none;">
-              <input type="file" id="presets-gallery-input" accept="image/*" style="display: none;">
-            </div>
-
-            <!-- 画像プレビューエリア -->
-            <div id="presets-image-preview-container" class="image-preview-container" style="display: none; margin-bottom: 12px; position: relative;">
-              <img id="presets-image-preview" src="" alt="プレビュー" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; border: 1.5px solid var(--border-color);">
-              <button type="button" class="btn-remove-image" id="btn-presets-remove-image" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">✕</button>
-            </div>
-
-            <!-- 料理名テキスト入力 -->
-            <div class="textarea-wrapper" style="margin-bottom: 12px; display: block; width: 100%;">
-              <textarea id="presets-text-input" placeholder="または料理名、レシピ、商品の説明を入力..." rows="2" style="width: 100%; font-size: 13px; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; resize: none; font-family: inherit;"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block" id="btn-presets-ai-submit" disabled style="padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
-              AI解析して定番に登録
-            </button>
-          </form>
-        </div>
-
-        <!-- 手動登録アコーディオン -->
-        <div class="card accordion-card" style="margin-bottom: 16px; padding: 12px 14px; text-align: left; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px;">
-          <div class="accordion-header" id="presets-manual-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-            <h3 class="card-title-v2" style="font-size: 13.5px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center;">
-              <svg class="icon-svg" style="margin-right: 6px; color: var(--text-muted); width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>手動で数値を入力して定番登録
-            </h3>
-            <span class="accordion-arrow" id="presets-manual-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
-          </div>
-          <div class="accordion-content" id="presets-manual-content" style="display: none; margin-top: 12px; border-top: 1.5px solid var(--border-color); padding-top: 12px;">
-            <form id="form-presets-manual">
-              <div class="form-group-compact" style="margin-bottom: 10px;">
-                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">メニュー名 / 商品名</label>
-                <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
-                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
-                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
-                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
-                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
-                </div>
-              </div>
-              <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
-                手動入力で定番に保存
-              </button>
-            </form>
-          </div>
-        </div>
-
         <!-- 登録済み定番メニュー一覧 -->
         <h3 class="section-subtitle" style="font-size: 13.5px; font-weight: 800; color: var(--text-main); margin-top: 20px; margin-bottom: 10px; text-align: left;">登録済みの定番メニュー</h3>
         <div id="presets-list" class="presets-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-bottom: 24px;">
           <div class="presets-empty-state" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px; background: rgba(255,255,255,0.7); border-radius: 12px; border: 1.5px dashed var(--border-color);">
-            登録されている定番メニューはありません。<br>上のAI解析か手動入力で登録してください。
+            登録されている定番メニューはありません。<br>解析タブの手動入力で登録してください。
           </div>
         </div>
       </section>

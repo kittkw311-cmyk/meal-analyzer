@@ -43,21 +43,9 @@
   const presetSelector = document.getElementById('preset-selector');
   const presetsList = document.getElementById('presets-list');
   const formPresetsManual = document.getElementById('form-presets-manual');
-  const formPresetsAiAnalyze = document.getElementById('form-presets-ai-analyze');
-  const btnPresetsAiSubmit = document.getElementById('btn-presets-ai-submit');
   const presetsManualToggle = document.getElementById('presets-manual-toggle');
   const presetsManualContent = document.getElementById('presets-manual-content');
   const presetsManualArrow = document.getElementById('presets-manual-arrow');
-  const presetsTextInput = document.getElementById('presets-text-input');
-  
-  // Presets AI upload elements
-  const btnPresetsCameraTrigger = document.getElementById('btn-presets-camera-trigger');
-  const btnPresetsGalleryTrigger = document.getElementById('btn-presets-gallery-trigger');
-  const presetsCameraInput = document.getElementById('presets-camera-input');
-  const presetsGalleryInput = document.getElementById('presets-gallery-input');
-  const presetsImagePreviewContainer = document.getElementById('presets-image-preview-container');
-  const presetsImagePreview = document.getElementById('presets-image-preview');
-  const btnPresetsRemoveImage = document.getElementById('btn-presets-remove-image');
   
   // Modal Edit Inputs
   const modalDateInput = document.getElementById('modal-date-input');
@@ -690,8 +678,6 @@
   // ==========================================================================
   // 定番メニュー (Presets) 管理ロジック
   // ==========================================================================
-  let presetsSelectedFile = null;
-
   // 1. 定番データの読み込み ＆ レンダリング
   async function loadPresets() {
     try {
@@ -719,7 +705,7 @@
         if (presets.length === 0) {
           presetsList.innerHTML = `
             <div class="presets-empty-state" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px; background: rgba(255,255,255,0.7); border-radius: 12px; border: 1.5px dashed var(--border-color);">
-              登録されている定番メニューはありません。<br>上のAI解析か手動入力で登録してください。
+              登録されている定番メニューはありません。<br>解析タブの手動入力で登録してください。
             </div>
           `;
           return;
@@ -899,107 +885,7 @@
     });
   }
 
-  // 4. AI定番登録フォームのファイルハンドラ
-  if (btnPresetsCameraTrigger) {
-    btnPresetsCameraTrigger.addEventListener('click', () => presetsCameraInput.click());
-    btnPresetsGalleryTrigger.addEventListener('click', () => presetsGalleryInput.click());
-
-    const handlePresetsFile = (file) => {
-      if (!file.type.startsWith('image/')) {
-        alert('画像ファイルを選択してください。');
-        return;
-      }
-      presetsSelectedFile = file;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        presetsImagePreview.src = e.target.result;
-        presetsImagePreviewContainer.style.display = 'block';
-        checkPresetsAiSubmitState();
-      };
-      reader.readAsDataURL(file);
-    };
-
-    presetsCameraInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) handlePresetsFile(e.target.files[0]);
-    });
-    presetsGalleryInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) handlePresetsFile(e.target.files[0]);
-    });
-
-    btnPresetsRemoveImage.addEventListener('click', () => {
-      presetsSelectedFile = null;
-      presetsCameraInput.value = '';
-      presetsGalleryInput.value = '';
-      presetsImagePreviewContainer.style.display = 'none';
-      presetsImagePreview.src = '';
-      checkPresetsAiSubmitState();
-    });
-  }
-
-  // AI定番登録ボタン活性化の制御
-  function checkPresetsAiSubmitState() {
-    const hasText = presetsTextInput.value.trim().length > 0;
-    const hasImage = !!presetsSelectedFile;
-    btnPresetsAiSubmit.disabled = (!hasText && !hasImage);
-  }
-
-  if (presetsTextInput) {
-    presetsTextInput.addEventListener('input', checkPresetsAiSubmitState);
-  }
-
-  // 5. AI定番登録フォーム送信処理
-  if (formPresetsAiAnalyze) {
-    formPresetsAiAnalyze.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const hasText = presetsTextInput.value.trim().length > 0;
-      const hasImage = !!presetsSelectedFile;
-      if (!hasText && !hasImage) return;
-
-      btnPresetsAiSubmit.disabled = true;
-      
-      const loadingTextEl = loadingOverlay.querySelector('p');
-      const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-      loadingTextEl.textContent = 'AIが栄養素を分析しています...';
-      loadingSubTextEl.textContent = '定番メニューに登録するデータを算出中';
-      loadingOverlay.style.display = 'flex';
-
-      const formData = new FormData();
-      if (hasImage) {
-        formData.append('image', presetsSelectedFile);
-      }
-      formData.append('textInput', presetsTextInput.value.trim());
-
-      try {
-        const response = await fetch('/api/presets/analyze', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || '定番登録中にサーバーエラーが発生しました。');
-        }
-
-        // フォームのリセット
-        presetsSelectedFile = null;
-        presetsCameraInput.value = '';
-        presetsGalleryInput.value = '';
-        presetsImagePreviewContainer.style.display = 'none';
-        presetsImagePreview.src = '';
-        presetsTextInput.value = '';
-        btnPresetsAiSubmit.disabled = true;
-
-        loadPresets();
-      } catch (err) {
-        console.error(err);
-        alert('AI定番登録に失敗しました:\n' + err.message);
-      } finally {
-        loadingOverlay.style.display = 'none';
-      }
-    });
-  }
-
-  // 6. 食事詳細モーダル内の「定番に登録」ボタン押下処理
+  // 4. 食事詳細モーダル内の「定番に登録」ボタン押下処理
   if (btnPresetModal) {
     btnPresetModal.addEventListener('click', async () => {
       if (!activeDetailMeal) return;
@@ -2320,7 +2206,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     'tab-history': '履歴',
     'tab-weight': '体重',
     'tab-stats': '統計',
-    'tab-presets': '定型',
+    'tab-presets': '定番',
   };
   navItems.forEach(item => {
     const tabId = item.getAttribute('data-tab');
