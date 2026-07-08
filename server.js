@@ -29,6 +29,15 @@ const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
 const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
 const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
 
+const DEFAULT_PROFILE = {
+  height: null,
+  gender: '',
+  activityLevel: 'normal',
+  birthDate: '',
+  targetWeight: null,
+  targetDate: ''
+};
+
 function getJstDateKey(dateLike) {
   const date = new Date(dateLike);
   if (Number.isNaN(date.getTime())) return '';
@@ -57,32 +66,20 @@ function getJstDateParts(dateLike) {
   };
 }
 
-function readProfile() {
+function readLocalProfile() {
   try {
     const raw = fs.readFileSync(PROFILE_FILE, 'utf8');
     return {
-      height: null,
-      gender: '',
-      activityLevel: 'normal',
-      birthDate: '',
-      targetWeight: null,
-      targetDate: '',
+      ...DEFAULT_PROFILE,
       ...JSON.parse(raw || '{}')
     };
   } catch (err) {
-    console.error('Error reading profile:', err);
-    return {
-      height: null,
-      gender: '',
-      activityLevel: 'normal',
-      birthDate: '',
-      targetWeight: null,
-      targetDate: ''
-    };
+    console.error('Error reading local profile:', err);
+    return { ...DEFAULT_PROFILE };
   }
 }
 
-function writeProfile(profile) {
+function writeLocalProfile(profile) {
   fs.writeFileSync(PROFILE_FILE, JSON.stringify(profile, null, 2));
 }
 
@@ -105,14 +102,7 @@ if (!fs.existsSync(SUMMARY_FILE)) {
   fs.writeFileSync(SUMMARY_FILE, JSON.stringify([], null, 2));
 }
 if (!fs.existsSync(PROFILE_FILE)) {
-  fs.writeFileSync(PROFILE_FILE, JSON.stringify({
-    height: null,
-    gender: '',
-    activityLevel: 'normal',
-    birthDate: '',
-    targetWeight: null,
-    targetDate: ''
-  }, null, 2));
+  fs.writeFileSync(PROFILE_FILE, JSON.stringify(DEFAULT_PROFILE, null, 2));
 }
 
 // Multer設定（メモリ上にバッファとして保存）
@@ -162,8 +152,90 @@ let driveHistoryFileId = null;
 let driveWeightFileId = null;
 let drivePresetsFileId = null;
 let driveSummaryFileId = null;
+let driveProfileFileId = null;
 
 // 体組成ファイルを検索または新規作成してファイルIDを設定する
+async function initDriveProfile() {
+  if (!drive || !folderId) return;
+  try {
+    console.log('Searching for profile.json in Google Drive...');
+    const res = await drive.files.list({
+      q: `name = 'profile.json' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+
+    if (res.data.files && res.data.files.length > 0) {
+      driveProfileFileId = res.data.files[0].id;
+      console.log(`Found profile.json in Google Drive. File ID: ${driveProfileFileId}`);
+      const profile = await readProfile();
+      writeLocalProfile(profile);
+    } else {
+      console.log('profile.json not found in Google Drive. Creating a new one from local profile...');
+      const localProfile = readLocalProfile();
+      const driveResponse = await drive.files.create({
+        requestBody: {
+          name: 'profile.json',
+          parents: [folderId],
+          mimeType: 'application/json',
+        },
+        media: {
+          mimeType: 'application/json',
+          body: Readable.from(JSON.stringify(localProfile, null, 2)),
+        },
+        fields: 'id',
+      });
+      driveProfileFileId = driveResponse.data.id;
+      console.log(`Created new profile.json in Google Drive. File ID: ${driveProfileFileId}`);
+    }
+  } catch (err) {
+    console.error('Failed to initialize Google Drive profile file:', err.message);
+  }
+}
+
+async function readProfile() {
+  if (drive && driveProfileFileId) {
+    try {
+      const res = await drive.files.get(
+        { fileId: driveProfileFileId, alt: 'media' },
+        { responseType: 'text' }
+      );
+      const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      const profile = { ...DEFAULT_PROFILE, ...JSON.parse(dataText || '{}') };
+      writeLocalProfile(profile);
+      return profile;
+    } catch (err) {
+      console.error('Error reading profile from Google Drive, falling back to local cache:', err.message);
+      return readLocalProfile();
+    }
+  }
+  return readLocalProfile();
+}
+
+async function writeProfile(profile) {
+  const next = { ...DEFAULT_PROFILE, ...profile };
+  writeLocalProfile(next);
+
+  if (drive && !driveProfileFileId) {
+    await initDriveProfile();
+  }
+
+  if (drive && driveProfileFileId) {
+    try {
+      await drive.files.update({
+        fileId: driveProfileFileId,
+        media: {
+          mimeType: 'application/json',
+          body: Readable.from(JSON.stringify(next, null, 2)),
+        },
+      });
+      console.log('Successfully updated profile.json in Google Drive.');
+    } catch (err) {
+      console.error('Error writing profile to Google Drive:', err.message);
+    }
+  }
+}
+
 async function initDriveWeight() {
   if (!drive || !folderId) return;
   try {
@@ -813,13 +885,18 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 // ==========================================================================
 
 // 1. 定番メニュー一覧取得 API
-app.get('/api/profile', (req, res) => {
-  res.json(readProfile());
+app.get('/api/profile', async (req, res) => {
+  try {
+    res.json(await readProfile());
+  } catch (err) {
+    console.error('Profile read error:', err);
+    res.status(500).json({ error: 'プロフィールの読み込み中にエラーが発生しました。: ' + err.message });
+  }
 });
 
-app.patch('/api/profile', (req, res) => {
+app.patch('/api/profile', async (req, res) => {
   try {
-    const current = readProfile();
+    const current = await readProfile();
     const next = { ...current };
 
     if (Object.prototype.hasOwnProperty.call(req.body, 'height')) {
@@ -845,7 +922,7 @@ app.patch('/api/profile', (req, res) => {
       next.targetDate = typeof req.body.targetDate === 'string' ? req.body.targetDate : '';
     }
 
-    writeProfile(next);
+    await writeProfile(next);
     res.json(next);
   } catch (err) {
     console.error('Profile update error:', err);
@@ -1834,6 +1911,7 @@ app.delete('/api/summary-history/:id', async (req, res) => {
 // サーバー起動処理
 (async () => {
   if (drive && folderId) {
+    await initDriveProfile();
     await initDriveHistory();
     await initDriveWeight();
     await initDrivePresets();
