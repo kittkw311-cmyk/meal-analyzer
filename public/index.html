@@ -273,6 +273,33 @@
 
       <!-- 3. 体組成タブ -->
       <section id="tab-weight" class="tab-content">
+        <div class="card profile-goal-card">
+          <h3 class="profile-goal-title">プロフィール・目標</h3>
+          <div class="profile-goal-grid">
+            <label class="profile-goal-field">
+              <span>身長 (cm)</span>
+              <input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0">
+            </label>
+            <label class="profile-goal-field">
+              <span>性別</span>
+              <select id="profile-gender-select">
+                <option value="">未設定</option>
+                <option value="male">男性</option>
+                <option value="female">女性</option>
+                <option value="other">その他</option>
+              </select>
+            </label>
+            <label class="profile-goal-field">
+              <span>目標体重 (kg)</span>
+              <input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0">
+            </label>
+            <label class="profile-goal-field">
+              <span>目標期限</span>
+              <input type="date" id="profile-target-date-input">
+            </label>
+          </div>
+        </div>
+
         <!-- 体組成データの記録セクション (履歴のみ) -->
         <div class="body-composition-section" style="margin-top: 0;">
           <!-- 体組成の簡易履歴リスト -->

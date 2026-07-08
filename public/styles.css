@@ -1900,6 +1900,76 @@ body {
   margin-bottom: 40px;
 }
 
+.profile-goal-card {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.profile-goal-title {
+  color: var(--text-main);
+  font-size: 13.5px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+.profile-goal-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-goal-field {
+  position: relative;
+}
+
+.profile-goal-field span {
+  color: var(--text-muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.profile-goal-field input,
+.profile-goal-field select {
+  background: #fff;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  box-sizing: border-box;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  outline: none;
+  padding: 9px 28px 9px 10px;
+  width: 100%;
+}
+
+.profile-goal-field input:focus,
+.profile-goal-field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(107, 184, 132, 0.15);
+}
+
+.profile-goal-field input.is-saving,
+.profile-goal-field select.is-saving {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.profile-field-spinner {
+  animation: presetMacroSpin 0.7s linear infinite;
+  border: 2px solid var(--primary);
+  border-right-color: transparent;
+  border-radius: 999px;
+  bottom: 10px;
+  height: 10px;
+  position: absolute;
+  right: 9px;
+  width: 10px;
+}
+
 /* 体重の増減差分表示 */
 .weight-diff {
   display: inline-block;

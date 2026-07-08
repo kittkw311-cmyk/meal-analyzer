@@ -21,6 +21,7 @@ const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
 const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
 const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
+const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
 
 function getJstDateKey(dateLike) {
   const date = new Date(dateLike);
@@ -50,6 +51,33 @@ function getJstDateParts(dateLike) {
   };
 }
 
+function readProfile() {
+  try {
+    const raw = fs.readFileSync(PROFILE_FILE, 'utf8');
+    return {
+      height: null,
+      gender: '',
+      activityLevel: 'normal',
+      targetWeight: null,
+      targetDate: '',
+      ...JSON.parse(raw || '{}')
+    };
+  } catch (err) {
+    console.error('Error reading profile:', err);
+    return {
+      height: null,
+      gender: '',
+      activityLevel: 'normal',
+      targetWeight: null,
+      targetDate: ''
+    };
+  }
+}
+
+function writeProfile(profile) {
+  fs.writeFileSync(PROFILE_FILE, JSON.stringify(profile, null, 2));
+}
+
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
 }
@@ -67,6 +95,15 @@ if (!fs.existsSync(PRESETS_FILE)) {
 }
 if (!fs.existsSync(SUMMARY_FILE)) {
   fs.writeFileSync(SUMMARY_FILE, JSON.stringify([], null, 2));
+}
+if (!fs.existsSync(PROFILE_FILE)) {
+  fs.writeFileSync(PROFILE_FILE, JSON.stringify({
+    height: null,
+    gender: '',
+    activityLevel: 'normal',
+    targetWeight: null,
+    targetDate: ''
+  }, null, 2));
 }
 
 // Multer設定（メモリ上にバッファとして保存）
@@ -767,6 +804,39 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 // ==========================================================================
 
 // 1. 定番メニュー一覧取得 API
+app.get('/api/profile', (req, res) => {
+  res.json(readProfile());
+});
+
+app.patch('/api/profile', (req, res) => {
+  try {
+    const current = readProfile();
+    const next = { ...current };
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'height')) {
+      const value = req.body.height === '' || req.body.height === null ? null : Number(req.body.height);
+      next.height = Number.isFinite(value) && value > 0 ? Math.round(value * 10) / 10 : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'gender')) {
+      const allowed = ['male', 'female', 'other', ''];
+      next.gender = allowed.includes(req.body.gender) ? req.body.gender : '';
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'targetWeight')) {
+      const value = req.body.targetWeight === '' || req.body.targetWeight === null ? null : Number(req.body.targetWeight);
+      next.targetWeight = Number.isFinite(value) && value > 0 ? Math.round(value * 10) / 10 : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'targetDate')) {
+      next.targetDate = typeof req.body.targetDate === 'string' ? req.body.targetDate : '';
+    }
+
+    writeProfile(next);
+    res.json(next);
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ error: 'プロフィールの更新中にエラーが発生しました。: ' + err.message });
+  }
+});
+
 app.get('/api/presets', async (req, res) => {
   try {
     const presets = await readPresets();

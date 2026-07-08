@@ -104,6 +104,10 @@
 
   const btnSaveWeight = document.getElementById('btn-save-weight');
   const weightHistoryTbody = document.getElementById('weight-history-tbody');
+  const profileHeightInput = document.getElementById('profile-height-input');
+  const profileGenderSelect = document.getElementById('profile-gender-select');
+  const profileTargetWeightInput = document.getElementById('profile-target-weight-input');
+  const profileTargetDateInput = document.getElementById('profile-target-date-input');
 
   // 体組成詳細モーダルの要素
   const weightDetailModal = document.getElementById('weight-detail-modal');
@@ -1520,6 +1524,114 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   // ==========================================================================
   // 体組成 (Weight / Body Composition) OCR & 記録ロジック
   // ==========================================================================
+
+  const profileFields = [
+    { input: profileHeightInput, field: 'height', type: 'number' },
+    { input: profileGenderSelect, field: 'gender', type: 'string' },
+    { input: profileTargetWeightInput, field: 'targetWeight', type: 'number' },
+    { input: profileTargetDateInput, field: 'targetDate', type: 'string' }
+  ];
+
+  const setProfileFieldSaving = (input, isSaving) => {
+    if (!input) return;
+    const field = input.closest('.profile-goal-field');
+    input.classList.toggle('is-saving', isSaving);
+    input.disabled = isSaving;
+    let spinner = field ? field.querySelector('.profile-field-spinner') : null;
+    if (isSaving && field && !spinner) {
+      spinner = document.createElement('span');
+      spinner.className = 'profile-field-spinner';
+      spinner.setAttribute('aria-hidden', 'true');
+      field.appendChild(spinner);
+    } else if (!isSaving && spinner) {
+      spinner.remove();
+    }
+  };
+
+  const formatProfileValue = (value) => value === null || value === undefined ? '' : String(value);
+
+  const loadProfile = async () => {
+    try {
+      const response = await fetch('/api/profile');
+      if (!response.ok) throw new Error('プロフィールの読み込みに失敗しました。');
+      const profile = await response.json();
+      if (profileHeightInput) {
+        profileHeightInput.value = formatProfileValue(profile.height);
+        profileHeightInput.dataset.originalValue = profileHeightInput.value;
+      }
+      if (profileGenderSelect) {
+        profileGenderSelect.value = profile.gender || '';
+        profileGenderSelect.dataset.originalValue = profileGenderSelect.value;
+      }
+      if (profileTargetWeightInput) {
+        profileTargetWeightInput.value = formatProfileValue(profile.targetWeight);
+        profileTargetWeightInput.dataset.originalValue = profileTargetWeightInput.value;
+      }
+      if (profileTargetDateInput) {
+        profileTargetDateInput.value = profile.targetDate || '';
+        profileTargetDateInput.dataset.originalValue = profileTargetDateInput.value;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const saveProfileField = async (config) => {
+    if (!config.input || config.input.classList.contains('is-saving')) return;
+    const rawValue = config.input.value.trim();
+    const previousValue = config.input.dataset.originalValue ?? '';
+    if (rawValue === previousValue) return;
+
+    const nextValue = config.type === 'number'
+      ? (rawValue === '' ? null : Math.round(Number(rawValue) * 10) / 10)
+      : rawValue;
+
+    if (config.type === 'number' && rawValue !== '' && !Number.isFinite(nextValue)) {
+      config.input.value = previousValue;
+      return;
+    }
+
+    try {
+      setProfileFieldSaving(config.input, true);
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [config.field]: nextValue })
+      });
+      if (!response.ok) throw new Error('プロフィールの保存に失敗しました。');
+      const profile = await response.json();
+      const savedValue = formatProfileValue(profile[config.field]);
+      config.input.value = savedValue;
+      config.input.dataset.originalValue = savedValue;
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'プロフィール保存中に通信エラーが発生しました。');
+      config.input.value = previousValue;
+    } finally {
+      setProfileFieldSaving(config.input, false);
+    }
+  };
+
+  profileFields.forEach(config => {
+    if (!config.input) return;
+    if (config.input.tagName === 'SELECT' || config.input.type === 'date') {
+      config.input.addEventListener('change', () => saveProfileField(config));
+    } else {
+      config.input.addEventListener('blur', () => saveProfileField(config));
+      config.input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          config.input.blur();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          config.input.value = config.input.dataset.originalValue ?? '';
+          config.input.blur();
+        }
+      });
+    }
+  });
+
+  loadProfile();
 
   // 最新体重・基礎代謝サマリーの更新（日付フィルターなしで常に最新値を表示）
   async function updateDailyWeightSummary() {
