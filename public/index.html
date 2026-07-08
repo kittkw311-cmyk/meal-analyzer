@@ -28,8 +28,8 @@
     <!-- メインコンテンツ領域（タブで切り替え） -->
     <main class="app-main">
       
-      <!-- 1. 解析タブ -->
-      <section id="tab-analyze" class="tab-content active">
+      <!-- 1. 総合タブ -->
+      <section id="tab-overview" class="tab-content active">
         <!-- 本日の合計栄養素サマリー (最上部・見出し無しのスリム型) -->
         <div class="card daily-summary-card" id="daily-summary-card">
           <div class="daily-summary-capsule">
@@ -56,7 +56,10 @@
             </div>
           </div>
         </div>
+      </section>
 
+      <!-- 2. 解析タブ -->
+      <section id="tab-analyze" class="tab-content">
         <div class="card upload-card">
           <!-- 定番メニューから選ぶドロップダウン -->
           <div class="preset-select-wrapper" style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left;">
@@ -274,7 +277,6 @@
       <!-- 3. 体組成タブ -->
       <section id="tab-weight" class="tab-content">
         <div class="card profile-goal-card">
-          <h3 class="profile-goal-title">プロフィール・目標</h3>
           <div class="profile-goal-grid">
             <label class="profile-goal-field">
               <span>身長 (cm)</span>
@@ -288,6 +290,14 @@
                 <option value="female">女性</option>
                 <option value="other">その他</option>
               </select>
+            </label>
+            <label class="profile-goal-field">
+              <span>生年月日</span>
+              <input type="date" id="profile-birth-date-input">
+            </label>
+            <label class="profile-goal-field">
+              <span>年齢</span>
+              <output id="profile-age-output" class="profile-age-output">-- 歳</output>
             </label>
             <label class="profile-goal-field">
               <span>目標体重 (kg)</span>
@@ -356,64 +366,15 @@
           </div>
         </div>
       </section>
-      <!-- 5. 総括タブ -->
-      <section id="tab-summary" class="tab-content">
-        <h2 class="section-title">
-          <svg class="icon-svg" style="margin-right: 8px; color: var(--primary); vertical-align: -3px; width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          AI総括
-        </h2>
-
-        <div class="card upload-card" style="margin-bottom: 14px;">
-          <!-- 日付指定 -->
-          <div class="selectors-inline-row" style="margin-bottom: 12px;">
-            <input type="date" id="summary-date-input" class="date-input" style="flex: 1;">
-          </div>
-
-          <!-- コメント入力 -->
-          <div class="text-input-area" style="margin-bottom: 12px;">
-            <textarea id="summary-comment-input" class="meal-textarea" placeholder="体調、目標、気になること、トレーナーへのメモなど自由に入力..." rows="3"></textarea>
-          </div>
-
-          <button class="btn btn-primary btn-block" id="btn-analyze-summary">
-            <svg class="icon-svg" style="margin-right: 6px; vertical-align: -2px; width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            AIダイエット分析
-          </button>
-        </div>
-
-        <!-- 分析結果表示エリア -->
-        <div id="summary-result-container" style="display: none;">
-          <div class="card" style="padding: 16px; border-radius: 14px; border-left: 4px solid var(--primary);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-              <svg class="icon-svg" style="color: var(--primary); width: 18px; height: 18px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              <span id="summary-result-date" style="font-size: 12px; color: var(--text-muted); font-weight: 700;"></span>
-            </div>
-            <div id="summary-result-text" style="font-size: 14px; line-height: 1.8; color: var(--text-main); white-space: pre-wrap; margin-bottom: 14px;"></div>
-
-          </div>
-        </div>
-
-        <!-- ローディング -->
-        <div id="summary-loading" style="display: none; text-align: center; padding: 32px 0;">
-          <div class="summary-spinner"></div>
-          <p style="margin-top: 12px; color: var(--text-muted); font-size: 13px;">AIがダイエットトレーナーとして分析中...</p>
-        </div>
-
-        <!-- 分析履歴 -->
-        <div id="summary-history-section" style="margin-top: 20px;">
-          <h3 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; padding: 0 2px;">
-            分析履歴
-          </h3>
-          <div id="summary-history-list">
-            <!-- JSで動的生成 -->
-          </div>
-        </div>
-      </section>
-
     </main>
 
     <!-- 下部ナビゲーションバー（スマホ向け） -->
     <nav class="app-nav">
-      <button class="nav-item active" data-tab="tab-analyze">
+      <button class="nav-item active" data-tab="tab-overview">
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg></span>
+        <span class="nav-label">総合</span>
+      </button>
+      <button class="nav-item" data-tab="tab-analyze">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
         <span class="nav-label">解析</span>
       </button>
@@ -432,10 +393,6 @@
       <button class="nav-item" data-tab="tab-presets">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
         <span class="nav-label">定番</span>
-      </button>
-      <button class="nav-item" data-tab="tab-summary">
-        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
-        <span class="nav-label">総括</span>
       </button>
     </nav>
   </div>

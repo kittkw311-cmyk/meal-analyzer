@@ -58,6 +58,7 @@ function readProfile() {
       height: null,
       gender: '',
       activityLevel: 'normal',
+      birthDate: '',
       targetWeight: null,
       targetDate: '',
       ...JSON.parse(raw || '{}')
@@ -68,6 +69,7 @@ function readProfile() {
       height: null,
       gender: '',
       activityLevel: 'normal',
+      birthDate: '',
       targetWeight: null,
       targetDate: ''
     };
@@ -101,6 +103,7 @@ if (!fs.existsSync(PROFILE_FILE)) {
     height: null,
     gender: '',
     activityLevel: 'normal',
+    birthDate: '',
     targetWeight: null,
     targetDate: ''
   }, null, 2));
@@ -820,6 +823,9 @@ app.patch('/api/profile', (req, res) => {
     if (Object.prototype.hasOwnProperty.call(req.body, 'gender')) {
       const allowed = ['male', 'female', 'other', ''];
       next.gender = allowed.includes(req.body.gender) ? req.body.gender : '';
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'birthDate')) {
+      next.birthDate = typeof req.body.birthDate === 'string' ? req.body.birthDate : '';
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'targetWeight')) {
       const value = req.body.targetWeight === '' || req.body.targetWeight === null ? null : Number(req.body.targetWeight);

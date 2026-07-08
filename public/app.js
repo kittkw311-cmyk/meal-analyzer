@@ -1,4 +1,15 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
+  const jstDateKey = (dateLike) => {
+    const date = new Date(dateLike);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  };
+
   // ==========================================================================
   // DOM Elements
   // ==========================================================================
@@ -106,6 +117,8 @@
   const weightHistoryTbody = document.getElementById('weight-history-tbody');
   const profileHeightInput = document.getElementById('profile-height-input');
   const profileGenderSelect = document.getElementById('profile-gender-select');
+  const profileBirthDateInput = document.getElementById('profile-birth-date-input');
+  const profileAgeOutput = document.getElementById('profile-age-output');
   const profileTargetWeightInput = document.getElementById('profile-target-weight-input');
   const profileTargetDateInput = document.getElementById('profile-target-date-input');
 
@@ -1528,10 +1541,30 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   const profileFields = [
     { input: profileHeightInput, field: 'height', type: 'number' },
     { input: profileGenderSelect, field: 'gender', type: 'string' },
+    { input: profileBirthDateInput, field: 'birthDate', type: 'string' },
     { input: profileTargetWeightInput, field: 'targetWeight', type: 'number' },
     { input: profileTargetDateInput, field: 'targetDate', type: 'string' }
   ];
   let currentProfile = null;
+
+  const calculateAge = (birthDateValue) => {
+    if (!birthDateValue) return null;
+    const birthDate = new Date(`${birthDateValue}T00:00:00`);
+    if (Number.isNaN(birthDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age -= 1;
+    }
+    return age >= 0 ? age : null;
+  };
+
+  const renderProfileAge = (birthDateValue) => {
+    if (!profileAgeOutput) return;
+    const age = calculateAge(birthDateValue);
+    profileAgeOutput.textContent = age === null ? '-- 歳' : `${age} 歳`;
+  };
 
   const setProfileFieldSaving = (input, isSaving) => {
     if (!input) return;
@@ -1565,6 +1598,10 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
         profileGenderSelect.value = profile.gender || '';
         profileGenderSelect.dataset.originalValue = profileGenderSelect.value;
       }
+      if (profileBirthDateInput) {
+        profileBirthDateInput.value = profile.birthDate || '';
+        profileBirthDateInput.dataset.originalValue = profileBirthDateInput.value;
+      }
       if (profileTargetWeightInput) {
         profileTargetWeightInput.value = formatProfileValue(profile.targetWeight);
         profileTargetWeightInput.dataset.originalValue = profileTargetWeightInput.value;
@@ -1573,6 +1610,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
         profileTargetDateInput.value = profile.targetDate || '';
         profileTargetDateInput.dataset.originalValue = profileTargetDateInput.value;
       }
+      renderProfileAge(profile.birthDate);
       await updateDailyWeightSummary();
     } catch (err) {
       console.error(err);
@@ -1607,6 +1645,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
       const savedValue = formatProfileValue(profile[config.field]);
       config.input.value = savedValue;
       config.input.dataset.originalValue = savedValue;
+      if (config.field === 'birthDate') renderProfileAge(profile.birthDate);
       await updateDailyWeightSummary();
     } catch (err) {
       console.error(err);
@@ -1643,6 +1682,12 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     const weight = Number(weightKg);
     const gender = profile?.gender;
     if (!Number.isFinite(heightCm) || heightCm <= 0 || !Number.isFinite(weight) || weight <= 0) return null;
+    const age = calculateAge(profile?.birthDate);
+
+    if (age !== null) {
+      const genderOffset = gender === 'female' ? -161 : 5;
+      return (10 * weight) + (6.25 * heightCm) - (5 * age) + genderOffset;
+    }
 
     if (gender === 'male') {
       return (13.397 * weight) + (4.799 * heightCm) + 88.362;
@@ -2511,44 +2556,9 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     }
   });
 
-  // ==========================================================================
-  // 総括タブ - AI分析ロジック
-  // ==========================================================================
-  const summaryDateInput = document.getElementById('summary-date-input');
-  const summaryCommentInput = document.getElementById('summary-comment-input');
-  const btnAnalyzeSummary = document.getElementById('btn-analyze-summary');
-  const summaryResultContainer = document.getElementById('summary-result-container');
-  const summaryResultText = document.getElementById('summary-result-text');
-  const summaryResultDate = document.getElementById('summary-result-date');
-  const summaryLoading = document.getElementById('summary-loading');
-  const summaryHistoryList = document.getElementById('summary-history-list');
-
-  const jstDateKey = (dateLike) => {
-    const date = new Date(dateLike);
-    if (Number.isNaN(date.getTime())) return '';
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Tokyo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
-  };
-
-  // 総括タブ表示時に今日の日付をセット
-  const initSummaryDate = () => {
-    const t = new Date();
-    summaryDateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-  };
-  initSummaryDate();
-
-  const tabAnalyze = document.querySelector('[data-tab="tab-analyze"]');
-  const tabSummary = document.querySelector('[data-tab="tab-summary"]');
-  if (tabAnalyze && tabSummary && tabAnalyze.nextElementSibling !== tabSummary) {
-    tabAnalyze.insertAdjacentElement('afterend', tabSummary);
-  }
   const navLabelMap = {
+    'tab-overview': '総合',
     'tab-analyze': '解析',
-    'tab-summary': '総括',
     'tab-history': '履歴',
     'tab-weight': '体重',
     'tab-stats': '統計',
@@ -2560,142 +2570,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
     if (label && navLabelMap[tabId]) label.textContent = navLabelMap[tabId];
   });
 
-  // タブ切り替え時にも日付を初期化
-  navItems.forEach(item => {
-    item.addEventListener('click', () => {
-      if (item.getAttribute('data-tab') === 'tab-summary') {
-        if (!summaryDateInput.value) initSummaryDate();
-      }
-    });
-  });
-
-  // AI分析ボタン
-  btnAnalyzeSummary.addEventListener('click', async () => {
-    const date = summaryDateInput.value;
-    if (!date) {
-      alert('分析する日付を指定してください。');
-      return;
-    }
-    const comment = summaryCommentInput.value.trim();
-
-    // ローディング表示
-    btnAnalyzeSummary.disabled = true;
-    summaryResultContainer.style.display = 'none';
-    summaryLoading.style.display = 'block';
-
-    try {
-      const res = await fetch('/api/analyze-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, comment })
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        const msg = res.status === 429
-          ? 'APIの利用制限に達しました。\n少し時間をおいてから再度お試しください。'
-          : (data.error || '分析に失敗しました。');
-        throw new Error(msg);
-      }
-
-      // 結果表示
-      const dateObj = new Date(date + 'T00:00:00');
-      const yyyy = dateObj.getFullYear();
-      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const dd = String(dateObj.getDate()).padStart(2, '0');
-      summaryResultDate.textContent = `${yyyy}/${mm}/${dd} の分析結果`;
-      summaryResultText.textContent = data.analysis;
-      summaryResultContainer.style.display = 'block';
-
-    } catch (err) {
-      console.error('Summary analysis error:', err);
-      alert('AI分析中にエラーが発生しました: ' + err.message);
-    } finally {
-      summaryLoading.style.display = 'none';
-      btnAnalyzeSummary.disabled = false;
-    }
-  });
-
-  const renderSummaryHistoryRecord = (record) => {
-    const dateObj = new Date(`${record.date}T00:00:00`);
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    const dateLabel = `${yyyy}/${mm}/${dd}`;
-    const analysisPreview = (record.analysis || '').trim().slice(0, 120) || '分析結果はありません。';
-    const createdAt = record.createdAt ? new Date(record.createdAt).toLocaleString('ja-JP') : '';
-
-    const item = document.createElement('div');
-    item.className = 'summary-history-card';
-    item.innerHTML = `
-      <div class="summary-history-card-top">
-        <div>
-          <div class="summary-history-date">${dateLabel}</div>
-          <div class="summary-history-meta">
-            ${record.mealCount ?? 0} 食 / ${Number(record.totalCalories || 0)} kcal${record.hasBodyComp ? ' / 体組成あり' : ''}
-          </div>
-        </div>
-        <button type="button" class="btn btn-sm btn-danger summary-history-delete">削除</button>
-      </div>
-      <div class="summary-history-preview">${analysisPreview}${(record.analysis || '').length > 120 ? '…' : ''}</div>
-      <div class="summary-history-created">${createdAt}</div>
-    `;
-
-    item.addEventListener('click', () => {
-      summaryResultDate.textContent = `${dateLabel} の分析結果`;
-      summaryResultText.textContent = record.analysis || '';
-      summaryResultContainer.style.display = 'block';
-      summaryResultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-
-    const deleteBtn = item.querySelector('.summary-history-delete');
-    deleteBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (!confirm('この分析履歴を削除しますか？')) return;
-      try {
-        const res = await fetch(`/api/summary-history/${record.id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('削除に失敗しました');
-        await loadSummaryHistory();
-        if (summaryResultText.textContent === record.analysis) {
-          summaryResultContainer.style.display = 'none';
-        }
-      } catch (err) {
-        console.error('Failed to delete summary history:', err);
-        alert(err.message);
-      }
-    });
-
-    return item;
-  };
-
-  async function loadSummaryHistory() {
-    if (!summaryHistoryList) return;
-    try {
-      const res = await fetch('/api/summary-history');
-      if (!res.ok) throw new Error('履歴の取得に失敗しました');
-      const history = await res.json();
-
-      if (!history.length) {
-        summaryHistoryList.innerHTML = `
-          <div class="summary-history-empty">
-            まだ分析履歴がありません。AI邱乗峡を実行すると、ここに保存されます。
-          </div>
-        `;
-        return;
-      }
-
-      summaryHistoryList.innerHTML = '';
-      history.forEach(record => {
-        summaryHistoryList.appendChild(renderSummaryHistoryRecord(record));
-      });
-    } catch (err) {
-      console.error('Failed to load summary history:', err);
-      summaryHistoryList.innerHTML = `<p class="error-text">分析履歴の読み込みに失敗しました。</p>`;
-    }
-  }
-
   loadWeightHistory();
   updateDailyWeightSummary();
   loadPresets();
-  loadSummaryHistory();
 });

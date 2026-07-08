@@ -1916,22 +1916,19 @@ body {
 }
 
 .profile-goal-card {
-  margin-bottom: 12px;
-  padding: 12px 14px;
+  background: #f8faf9;
+  border: 1px solid #e5ece7;
+  border-radius: 8px;
+  box-shadow: none;
+  margin-bottom: 8px;
+  padding: 8px 10px;
   text-align: left;
-}
-
-.profile-goal-title {
-  color: var(--text-main);
-  font-size: 13.5px;
-  font-weight: 800;
-  margin: 0 0 10px;
 }
 
 .profile-goal-grid {
   display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .profile-goal-field {
@@ -1941,24 +1938,30 @@ body {
 .profile-goal-field span {
   color: var(--text-muted);
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .profile-goal-field input,
-.profile-goal-field select {
+.profile-goal-field select,
+.profile-age-output {
   background: #fff;
   border: 1.5px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 7px;
   box-sizing: border-box;
   color: var(--text-main);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   outline: none;
-  padding: 9px 28px 9px 10px;
+  padding: 6px 24px 6px 8px;
   width: 100%;
+}
+
+.profile-age-output {
+  display: block;
+  min-height: 31px;
 }
 
 .profile-goal-field input:focus,
@@ -1978,11 +1981,11 @@ body {
   border: 2px solid var(--primary);
   border-right-color: transparent;
   border-radius: 999px;
-  bottom: 10px;
-  height: 10px;
+  bottom: 8px;
+  height: 9px;
   position: absolute;
-  right: 9px;
-  width: 10px;
+  right: 8px;
+  width: 9px;
 }
 
 /* 体重の増減差分表示 */
@@ -3069,19 +3072,3 @@ body {
   }
 }
 
-/* ==========================================================================
-   総括タブ スピナー
-   ========================================================================== */
-.summary-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
