@@ -1172,8 +1172,15 @@ body {
   width: 100%;
 }
 
+.summary-main-row {
+  display: grid;
+  gap: var(--design-space);
+  grid-template-columns: minmax(0, 1.45fr) minmax(112px, 0.75fr);
+  width: 100%;
+}
+
 .summary-calorie-capsule {
-  align-items: flex-start;
+  align-items: stretch;
   background: var(--design-bg);
   border: 1px solid var(--design-border);
   border-left: 4px solid var(--design-accent);
@@ -1190,16 +1197,62 @@ body {
   padding: calc(var(--design-space) * 2);
 }
 
+.summary-weight-card {
+  align-items: stretch;
+  background: #ffffff;
+  border: 1px solid #bae6fd;
+  border-radius: var(--design-radius);
+  box-sizing: border-box;
+  color: var(--design-primary);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-heading);
+  justify-content: center;
+  min-height: 72px;
+  padding: calc(var(--design-space) * 2);
+  position: relative;
+}
+
+.summary-weight-label {
+  color: var(--design-muted);
+  font-size: 10px;
+  font-weight: 900;
+  margin-bottom: var(--design-space);
+  text-align: left;
+}
+
+.summary-weight-value {
+  align-items: baseline;
+  color: var(--design-primary);
+  display: flex;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.summary-weight-unit {
+  color: var(--design-muted);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 3px;
+}
+
 .summary-calorie-label {
   color: var(--design-muted);
   font-size: 10px;
   font-weight: 900;
   margin-bottom: var(--design-space);
+  text-align: left;
 }
 
 .summary-calorie-value {
   align-items: baseline;
   display: flex;
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .summary-calorie-capsule .calorie-num {
@@ -1226,7 +1279,7 @@ body {
   align-items: stretch;
   display: grid;
   gap: var(--design-space);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .summary-chip {
@@ -1235,68 +1288,70 @@ body {
   border: 1px solid var(--design-border);
   box-shadow: none;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-areas:
+    "label value"
+    "label target";
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 2px;
   font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 800;
-  justify-content: space-between;
-  min-height: 88px;
+  min-height: 52px;
   overflow: hidden;
-  padding: calc(var(--design-space) * 1.5) var(--design-space);
-  text-align: center;
+  padding: 8px 10px;
+  text-align: right;
   width: 100%;
 }
 
 .summary-chip-target {
   display: block;
-  font-size: 14px;
+  grid-area: target;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1;
   margin-top: 0;
   opacity: 0.7;
-  text-align: center;
+  text-align: right;
   white-space: nowrap;
 }
 
 .summary-chip .label {
-  color: var(--design-primary);
+  grid-area: label;
+  color: inherit;
   font-size: 12px;
   line-height: 1;
   opacity: 1;
+  text-align: left;
 }
 
 .summary-chip .val {
-  color: var(--design-text);
+  grid-area: value;
+  color: inherit;
   font-size: 14px;
   line-height: 1;
-  text-align: center;
+  text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .summary-chip.protein {
-  background-color: #f0f9ff;
-  border-color: #bae6fd;
-  color: var(--design-primary);
+  background-color: rgba(154, 194, 244, 0.12);
+  border-color: rgba(154, 194, 244, 0.28);
+  color: #2b5585;
 }
 
 .summary-chip.fat {
-  background-color: #ffffff;
-  border-color: var(--design-border);
-  color: var(--design-primary);
+  background-color: rgba(251, 216, 127, 0.16);
+  border-color: rgba(251, 216, 127, 0.34);
+  color: #8c701f;
 }
 
 .summary-chip.carbs {
-  background-color: #f8fafc;
-  border-color: var(--design-border);
-  color: var(--design-primary);
-}
-
-.summary-chip.weight {
-  background-color: #ffffff;
-  border-color: #bae6fd;
-  color: var(--design-primary);
+  background-color: rgba(247, 168, 184, 0.12);
+  border-color: rgba(247, 168, 184, 0.3);
+  color: #a04859;
 }
 
 .overview-energy-card {
@@ -1360,15 +1415,15 @@ body {
 
 /* 体重差を知らせる右肩重ねの吹き出しバッジ */
 .weight-diff-badge {
-  position: absolute;
-  top: -8px;
-  right: -6px;
+  position: static;
   font-size: 9px;
   font-weight: 800;
+  margin-top: 6px;
   padding: 2px 4px;
   border-radius: 4px;
   line-height: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
+  white-space: nowrap;
 }
 
 .weight-diff-badge.up {
@@ -2629,6 +2684,10 @@ body {
     grid-template-columns: 1fr !important;
     padding: 0 !important;
   }
+  .summary-main-row {
+    gap: 6px !important;
+    grid-template-columns: minmax(0, 1.35fr) minmax(94px, 0.75fr) !important;
+  }
   .summary-calorie-capsule {
     font-size: 11px !important;
     min-height: 64px !important;
@@ -2639,27 +2698,42 @@ body {
   }
   .summary-chips-capsule {
     gap: 6px !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
   .summary-chip {
     font-size: 12px !important;
-    min-height: 76px !important;
-    padding: 8px !important;
+    min-height: 48px !important;
+    padding: 7px 8px !important;
     border-radius: var(--design-radius) !important;
     letter-spacing: 0 !important;
-    justify-content: space-between !important;
-  }
-  .summary-chip.has-target {
-    justify-content: space-between !important;
+    text-align: right !important;
+    column-gap: 6px !important;
+    row-gap: 2px !important;
   }
   .summary-chip-target {
-    font-size: 12px !important;
+    font-size: 10px !important;
   }
   .summary-chip .label {
     font-size: 11px !important;
+    text-align: left !important;
   }
   .summary-chip .val {
     font-size: 12px !important;
+    text-align: right !important;
+  }
+  .summary-weight-card {
+    min-height: 64px !important;
+    padding: 10px !important;
+  }
+  .summary-weight-label {
+    font-size: 10px !important;
+    margin-bottom: 8px !important;
+  }
+  .summary-weight-value {
+    font-size: 18px !important;
+  }
+  .summary-weight-unit {
+    font-size: 10px !important;
   }
   .overview-energy-card {
     grid-template-columns: 1fr !important;

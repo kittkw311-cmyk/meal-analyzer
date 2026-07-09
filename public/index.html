@@ -33,9 +33,16 @@
         <!-- 本日の合計栄養素サマリー -->
         <div class="card daily-summary-card" id="daily-summary-card">
           <div class="daily-summary-capsule">
-            <div class="summary-calorie-capsule">
-              <span class="summary-calorie-label">摂取カロリー</span>
-              <span class="summary-calorie-value"><span id="daily-total-calories" class="calorie-num">0</span><span id="daily-bmr-divider" class="bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit">kcal</span></span>
+            <div class="summary-main-row">
+              <div class="summary-calorie-capsule">
+                <span class="summary-calorie-label">摂取カロリー</span>
+                <span class="summary-calorie-value"><span id="daily-total-calories" class="calorie-num">0</span><span id="daily-bmr-divider" class="bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit">kcal</span></span>
+              </div>
+              <div class="summary-weight-card" id="daily-weight-box">
+                <span class="summary-weight-label">最新体重</span>
+                <span class="summary-weight-value"><span id="summary-weight-val">--.-</span><span class="summary-weight-unit">kg</span></span>
+                <span id="daily-weight-diff" class="weight-diff-badge" style="display: none;"></span>
+              </div>
             </div>
             <div class="summary-chips-capsule">
               <div class="summary-chip protein has-target">
@@ -52,12 +59,6 @@
                 <span class="label">C</span>
                 <span class="val"><span id="daily-total-carbs">0.0</span>g</span>
                 <span class="summary-chip-target" id="daily-target-carbs">--g</span>
-              </div>
-              <div class="summary-chip weight" id="daily-weight-box" style="position: relative;">
-                <span class="label">W</span>
-                <span class="val"><span id="summary-weight-val">--.-</span>kg</span>
-                <span class="summary-chip-target">最新</span>
-                <span id="daily-weight-diff" class="weight-diff-badge" style="display: none;"></span>
               </div>
             </div>
           </div>

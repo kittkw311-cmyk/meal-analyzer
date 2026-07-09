@@ -1768,13 +1768,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
             const diff = latest.weight - prevRecord.weight;
             diffEl.style.display = 'inline-block';
             if (diff > 0) {
-              diffEl.textContent = `+${diff.toFixed(1)}`;
+              diffEl.textContent = `前回比 +${diff.toFixed(1)}`;
               diffEl.className = 'weight-diff-badge up';
             } else if (diff < 0) {
-              diffEl.textContent = `${diff.toFixed(1)}`;
+              diffEl.textContent = `前回比 ${diff.toFixed(1)}`;
               diffEl.className = 'weight-diff-badge down';
             } else {
-              diffEl.textContent = `±0`;
+              diffEl.textContent = `前回比 ±0`;
               diffEl.className = 'weight-diff-badge same';
             }
           } else {
