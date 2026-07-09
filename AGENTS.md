@@ -84,7 +84,12 @@
 - Heading-font: 'Outfit', sans-serif
 - Base spacing: 8px grid
 - Border-radius: 4px（角丸は控えめに）
-- Max-width: 800px（コンテンツ幅）
+- Max-width: 412px（コンテンツ幅）
+
+## Design Reference
+- UI やビジュアルデザインを変更する前に、必ず `DESIGN-spacex.md` を読み込む
+- デザイン実装では `DESIGN-spacex.md` のトークン、コンポーネント、Do's and Don'ts を参照する
+- `AGENTS.md` の既存ルールと `DESIGN-spacex.md` が競合する場合は、実装前に確認する
 
 ## Design Anti-patterns（禁止）
 - ❌ 青→紫のグラデーション背景を使わない
