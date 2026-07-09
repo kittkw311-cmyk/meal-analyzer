@@ -1480,13 +1480,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           datasets: [{
             label: '体重 (kg)',
             data: weightValues,
-            borderColor: '#ffffff',
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-            borderWidth: 2,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.12)',
+            borderWidth: 3,
             fill: true,
             tension: 0.25,
-            pointBackgroundColor: '#000000',
-            pointBorderColor: '#ffffff',
+            pointBackgroundColor: '#38bdf8',
+            pointBorderColor: '#fff',
             pointBorderWidth: 2,
             pointRadius: 4,
             pointHoverRadius: 6
@@ -1501,14 +1501,14 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           scales: {
             y: {
               grace: '5%',
-              grid: { color: 'rgba(255, 255, 255, 0.18)' },
-              ticks: { color: '#f0f0fa', font: { size: 10, weight: '700', family: 'Arial Narrow' } }
+              grid: { color: 'rgba(200, 220, 210, 0.3)' },
+              ticks: { color: '#6f7b72', font: { size: 10, weight: '700' } }
             },
             x: {
               grid: { display: false },
               ticks: {
-                color: '#f0f0fa',
-                font: { size: 10, weight: '700', family: 'Arial Narrow' },
+                color: '#6f7b72',
+                font: { size: 10, weight: '700' },
                 maxRotation: 0,
                 autoSkip: true,
                 maxTicksLimit: 6
