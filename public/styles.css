@@ -4711,6 +4711,83 @@ body {
   border-color: var(--overview-accent);
 }
 
+#tab-overview .overview-ai-consultation-card {
+  background: var(--overview-card);
+  border: 1px solid var(--overview-border);
+  border-radius: 4px;
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 16px;
+}
+
+#tab-overview .overview-ai-consultation-title {
+  color: var(--overview-foreground);
+  font: var(--design-label-font-weight) 16px var(--font-heading);
+  margin: 0;
+}
+
+#tab-overview .overview-ai-consultation-description {
+  color: var(--overview-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+#tab-overview .overview-ai-question {
+  background: var(--overview-background);
+  border: 1px solid var(--overview-border);
+  border-radius: 4px;
+  color: var(--overview-foreground);
+  font: 500 13px var(--font-sans);
+  line-height: 1.6;
+  min-height: 80px;
+  padding: 8px;
+  resize: vertical;
+  width: 100%;
+}
+
+#tab-overview .overview-ai-question:focus {
+  border-color: var(--overview-accent);
+  box-shadow: 0 0 0 1px var(--overview-accent);
+  outline: none;
+}
+
+#tab-overview .overview-ai-question::placeholder {
+  color: var(--overview-muted);
+}
+
+#tab-overview .overview-ai-consultation-button {
+  background: var(--overview-primary);
+  border: 1px solid var(--overview-accent);
+  border-radius: 4px;
+  color: var(--overview-foreground);
+  font: 800 13px var(--font-sans);
+  min-height: 40px;
+  width: 100%;
+}
+
+#tab-overview .overview-ai-consultation-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+#tab-overview .overview-ai-consultation-answer {
+  background: var(--overview-background);
+  border: 1px solid var(--overview-border);
+  border-left: 4px solid var(--overview-accent);
+  border-radius: 4px;
+  color: var(--overview-foreground);
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+#tab-overview .overview-ai-consultation-answer[hidden] {
+  display: none;
+}
+
 #tab-overview .summary-chip.carbs .label,
 #tab-overview .summary-chip.carbs .summary-chip-target,
 #tab-overview .chart-title .icon-svg {

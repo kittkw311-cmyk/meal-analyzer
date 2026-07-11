@@ -28,6 +28,7 @@ const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
 const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
 const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
 const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
+const AI_CONSULTATIONS_FILE = path.join(DATA_DIR, 'ai_consultations.json');
 
 const DEFAULT_PROFILE = {
   height: null,
@@ -104,6 +105,9 @@ if (!fs.existsSync(SUMMARY_FILE)) {
 if (!fs.existsSync(PROFILE_FILE)) {
   fs.writeFileSync(PROFILE_FILE, JSON.stringify(DEFAULT_PROFILE, null, 2));
 }
+if (!fs.existsSync(AI_CONSULTATIONS_FILE)) {
+  fs.writeFileSync(AI_CONSULTATIONS_FILE, JSON.stringify([], null, 2));
+}
 
 // Multer設定（メモリ上にバッファとして保存）
 const storage = multer.memoryStorage();
@@ -153,6 +157,7 @@ let driveWeightFileId = null;
 let drivePresetsFileId = null;
 let driveSummaryFileId = null;
 let driveProfileFileId = null;
+let driveAiConsultationsFileId = null;
 
 // 体組成ファイルを検索または新規作成してファイルIDを設定する
 async function initDriveProfile() {
@@ -1908,6 +1913,130 @@ app.delete('/api/summary-history/:id', async (req, res) => {
   }
 });
 
+async function initDriveAiConsultations() {
+  if (!drive || !folderId) return;
+  try {
+    const result = await drive.files.list({
+      q: `name = 'ai_consultations.json' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    if (result.data.files?.length) {
+      driveAiConsultationsFileId = result.data.files[0].id;
+      return;
+    }
+    const created = await drive.files.create({
+      requestBody: { name: 'ai_consultations.json', parents: [folderId], mimeType: 'application/json' },
+      media: { mimeType: 'application/json', body: Readable.from(JSON.stringify([], null, 2)) },
+      fields: 'id',
+    });
+    driveAiConsultationsFileId = created.data.id;
+  } catch (err) {
+    console.error('Failed to initialize ai_consultations.json:', err.message);
+  }
+}
+
+async function readAiConsultations() {
+  if (drive && driveAiConsultationsFileId) {
+    const result = await drive.files.get(
+      { fileId: driveAiConsultationsFileId, alt: 'media' },
+      { responseType: 'text' }
+    );
+    const text = typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
+    return JSON.parse(text || '[]');
+  }
+  try { return JSON.parse(fs.readFileSync(AI_CONSULTATIONS_FILE, 'utf8')); } catch { return []; }
+}
+
+async function writeAiConsultations(data) {
+  const json = JSON.stringify(data, null, 2);
+  if (drive && folderId && !driveAiConsultationsFileId) await initDriveAiConsultations();
+  if (drive && driveAiConsultationsFileId) {
+    await drive.files.update({
+      fileId: driveAiConsultationsFileId,
+      media: { mimeType: 'application/json', body: Readable.from(json) },
+    });
+  } else {
+    fs.writeFileSync(AI_CONSULTATIONS_FILE, json);
+  }
+}
+
+app.post('/api/ai-consultation', async (req, res) => {
+  try {
+    const question = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
+    if (!question) return res.status(400).json({ error: '質問を入力してください。' });
+    if (question.length > 500) return res.status(400).json({ error: '質問は500文字以内で入力してください。' });
+    if (!ai) return res.status(500).json({ error: 'Gemini APIが初期化されていません。' });
+
+    const [history, weights, profile] = await Promise.all([readHistory(), readWeight(), readProfile()]);
+    const today = getJstDateKey(new Date());
+    const todayMeals = history.filter(item => getJstDateKey(item.mealDate || item.date) === today);
+    const totals = todayMeals.reduce((sum, item) => ({
+      calories: sum.calories + Number(item.nutrition?.calories || 0),
+      protein: sum.protein + Number(item.nutrition?.protein || 0),
+      fat: sum.fat + Number(item.nutrition?.fat || 0),
+      carbohydrates: sum.carbohydrates + Number(item.nutrition?.carbohydrates || 0),
+    }), { calories: 0, protein: 0, fat: 0, carbohydrates: 0 });
+
+    const weightPriority = { night: 3, morning: 2, other: 1 };
+    const latestWeight = weights
+      .filter(item => Number.isFinite(Number(item.weight)))
+      .slice()
+      .sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        return dateDiff || (weightPriority[b.measurementType] || 0) - (weightPriority[a.measurementType] || 0);
+      })[0] || null;
+
+    const context = {
+      date: today,
+      currentWeightKg: latestWeight ? Number(latestWeight.weight) : null,
+      weightMeasuredAt: latestWeight?.date || null,
+      todayNutrition: {
+        calories: Math.round(totals.calories),
+        proteinG: Math.round(totals.protein * 10) / 10,
+        fatG: Math.round(totals.fat * 10) / 10,
+        carbohydratesG: Math.round(totals.carbohydrates * 10) / 10,
+        mealCount: todayMeals.length,
+      },
+      targetWeightKg: profile.targetWeight ?? null,
+      targetDate: profile.targetDate || null,
+      heightCm: profile.height ?? null,
+      activityLevel: profile.activityLevel || null,
+    };
+
+    const prompt = `あなたは食事・体重管理を支援するアドバイザーです。以下の現在状況と目標を必ず考慮し、ユーザーの質問に日本語で簡潔かつ具体的に回答してください。
+断定的な医療診断は避け、食べてよいかを聞かれた場合は、可否だけでなく量・タイミング・その後の調整案を示してください。
+
+現在状況(JSON):
+${JSON.stringify(context, null, 2)}
+
+質問:
+${question}`;
+
+    const aiResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    });
+    const answer = aiResponse?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!answer) throw new Error('AIから回答を取得できませんでした。');
+
+    const record = {
+      id: `consultation-${Date.now()}`,
+      question,
+      answer,
+      context,
+      createdAt: new Date().toISOString(),
+    };
+    const consultations = await readAiConsultations();
+    consultations.push(record);
+    await writeAiConsultations(consultations);
+    res.json(record);
+  } catch (err) {
+    console.error('AI consultation error:', err);
+    res.status(500).json({ error: 'AIへの問い合わせ中にエラーが発生しました。: ' + err.message });
+  }
+});
+
 // サーバー起動処理
 (async () => {
   if (drive && folderId) {
@@ -1916,6 +2045,7 @@ app.delete('/api/summary-history/:id', async (req, res) => {
     await initDriveWeight();
     await initDrivePresets();
     await initDriveSummary();
+    await initDriveAiConsultations();
   }
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);

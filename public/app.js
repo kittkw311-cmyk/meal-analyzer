@@ -155,6 +155,9 @@
   const summaryWeightVal = document.getElementById('summary-weight-val');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
   const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
+  const overviewAiQuestion = document.getElementById('overview-ai-question');
+  const btnOverviewAiConsultation = document.getElementById('btn-overview-ai-consultation');
+  const overviewAiConsultationAnswer = document.getElementById('overview-ai-consultation-answer');
   const dailyTargetProtein = document.getElementById('daily-target-protein');
   const dailyTargetFat = document.getElementById('daily-target-fat');
   const dailyTargetCarbs = document.getElementById('daily-target-carbs');
@@ -784,6 +787,39 @@
 
   // 起動時に今日の合計をロード
   updateDailySummary();
+
+  btnOverviewAiConsultation.addEventListener('click', async () => {
+    const question = overviewAiQuestion.value.trim();
+    if (!question) {
+      overviewAiQuestion.focus();
+      return;
+    }
+
+    btnOverviewAiConsultation.disabled = true;
+    btnOverviewAiConsultation.textContent = '回答を作成中...';
+    overviewAiConsultationAnswer.hidden = false;
+    overviewAiConsultationAnswer.textContent = '現在の体重・PFC・目標を確認しています...';
+
+    try {
+      const response = await fetch('/api/ai-consultation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`サーバーから不正な応答を受信しました（HTTP ${response.status}）。サーバーを再起動してください。`);
+      }
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '回答を取得できませんでした。');
+      overviewAiConsultationAnswer.textContent = result.answer;
+    } catch (err) {
+      overviewAiConsultationAnswer.textContent = err.message;
+    } finally {
+      btnOverviewAiConsultation.disabled = false;
+      btnOverviewAiConsultation.textContent = '質問する';
+    }
+  });
 
   // ==========================================================================
   // 定番メニュー (Presets) 管理ロジック

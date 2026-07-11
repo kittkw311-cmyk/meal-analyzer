@@ -84,6 +84,13 @@
             <canvas id="weight-trend-chart"></canvas>
           </div>
         </div>
+        <div class="card overview-ai-consultation-card">
+          <h3 class="overview-ai-consultation-title">AIに相談</h3>
+          <p class="overview-ai-consultation-description">現在の体重・今日のPFC・目標体重・期限を踏まえて回答します。</p>
+          <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
+          <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
+          <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
+        </div>
       </section>
 
       <!-- 5. 情報タブ -->
