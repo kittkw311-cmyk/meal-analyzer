@@ -34,9 +34,18 @@
         <div class="card daily-summary-card" id="daily-summary-card">
           <div class="daily-summary-capsule">
             <div class="summary-main-row">
+              <div class="summary-today-card summary-target-tdee-card">
+                <span class="summary-today-label">目標TDEE</span>
+                <span class="summary-today-value"><span id="daily-bmr-calories">----</span><span class="overview-energy-unit">kcal</span></span>
+                <span class="summary-tdee-reference">TDEE <span id="overview-tdee-calories">----</span> kcal</span>
+              </div>
               <div class="summary-calorie-capsule">
                 <span class="summary-calorie-label">摂取カロリー</span>
-                <span class="summary-calorie-value"><span id="daily-total-calories" class="calorie-num">0</span><span id="daily-bmr-divider" class="bmr-divider" style="display: none;">/<span id="daily-bmr-calories">----</span></span><span class="calorie-unit">kcal</span></span>
+                <span class="summary-calorie-value"><span id="daily-total-calories" class="calorie-num">0</span><span class="calorie-unit">kcal</span></span>
+                <div class="calorie-progress" id="daily-calorie-progress" aria-label="目標摂取カロリーに対する進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" role="progressbar">
+                  <span class="calorie-progress-fill" id="daily-calorie-progress-fill"></span>
+                </div>
+                <span class="calorie-progress-status" id="daily-calorie-progress-status">目標を設定すると進捗を表示します</span>
               </div>
               <div class="summary-weight-card" id="daily-weight-box">
                 <span class="summary-weight-label">最新体重</span>
@@ -48,29 +57,25 @@
               <div class="summary-chip protein has-target">
                 <span class="label">P</span>
                 <span class="val"><span id="daily-total-protein">0.0</span>g</span>
-                <span class="summary-chip-target" id="daily-target-protein">--g</span>
+                <span class="summary-chip-target" id="daily-target-protein">目標 --.-g</span>
+                <div class="pfc-progress" id="daily-protein-progress" role="progressbar" aria-label="タンパク質の目標進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="pfc-progress-fill"></span></div>
+                <span class="pfc-progress-status" id="daily-protein-progress-status">あと --.-g</span>
               </div>
               <div class="summary-chip fat has-target">
                 <span class="label">F</span>
                 <span class="val"><span id="daily-total-fat">0.0</span>g</span>
-                <span class="summary-chip-target" id="daily-target-fat">--g</span>
+                <span class="summary-chip-target" id="daily-target-fat">目標 --.-g</span>
+                <div class="pfc-progress" id="daily-fat-progress" role="progressbar" aria-label="脂質の目標進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="pfc-progress-fill"></span></div>
+                <span class="pfc-progress-status" id="daily-fat-progress-status">あと --.-g</span>
               </div>
               <div class="summary-chip carbs has-target">
                 <span class="label">C</span>
                 <span class="val"><span id="daily-total-carbs">0.0</span>g</span>
-                <span class="summary-chip-target" id="daily-target-carbs">--g</span>
+                <span class="summary-chip-target" id="daily-target-carbs">目標 --.-g</span>
+                <div class="pfc-progress" id="daily-carbs-progress" role="progressbar" aria-label="炭水化物の目標進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="pfc-progress-fill"></span></div>
+                <span class="pfc-progress-status" id="daily-carbs-progress-status">あと --.-g</span>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="overview-energy-card" id="overview-energy-card" style="display: none;">
-          <div class="overview-energy-item">
-            <span class="overview-energy-label">TDEE</span>
-            <span class="overview-energy-value"><span id="overview-tdee-calories">----</span><span class="overview-energy-unit">kcal</span></span>
-          </div>
-          <div class="overview-energy-item target">
-            <span class="overview-energy-label">目標TDEE</span>
-            <span class="overview-energy-value"><span id="overview-target-calories">----</span><span class="overview-energy-unit">kcal</span></span>
           </div>
         </div>
         <div class="card overview-trend-card">

@@ -55,7 +55,7 @@ body {
    ========================================================================== */
 .app-container {
   width: 100%;
-  max-width: 800px;
+  max-width: 412px;
   height: 100vh;
   background-color: var(--design-bg);
   box-shadow: none;
@@ -1175,41 +1175,44 @@ body {
 .summary-main-row {
   display: grid;
   gap: var(--design-space);
-  grid-template-columns: minmax(0, 1.45fr) minmax(112px, 0.75fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   width: 100%;
 }
 
 .summary-calorie-capsule {
-  align-items: stretch;
+  align-items: center;
   background: var(--design-bg);
   border: 1px solid var(--design-border);
   border-left: 4px solid var(--design-accent);
   border-radius: var(--design-radius);
   box-sizing: border-box;
   color: var(--design-muted);
-  display: flex;
-  flex-direction: column;
+  column-gap: 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   font-family: var(--font-heading);
   font-size: 13px;
   font-weight: 700;
   justify-content: center;
-  min-height: 72px;
-  padding: calc(var(--design-space) * 2);
+  min-height: 0;
+  padding: 10px 12px;
 }
 
 .summary-weight-card {
-  align-items: stretch;
-  background: #ffffff;
-  border: 1px solid #bae6fd;
+  align-items: center;
+  background: var(--design-bg);
+  border: 1px solid var(--design-border);
+  border-left: 4px solid var(--design-accent);
   border-radius: var(--design-radius);
   box-sizing: border-box;
   color: var(--design-primary);
-  display: flex;
-  flex-direction: column;
+  column-gap: 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   font-family: var(--font-heading);
   justify-content: center;
-  min-height: 72px;
-  padding: calc(var(--design-space) * 2);
+  min-height: 0;
+  padding: 10px 12px;
   position: relative;
 }
 
@@ -1217,7 +1220,7 @@ body {
   color: var(--design-muted);
   font-size: 10px;
   font-weight: 900;
-  margin-bottom: var(--design-space);
+  margin-bottom: 0;
   text-align: left;
 }
 
@@ -1240,11 +1243,24 @@ body {
   margin-left: 3px;
 }
 
+.summary-weight-goal {
+  color: var(--design-muted);
+  display: flex;
+  font-size: 9px;
+  font-weight: 700;
+  gap: 10px;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  margin-top: 5px;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .summary-calorie-label {
   color: var(--design-muted);
   font-size: 10px;
   font-weight: 900;
-  margin-bottom: var(--design-space);
+  margin-bottom: 0;
   text-align: left;
 }
 
@@ -1256,7 +1272,7 @@ body {
 }
 
 .summary-calorie-capsule .calorie-num {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--design-primary);
   line-height: 1;
@@ -1273,6 +1289,38 @@ body {
   color: var(--design-muted);
   font-weight: 700;
   margin-left: 3px;
+}
+
+.calorie-progress {
+  background: #e2e8f0;
+  border-radius: var(--design-radius);
+  grid-column: 1 / -1;
+  height: 8px;
+  margin-top: 7px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.calorie-progress-fill {
+  background: var(--design-accent);
+  display: block;
+  height: 100%;
+  transition: width 240ms ease;
+  width: 0;
+}
+
+.calorie-progress.is-over .calorie-progress-fill {
+  background: #f97316;
+}
+
+.calorie-progress-status {
+  color: var(--design-muted);
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  text-align: right;
 }
 
 .summary-chips-capsule {
@@ -1415,10 +1463,12 @@ body {
 
 /* 体重差を知らせる右肩重ねの吹き出しバッジ */
 .weight-diff-badge {
-  position: static;
+  position: absolute;
+  right: 10px;
+  top: 8px;
   font-size: 9px;
   font-weight: 800;
-  margin-top: 6px;
+  margin-top: 0;
   padding: 2px 4px;
   border-radius: 4px;
   line-height: 1;
@@ -2686,12 +2736,12 @@ body {
   }
   .summary-main-row {
     gap: 6px !important;
-    grid-template-columns: minmax(0, 1.35fr) minmax(94px, 0.75fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
   .summary-calorie-capsule {
     font-size: 11px !important;
-    min-height: 64px !important;
-    padding: 10px !important;
+    min-height: 0 !important;
+    padding: 8px !important;
   }
   .summary-calorie-capsule .calorie-num {
     font-size: 24px !important;
@@ -2722,18 +2772,22 @@ body {
     text-align: right !important;
   }
   .summary-weight-card {
-    min-height: 64px !important;
-    padding: 10px !important;
+    min-height: 0 !important;
+    padding: 8px !important;
   }
   .summary-weight-label {
     font-size: 10px !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 3px !important;
   }
   .summary-weight-value {
     font-size: 18px !important;
   }
   .summary-weight-unit {
     font-size: 10px !important;
+  }
+  .summary-weight-goal {
+    font-size: 8px !important;
+    gap: 5px !important;
   }
   .overview-energy-card {
     grid-template-columns: 1fr !important;
@@ -3281,5 +3335,449 @@ body {
     transform: scale(1);
     box-shadow: 0 4px 10px rgba(245, 166, 35, 0.3);
   }
+}
+
+/* 総合タブの数値カード: 最大3列の統一レイアウト */
+#tab-overview .daily-summary-capsule {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#tab-overview .summary-main-row,
+#tab-overview .summary-chips-capsule {
+  display: contents !important;
+}
+
+#tab-overview .summary-today-card {
+  background: var(--design-bg);
+  border: 1px solid var(--design-border);
+  border-left: 4px solid var(--design-accent);
+  border-radius: var(--design-radius);
+  box-sizing: border-box;
+  color: var(--design-primary);
+  font-family: var(--font-heading);
+  position: relative;
+}
+
+#tab-overview .summary-calorie-capsule,
+#tab-overview .summary-today-card,
+#tab-overview .summary-weight-card,
+#tab-overview .summary-chip,
+#tab-overview .overview-energy-item {
+  align-content: center;
+  display: grid;
+  min-height: 132px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+#tab-overview .summary-calorie-capsule,
+#tab-overview .summary-today-card,
+#tab-overview .summary-weight-card {
+  grid-template-columns: 1fr;
+}
+
+#tab-overview .summary-calorie-label,
+#tab-overview .summary-today-label,
+#tab-overview .summary-weight-label,
+#tab-overview .summary-chip .label,
+#tab-overview .overview-energy-label {
+  font-size: 11px;
+  margin: 0 0 10px;
+  opacity: 0.62;
+  text-align: center;
+}
+
+#tab-overview .summary-calorie-value,
+#tab-overview .summary-today-value,
+#tab-overview .summary-weight-value,
+#tab-overview .summary-chip .val,
+#tab-overview .overview-energy-value {
+  align-items: baseline;
+  display: flex;
+  font-size: 30px;
+  justify-content: center;
+  line-height: 1;
+  text-align: center;
+}
+
+#tab-overview .summary-calorie-capsule .calorie-num,
+#tab-overview .summary-today-value,
+#tab-overview .summary-weight-value,
+#tab-overview .summary-chip .val,
+#tab-overview .overview-energy-value {
+  font-size: 30px;
+}
+
+#tab-overview .summary-chip {
+  grid-template-areas:
+    "label"
+    "value"
+    "target";
+  grid-template-columns: 1fr;
+  row-gap: 0;
+}
+
+#tab-overview .summary-chip-target,
+#tab-overview .summary-weight-goal,
+#tab-overview .calorie-progress-status {
+  font-size: 10px;
+  justify-content: center;
+  margin-top: 10px;
+  opacity: 0.72;
+  text-align: center;
+}
+
+#tab-overview .calorie-progress {
+  margin-top: 12px;
+}
+
+#tab-overview .overview-energy-card {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#tab-overview .overview-energy-item {
+  justify-items: center;
+}
+
+#tab-overview .weight-diff-badge {
+  right: 10px;
+  top: 10px;
+}
+
+@media (max-width: 600px) {
+  #tab-overview .daily-summary-capsule,
+  #tab-overview .overview-energy-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #tab-overview .summary-calorie-capsule,
+  #tab-overview .summary-today-card,
+  #tab-overview .summary-weight-card,
+  #tab-overview .summary-chip,
+  #tab-overview .overview-energy-item {
+    min-height: 124px !important;
+    padding: 12px 8px !important;
+  }
+}
+
+/* DESIGN.md: 総合タブ専用ダークダッシュボード */
+#tab-overview {
+  --overview-background: #111d27;
+  --overview-card: #162a37;
+  --overview-border: #233e50;
+  --overview-primary: #196a5b;
+  --overview-accent: #00e5ff;
+  --overview-foreground: #f0f7f6;
+  --overview-muted: #8fa7a3;
+  background: var(--overview-background);
+  box-sizing: border-box;
+  color: var(--overview-foreground);
+  margin-inline: auto;
+  max-width: 412px;
+  padding: 8px;
+  width: 100%;
+}
+
+#tab-overview .summary-today-value #daily-bmr-calories {
+  font-family: 'Outfit', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+#tab-overview .summary-tdee-reference {
+  align-self: center;
+  color: var(--overview-muted);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: center;
+}
+
+#tab-overview .summary-tdee-reference #overview-tdee-calories {
+  color: var(--overview-accent);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+}
+
+#tab-overview .summary-chip {
+  grid-template-areas:
+    "label"
+    "value"
+    "target"
+    "progress"
+    "status";
+  grid-template-rows: 18px 38px 16px 8px 16px;
+  min-height: 128px !important;
+  row-gap: 2px;
+}
+
+#tab-overview .pfc-progress {
+  align-self: center;
+  background: var(--overview-border);
+  border-radius: 4px;
+  grid-area: progress;
+  height: 6px;
+  overflow: hidden;
+  width: 100%;
+}
+
+#tab-overview .pfc-progress-fill {
+  display: block;
+  height: 100%;
+  transition: width 240ms ease;
+  width: 0;
+}
+
+#tab-overview .summary-chip.protein .pfc-progress-fill {
+  background: var(--overview-primary);
+}
+
+#tab-overview .summary-chip.fat .pfc-progress-fill {
+  background: #ff9900;
+}
+
+#tab-overview .summary-chip.carbs .pfc-progress-fill {
+  background: var(--overview-accent);
+}
+
+#tab-overview .pfc-progress.is-over .pfc-progress-fill {
+  background: #ff9900;
+}
+
+#tab-overview .pfc-progress-status {
+  align-self: center;
+  color: var(--overview-muted);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 10px;
+  grid-area: status;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* DESIGN.md: 412px外フレーム */
+body {
+  background: #0a1219;
+}
+
+.app-container {
+  background: #111d27;
+  border-color: #233e50;
+  color: #f0f7f6;
+}
+
+.app-header {
+  background: #162a37;
+  border-bottom: 1px solid #233e50;
+  padding: 16px 24px 8px;
+}
+
+.app-header h1 {
+  background: none;
+  color: #f0f7f6;
+  font-family: 'Outfit', sans-serif;
+  -webkit-text-fill-color: currentColor;
+}
+
+.app-header .logo-svg {
+  color: #00e5ff;
+}
+
+.subtitle {
+  color: #8fa7a3;
+}
+
+.app-version {
+  background: #111d27;
+  border: 1px solid #233e50;
+  border-radius: 4px;
+  color: #00e5ff;
+}
+
+.app-main {
+  background: #111d27;
+}
+
+.app-nav {
+  background: rgba(22, 42, 55, 0.96);
+  border-top: 1px solid #233e50;
+}
+
+.nav-item {
+  color: #8fa7a3;
+}
+
+.nav-item.active,
+.nav-item.active .nav-icon {
+  color: #00e5ff;
+}
+
+#tab-overview .daily-summary-capsule,
+#tab-overview .overview-energy-card {
+  column-gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  row-gap: 8px;
+}
+
+#tab-overview .summary-today-card,
+#tab-overview .summary-calorie-capsule,
+#tab-overview .summary-weight-card,
+#tab-overview .summary-chip,
+#tab-overview .overview-energy-item,
+#tab-overview .overview-energy-item.target,
+#tab-overview .overview-trend-card {
+  background: var(--overview-card);
+  border: 1px solid var(--overview-border);
+  border-radius: 4px;
+  box-shadow: none;
+  color: var(--overview-foreground);
+}
+
+#tab-overview .summary-today-card,
+#tab-overview .summary-calorie-capsule,
+#tab-overview .summary-weight-card,
+#tab-overview .summary-chip,
+#tab-overview .overview-energy-item {
+  min-height: 128px !important;
+  padding: 8px !important;
+}
+
+#tab-overview .summary-today-label,
+#tab-overview .summary-calorie-label,
+#tab-overview .summary-weight-label,
+#tab-overview .summary-chip .label,
+#tab-overview .overview-energy-label,
+#tab-overview .calorie-unit,
+#tab-overview .summary-weight-unit,
+#tab-overview .overview-energy-unit,
+#tab-overview .calorie-progress-status,
+#tab-overview .summary-weight-goal,
+#tab-overview .summary-chip-target {
+  color: var(--overview-muted);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+}
+
+#tab-overview .summary-today-value,
+#tab-overview .summary-calorie-value,
+#tab-overview .summary-calorie-capsule .calorie-num,
+#tab-overview .summary-weight-value,
+#tab-overview .summary-chip .val,
+#tab-overview .overview-energy-value,
+#tab-overview .chart-title {
+  color: var(--overview-foreground);
+  font-family: 'Outfit', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+#tab-overview .summary-today-value {
+  font-size: 20px;
+}
+
+#tab-overview .summary-weight-goal {
+  display: grid;
+  gap: 2px;
+  justify-content: center;
+  white-space: normal;
+}
+
+#tab-overview .weight-diff-badge,
+#tab-overview .weight-diff-badge.up,
+#tab-overview .weight-diff-badge.down,
+#tab-overview .weight-diff-badge.same {
+  background: transparent;
+  border: 0;
+  color: var(--overview-accent);
+  margin-top: 8px;
+  position: static;
+}
+
+#tab-overview .calorie-progress {
+  background: var(--overview-border);
+  border: 0;
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+}
+
+#tab-overview .calorie-progress-fill,
+#tab-overview .calorie-progress.is-over .calorie-progress-fill {
+  background: var(--overview-accent);
+}
+
+#tab-overview .summary-chip.protein {
+  border-color: var(--overview-primary);
+}
+
+#tab-overview .summary-chip.protein .label,
+#tab-overview .summary-chip.protein .summary-chip-target {
+  color: #5fb9a8;
+}
+
+#tab-overview .summary-chip.fat {
+  border-color: #ff9900;
+}
+
+#tab-overview .summary-chip.fat .label,
+#tab-overview .summary-chip.fat .summary-chip-target {
+  color: #ff9900;
+}
+
+#tab-overview .summary-chip.carbs {
+  border-color: var(--overview-accent);
+}
+
+#tab-overview .summary-chip.carbs .label,
+#tab-overview .summary-chip.carbs .summary-chip-target,
+#tab-overview .chart-title .icon-svg {
+  color: var(--overview-accent) !important;
+}
+
+#tab-overview .overview-trend-card {
+  padding: 16px;
+}
+
+/* 総合タブ: カード内の見出し・数値位置を統一 */
+#tab-overview .summary-today-card,
+#tab-overview .summary-calorie-capsule,
+#tab-overview .summary-weight-card,
+#tab-overview .summary-chip {
+  align-content: stretch;
+  grid-template-rows: 18px 38px minmax(0, 1fr);
+}
+
+#tab-overview .summary-today-label,
+#tab-overview .summary-calorie-label,
+#tab-overview .summary-weight-label,
+#tab-overview .summary-chip .label {
+  align-self: center;
+  font-size: 11px;
+  line-height: 18px;
+  margin: 0;
+}
+
+#tab-overview .summary-today-value,
+#tab-overview .summary-calorie-value,
+#tab-overview .summary-calorie-capsule .calorie-num,
+#tab-overview .summary-weight-value,
+#tab-overview .summary-chip .val {
+  align-self: center;
+  font-size: 30px;
+  line-height: 38px;
+  min-height: 38px;
+}
+
+#tab-overview .summary-today-value,
+#tab-overview .summary-calorie-value,
+#tab-overview .summary-weight-value,
+#tab-overview .summary-chip .val {
+  align-items: center;
+  height: 38px;
+  justify-self: stretch;
+  line-height: 1;
+  max-height: 38px;
+  width: 100%;
 }
 
