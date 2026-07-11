@@ -40,6 +40,9 @@
 - 履歴表示と集計値が一致することを優先する
 
 ## UI 表示ルール
+- UIの新規作成・変更・レビューを行う前に、必ずリポジトリ直下の `DESIGN.md` を全文参照する
+- UIデザインは `DESIGN.md` のデザイントークン、レイアウト、タイポグラフィ、コンポーネント構造、禁止事項に従う
+- `DESIGN.md` と既存実装に差異がある場合は、対象範囲を確認したうえで `DESIGN.md` を優先する
 - 数値項目は基本的に右寄せで表示する
 - ラベルと単位を併記する場合も、比較・集計しやすいよう数値の桁位置を揃える
 
@@ -78,23 +81,3 @@
 - 秘密情報をログや差分に出さない
 - テスト未実施で完了扱いにしない
 - 参照優先順位を暗黙に変えない
-
-## Design Tokens
-- Primary: #0f172a（ダークネイビー）
-- Accent: #38bdf8（スカイブルー）
-- Background: #f8fafc（オフホワイト）
-- Text: #1e293b（チャコール）
-- Font-family: 'Zen Kaku Gothic New', sans-serif
-- Heading-font: 'Outfit', sans-serif
-- Base spacing: 8px grid
-- Border-radius: 4px（角丸は控えめに）
-- Max-width: 800px（コンテンツ幅）
-
-## Design Anti-patterns（禁止）
-- ❌ 青→紫のグラデーション背景を使わない
-- ❌ Interフォントを使わない
-- ❌ 角丸を12px以上にしない
-- ❌ shadcn/uiのデフォルトスタイルをそのまま使わない
-- ❌ ダミーテキスト（Lorem ipsum）を残さない
-- ❌ 影（box-shadow）を多用しない
-- ❌ 装飾のないプレーンなボタンを使わない

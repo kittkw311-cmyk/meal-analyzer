@@ -132,14 +132,13 @@
   // 解析タブのサマリー要素
   const dailyWeightSummaryBar = document.getElementById('daily-weight-box');
   const summaryWeightVal = document.getElementById('summary-weight-val');
-  const dailyBmrDivider = document.getElementById('daily-bmr-divider');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
-  const overviewEnergyCard = document.getElementById('overview-energy-card');
   const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
-  const overviewTargetCalories = document.getElementById('overview-target-calories');
   const dailyTargetProtein = document.getElementById('daily-target-protein');
   const dailyTargetFat = document.getElementById('daily-target-fat');
   const dailyTargetCarbs = document.getElementById('daily-target-carbs');
+  const summaryWeightGoalDiff = document.getElementById('summary-weight-goal-diff');
+  const summaryWeightGoalDays = document.getElementById('summary-weight-goal-days');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -661,6 +660,69 @@
   // ==========================================================================
   // Update Daily Summary (Always Visible Card on Analyze Tab)
   // ==========================================================================
+  function updateDailyCalorieProgress() {
+    const progress = document.getElementById('daily-calorie-progress');
+    const fill = document.getElementById('daily-calorie-progress-fill');
+    const status = document.getElementById('daily-calorie-progress-status');
+    const consumed = Number(document.getElementById('daily-total-calories')?.textContent) || 0;
+    const target = Number(dailyBmrCalories?.textContent);
+
+    if (!progress || !fill || !status) return;
+
+    if (!Number.isFinite(target) || target <= 0) {
+      fill.style.width = '0%';
+      progress.setAttribute('aria-valuenow', '0');
+      progress.setAttribute('aria-valuetext', '目標摂取カロリー未設定');
+      progress.classList.remove('is-over');
+      status.textContent = '目標を設定すると進捗を表示します';
+      return;
+    }
+
+    const percentage = Math.round((consumed / target) * 100);
+    const remaining = Math.max(0, target - consumed);
+    fill.style.width = `${Math.min(percentage, 100)}%`;
+    progress.setAttribute('aria-valuenow', String(Math.min(percentage, 100)));
+    progress.setAttribute('aria-valuetext', `目標の${percentage}%`);
+    progress.classList.toggle('is-over', consumed > target);
+    status.textContent = consumed > target
+      ? `目標の${percentage}%（${consumed - target} kcal超過）`
+      : `目標の${percentage}%（あと${remaining} kcal）`;
+  }
+
+  function updateDailyPfcProgress() {
+    const nutrients = [
+      { key: 'protein', totalId: 'daily-total-protein', targetEl: dailyTargetProtein },
+      { key: 'fat', totalId: 'daily-total-fat', targetEl: dailyTargetFat },
+      { key: 'carbs', totalId: 'daily-total-carbs', targetEl: dailyTargetCarbs }
+    ];
+
+    nutrients.forEach(({ key, totalId, targetEl }) => {
+      const progress = document.getElementById(`daily-${key}-progress`);
+      const fill = progress?.querySelector('.pfc-progress-fill');
+      const status = document.getElementById(`daily-${key}-progress-status`);
+      const consumed = Number(document.getElementById(totalId)?.textContent) || 0;
+      const target = Number(targetEl?.dataset.target);
+      if (!progress || !fill || !status) return;
+
+      if (!Number.isFinite(target) || target <= 0) {
+        fill.style.width = '0%';
+        progress.setAttribute('aria-valuenow', '0');
+        progress.setAttribute('aria-valuetext', '目標未設定');
+        progress.classList.remove('is-over');
+        status.textContent = 'あと --.-g';
+        return;
+      }
+
+      const percentage = Math.round((consumed / target) * 100);
+      const difference = Math.abs(target - consumed).toFixed(1);
+      fill.style.width = `${Math.min(percentage, 100)}%`;
+      progress.setAttribute('aria-valuenow', String(Math.min(percentage, 100)));
+      progress.setAttribute('aria-valuetext', `目標の${percentage}%`);
+      progress.classList.toggle('is-over', consumed > target);
+      status.textContent = consumed > target ? `${difference}g超過` : `あと ${difference}g`;
+    });
+  }
+
   async function updateDailySummary() {
     try {
       const response = await fetch('/api/history');
@@ -691,6 +753,8 @@
       document.getElementById('daily-total-protein').textContent = Number(totalP).toFixed(1);
       document.getElementById('daily-total-fat').textContent = Number(totalF).toFixed(1);
       document.getElementById('daily-total-carbs').textContent = Number(totalC).toFixed(1);
+      updateDailyCalorieProgress();
+      updateDailyPfcProgress();
 
     } catch (err) {
       console.error('Failed to update daily summary:', err);
@@ -1480,13 +1544,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           datasets: [{
             label: '体重 (kg)',
             data: weightValues,
-            borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56, 189, 248, 0.12)',
+            borderColor: '#00e5ff',
+            backgroundColor: 'rgba(0, 229, 255, 0.10)',
             borderWidth: 3,
             fill: true,
             tension: 0.25,
-            pointBackgroundColor: '#38bdf8',
-            pointBorderColor: '#fff',
+            pointBackgroundColor: '#00e5ff',
+            pointBorderColor: '#162a37',
             pointBorderWidth: 2,
             pointRadius: 4,
             pointHoverRadius: 6
@@ -1501,13 +1565,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           scales: {
             y: {
               grace: '5%',
-              grid: { color: 'rgba(200, 220, 210, 0.3)' },
-              ticks: { color: '#6f7b72', font: { size: 10, weight: '700' } }
+              grid: { color: 'rgba(35, 62, 80, 0.3)' },
+              ticks: { color: '#8fa7a3', font: { size: 10, weight: '700' } }
             },
             x: {
               grid: { display: false },
               ticks: {
-                color: '#6f7b72',
+                color: '#8fa7a3',
                 font: { size: 10, weight: '700' },
                 maxRotation: 0,
                 autoSkip: true,
@@ -1713,26 +1777,72 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   const calculateTargetPfcGrams = (targetCalories) => {
     if (!Number.isFinite(targetCalories) || targetCalories <= 0) return null;
     return {
-      protein: Math.round((targetCalories * 0.2) / 4),
-      fat: Math.round((targetCalories * 0.25) / 9),
-      carbs: Math.round((targetCalories * 0.55) / 4)
+      protein: Math.round(((targetCalories * 0.2) / 4) * 10) / 10,
+      fat: Math.round(((targetCalories * 0.25) / 9) * 10) / 10,
+      carbs: Math.round(((targetCalories * 0.55) / 4) * 10) / 10
     };
   };
 
   const updateTargetPfcSummary = (targetCalories) => {
     const pfcTargets = calculateTargetPfcGrams(targetCalories);
     if (!pfcTargets) {
-      if (dailyTargetProtein) dailyTargetProtein.textContent = '--g';
-      if (dailyTargetFat) dailyTargetFat.textContent = '--g';
-      if (dailyTargetCarbs) dailyTargetCarbs.textContent = '--g';
+      [dailyTargetProtein, dailyTargetFat, dailyTargetCarbs].forEach(element => {
+        if (!element) return;
+        element.textContent = '目標 --.-g';
+        delete element.dataset.target;
+      });
+      updateDailyPfcProgress();
       return;
     }
-    if (dailyTargetProtein) dailyTargetProtein.textContent = `${pfcTargets.protein}g`;
-    if (dailyTargetFat) dailyTargetFat.textContent = `${pfcTargets.fat}g`;
-    if (dailyTargetCarbs) dailyTargetCarbs.textContent = `${pfcTargets.carbs}g`;
+    [
+      [dailyTargetProtein, pfcTargets.protein],
+      [dailyTargetFat, pfcTargets.fat],
+      [dailyTargetCarbs, pfcTargets.carbs]
+    ].forEach(([element, target]) => {
+      if (!element) return;
+      element.textContent = `目標 ${target.toFixed(1)}g`;
+      element.dataset.target = String(target);
+    });
+    updateDailyPfcProgress();
   };
 
   // 最新体重・基礎代謝サマリーの更新（日付フィルターなしで常に最新値を表示）
+  function updateWeightGoalSummary(latestWeight) {
+    if (!summaryWeightGoalDiff || !summaryWeightGoalDays) return;
+
+    const targetWeight = Number(currentProfile?.targetWeight);
+    if (Number.isFinite(latestWeight) && Number.isFinite(targetWeight) && targetWeight > 0) {
+      const difference = Math.round((latestWeight - targetWeight) * 10) / 10;
+      if (difference > 0) {
+        summaryWeightGoalDiff.textContent = `目標まで ${difference.toFixed(1)} kg`;
+      } else if (difference < 0) {
+        summaryWeightGoalDiff.textContent = `目標比 −${Math.abs(difference).toFixed(1)} kg`;
+      } else {
+        summaryWeightGoalDiff.textContent = '目標体重を達成';
+      }
+    } else {
+      summaryWeightGoalDiff.textContent = '目標体重を設定してください';
+    }
+
+    const targetDate = currentProfile?.targetDate;
+    const dateMatch = typeof targetDate === 'string'
+      ? targetDate.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      : null;
+    const todayMatch = jstDateKey(new Date()).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateMatch && todayMatch) {
+      const targetUtc = Date.UTC(Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]));
+      const todayUtc = Date.UTC(Number(todayMatch[1]), Number(todayMatch[2]) - 1, Number(todayMatch[3]));
+      const days = Math.round((targetUtc - todayUtc) / 86400000);
+      summaryWeightGoalDays.textContent = days > 0
+        ? `期日まで ${days} 日`
+        : days === 0
+          ? '期日は今日'
+          : `期日から ${Math.abs(days)} 日経過`;
+    } else {
+      summaryWeightGoalDays.textContent = '達成期日を設定してください';
+    }
+  }
+
   async function updateDailyWeightSummary() {
     try {
       const response = await fetch('/api/body-composition');
@@ -1759,6 +1869,7 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
         // 一番最後の要素が最も新しい測定データ
         const latest = validHistory[validHistory.length - 1];
         summaryWeightVal.textContent = latest.weight.toFixed(1);
+        updateWeightGoalSummary(latest.weight);
         
         // 前日比（1つ前の測定値との差）の算出
         const diffEl = document.getElementById('daily-weight-diff');
@@ -1787,37 +1898,34 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
         const energyTargets = calculateEnergyTargets(currentProfile, latest.weight);
         if (energyTargets !== null) {
           if (dailyBmrCalories) dailyBmrCalories.textContent = energyTargets.targetCalories;
-          if (dailyBmrDivider) dailyBmrDivider.style.display = 'inline';
           if (overviewTdeeCalories) overviewTdeeCalories.textContent = energyTargets.tdee;
-          if (overviewTargetCalories) overviewTargetCalories.textContent = energyTargets.targetCalories;
-          if (overviewEnergyCard) overviewEnergyCard.style.display = 'grid';
           updateTargetPfcSummary(energyTargets.targetCalories);
+          updateDailyCalorieProgress();
         } else {
-          if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
-          if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
+          if (dailyBmrCalories) dailyBmrCalories.textContent = '----';
           updateTargetPfcSummary(null);
+          updateDailyCalorieProgress();
         }
         
-        dailyWeightSummaryBar.style.display = 'inline-flex';
+        dailyWeightSummaryBar.style.display = 'grid';
       } else {
         // 測定データが一件もない場合はデフォルト表示
         summaryWeightVal.textContent = '--.-';
+        updateWeightGoalSummary(null);
+        if (dailyBmrCalories) dailyBmrCalories.textContent = '----';
         const diffEl = document.getElementById('daily-weight-diff');
         if (diffEl) {
           diffEl.textContent = '';
           diffEl.style.display = 'none';
         }
-        if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
-        if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
         updateTargetPfcSummary(null);
-        dailyWeightSummaryBar.style.display = 'inline-flex';
+        updateDailyCalorieProgress();
+        dailyWeightSummaryBar.style.display = 'grid';
       }
     } catch (err) {
       console.error('Failed to update daily weight summary:', err);
-      if (dailyBmrDivider) dailyBmrDivider.style.display = 'none';
-      if (overviewEnergyCard) overviewEnergyCard.style.display = 'none';
       updateTargetPfcSummary(null);
-      dailyWeightSummaryBar.style.display = 'inline-flex';
+      dailyWeightSummaryBar.style.display = 'grid';
     }
   }
 
