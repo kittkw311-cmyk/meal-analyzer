@@ -136,7 +136,7 @@
         <div class="card upload-card">
           <!-- 定番メニューから選ぶドロップダウン -->
           <div class="preset-select-wrapper" style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left;">
-            <select id="preset-selector" style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border-color); font-size: 13px; font-weight: 700; color: var(--text-main); background: #fdfdfd; outline: none; cursor: pointer; box-sizing: border-box;">
+            <select id="preset-selector" style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid var(--design-border); font-size: 13px; font-weight: 700; color: var(--design-foreground); background: var(--design-card); outline: none; cursor: pointer; box-sizing: border-box;">
               <option value="">定番メニューから選択</option>
             </select>
           </div>
@@ -191,24 +191,24 @@
             <form id="form-presets-manual">
               <div class="form-group-compact" style="margin-bottom: 10px;">
                 <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">メニュー名 / 商品名</label>
-                <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff;">
+                <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground);">
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
-                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
                 </div>
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
-                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
                 </div>
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
-                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
                 </div>
                 <div class="form-group-compact">
                   <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
-                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--border-color); outline: none; box-sizing: border-box; background: #fff; text-align: right;">
+                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
                 </div>
               </div>
               <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
@@ -261,7 +261,7 @@
 
           <!-- 解析結果確認・編集フォーム (最初は非表示) -->
           <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
-            <h3 class="results-edit-title"><svg class="icon-svg" style="margin-right: 6px; color: #2b5585; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>解析結果の確認・修正</h3>
+            <h3 class="results-edit-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--design-accent); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>解析結果の確認・修正</h3>
             <div class="body-comp-results-grid">
               <div class="result-edit-field">
                 <span class="label">体重 (kg)</span>
@@ -344,6 +344,11 @@
             <p>まだ解析履歴がありません。</p>
             <span>食事を解析するとここに保存されます。</span>
           </div>
+        </div>
+        <div id="history-day-detail" class="history-day-detail" hidden>
+          <button type="button" id="btn-history-back" class="history-back-btn">← 一覧へ戻る</button>
+          <div id="history-day-detail-header" class="history-day-detail-header"></div>
+          <div id="history-day-detail-meals" class="history-day-detail-meals"></div>
         </div>
       </section>
 
@@ -491,8 +496,8 @@
 
         <!-- アクションボタン行 -->
         <div class="modal-action-row" style="display: flex; gap: 8px; width: 100%; margin: 0;">
-          <button type="button" class="btn btn-warning modal-preset-btn" id="btn-preset-modal" style="background: #fff8e1; border: 1.5px solid #ffe082; color: #b78103; padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; outline: none; cursor: pointer; transition: all 0.2s; margin: 0;">
-            <svg class="icon-svg" style="width: 15px; height: 15px; color: #f5b041; vertical-align: middle; stroke-width: 2.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>定番に登録
+          <button type="button" class="btn btn-warning modal-preset-btn" id="btn-preset-modal" style="background: var(--design-card); border: 1.5px solid var(--design-chart-fat); color: var(--design-chart-fat); padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; outline: none; cursor: pointer; transition: all 0.2s; margin: 0;">
+            <svg class="icon-svg" style="width: 15px; height: 15px; color: var(--design-chart-fat); vertical-align: middle; stroke-width: 2.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>定番に登録
           </button>
           <button type="button" class="btn btn-secondary modal-reanalyze-btn" id="btn-reanalyze-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; margin: 0;">
             <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px; vertical-align: middle;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>再計算
@@ -501,6 +506,7 @@
             保存する
           </button>
         </div>
+        <button type="button" class="btn modal-history-delete-btn" id="btn-delete-history-modal">この履歴を削除</button>
       </div>
     </div>
   </div>
@@ -622,7 +628,7 @@
 
       <!-- アクションボタンを下部固定 (スクロール外) -->
       <div class="modal-action-row weight-modal-action-fixed" style="margin: 0; padding: 15px 20px; border-top: 1px solid var(--border-color); background: var(--card-bg); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-sizing: border-box; display: flex; gap: 8px; width: 100%;">
-        <button type="button" class="btn btn-danger modal-delete-btn" id="btn-delete-weight-modal" style="margin: 0; flex: 1; background-color: #fce8eb; border: 1.5px solid #f7a8b8; color: #ba546a; padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; outline: none; cursor: pointer; transition: all 0.2s;">
+        <button type="button" class="btn btn-danger modal-delete-btn" id="btn-delete-weight-modal" style="margin: 0; flex: 1; background-color: var(--design-card); border: 1.5px solid var(--design-danger); color: var(--design-danger); padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; outline: none; cursor: pointer; transition: all 0.2s;">
           削除
         </button>
       </div>

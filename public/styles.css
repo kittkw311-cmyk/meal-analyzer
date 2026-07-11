@@ -2,24 +2,38 @@
    CSS Variables & Reset
    ========================================================================== */
 :root {
-  --design-primary: #0f172a;
-  --design-accent: #38bdf8;
-  --design-bg: #f8fafc;
-  --design-text: #1e293b;
-  --design-border: #e2e8f0;
-  --design-muted: #64748b;
+  --design-background: #111d27;
+  --design-card: #162a37;
+  --design-border: #233e50;
+  --design-primary: #196a5b;
+  --design-accent: #00e5ff;
+  --design-foreground: #ffffff;
+  --design-muted: #ffffff;
+  --design-chart-fat: #ff9900;
+  --design-positive: #5fb9a8;
+  --design-danger: #ff9900;
+  --design-label-font-weight: 800;
+  --design-summary-card-height: 128px;
+  --design-history-row-height: 88px;
+  --design-history-card-height: 56px;
+  --design-badge-height: 24px;
+  --design-count-badge-width: 40px;
+  --design-pfc-chip-width: 64px;
+  --design-pfc-chip-height: 26px;
+  --design-bg: var(--design-background);
+  --design-text: var(--design-foreground);
   --design-radius: 4px;
   --design-space: 8px;
-  --bg-color: #f7f9f6;
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --text-main: #3a473e;
-  --text-muted: #708075;
-  --primary: #9cd4b0;        /* パステルグリーン */
-  --primary-hover: #80c498;
+  --bg-color: var(--design-background);
+  --card-bg: var(--design-card);
+  --text-main: var(--design-foreground);
+  --text-muted: var(--design-muted);
+  --primary: var(--design-primary);
+  --primary-hover: var(--design-primary);
   --secondary: #fbd87f;      /* パステルイエロー */
   --accent: #f7a8b8;         /* パステルピンク */
   --accent-blue: #9ac2f4;    /* パステルブルー */
-  --border-color: rgba(220, 230, 224, 0.8);
+  --border-color: var(--design-border);
   --shadow-color: rgba(150, 180, 160, 0.12);
   
   --font-sans: 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -78,7 +92,7 @@ body {
    ========================================================================== */
 .app-header {
   padding: 10px 24px 8px;
-  background: linear-gradient(135deg, #ffffff 0%, var(--bg-color) 100%);
+  background: var(--design-card);
   border-bottom: 1px solid var(--border-color);
   text-align: center;
 }
@@ -523,7 +537,7 @@ body {
 
 /* Advisor Card */
 .advisor-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f4fbf7 100%);
+  background: var(--design-card);
   border-left: 4px solid var(--primary);
 }
 
@@ -1411,7 +1425,7 @@ body {
 }
 
 .overview-energy-item {
-  background: #ffffff;
+  background: var(--design-card);
   border: 1px solid var(--design-border);
   border-radius: var(--design-radius);
   box-shadow: none;
@@ -1450,7 +1464,7 @@ body {
 
 .overview-trend-card {
   margin-top: var(--design-space);
-  background: #ffffff;
+  background: var(--design-card);
   border: 1px solid var(--design-border);
   border-radius: var(--design-radius);
   box-shadow: none;
@@ -1555,16 +1569,19 @@ body {
 }
 
 .modal-nutrition-chip.calorie {
-  background-color: #f2f4f3;
-  color: var(--text-main);
+  background-color: var(--design-background);
+  color: var(--design-accent);
   flex: 1.4;
-  justify-content: space-between;
+  justify-content: flex-end !important;
 }
 
 .modal-nutrition-chip.calorie .unit {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--design-foreground);
+  flex: 0 0 auto;
   font-weight: 700;
+  margin-left: 4px;
+  text-align: right;
 }
 
 .modal-nutrition-chip .label {
@@ -1573,6 +1590,7 @@ body {
 }
 
 .modal-nutrition-chip .val {
+  margin-left: auto;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -2041,7 +2059,7 @@ body {
 }
 
 .modal-inference-body {
-  background: #ffffff;
+  background: var(--design-card);
   max-height: 56vh;
   overflow-y: auto;
   padding: 13px 14px 14px;
@@ -2675,7 +2693,7 @@ body {
 /* アップロード件数バッジ & クリアボタン */
 .upload-badge {
   background-color: var(--accent-blue);
-  color: #ffffff;
+  color: var(--design-foreground);
   font-size: 11px;
   font-weight: 700;
   border-radius: 12px;
@@ -2849,7 +2867,6 @@ body {
   .modal-nutrition-chip.calorie {
     width: auto !important;
     flex: 1.4 !important;
-    justify-content: space-between !important;
   }
 
   /* 食事履歴リストの日付ヘッダーのスマホ幅調整 */
@@ -3367,7 +3384,9 @@ body {
 #tab-overview .overview-energy-item {
   align-content: center;
   display: grid;
-  min-height: 132px;
+  height: var(--design-summary-card-height);
+  min-height: var(--design-summary-card-height);
+  overflow: hidden;
   padding: 14px 12px;
   text-align: center;
 }
@@ -3383,9 +3402,11 @@ body {
 #tab-overview .summary-weight-label,
 #tab-overview .summary-chip .label,
 #tab-overview .overview-energy-label {
+  font-family: var(--font-heading);
   font-size: 11px;
+  font-weight: var(--design-label-font-weight);
   margin: 0 0 10px;
-  opacity: 0.62;
+  opacity: 1;
   text-align: center;
 }
 
@@ -3464,13 +3485,13 @@ body {
 
 /* DESIGN.md: 総合タブ専用ダークダッシュボード */
 #tab-overview {
-  --overview-background: #111d27;
-  --overview-card: #162a37;
-  --overview-border: #233e50;
-  --overview-primary: #196a5b;
-  --overview-accent: #00e5ff;
-  --overview-foreground: #f0f7f6;
-  --overview-muted: #8fa7a3;
+  --overview-background: var(--design-background);
+  --overview-card: var(--design-card);
+  --overview-border: var(--design-border);
+  --overview-primary: var(--design-primary);
+  --overview-accent: var(--design-accent);
+  --overview-foreground: var(--design-foreground);
+  --overview-muted: var(--design-muted);
   background: var(--overview-background);
   box-sizing: border-box;
   color: var(--overview-foreground);
@@ -3537,7 +3558,7 @@ body {
 }
 
 #tab-overview .summary-chip.fat .pfc-progress-fill {
-  background: #ff9900;
+  background: var(--design-chart-fat);
 }
 
 #tab-overview .summary-chip.carbs .pfc-progress-fill {
@@ -3545,7 +3566,7 @@ body {
 }
 
 #tab-overview .pfc-progress.is-over .pfc-progress-fill {
-  background: #ff9900;
+  background: var(--design-chart-fat);
 }
 
 #tab-overview .pfc-progress-status {
@@ -3560,70 +3581,70 @@ body {
 
 /* DESIGN.md: 最大800pxの外フレーム */
 body {
-  background: #0a1219;
+  background: var(--design-background);
 }
 
 .app-container {
-  background: #111d27;
-  border-color: #233e50;
-  color: #f0f7f6;
+  background: var(--design-background);
+  border-color: var(--design-border);
+  color: var(--design-foreground);
 }
 
 .app-header {
-  background: #162a37;
-  border-bottom: 1px solid #233e50;
+  background: var(--design-card);
+  border-bottom: 1px solid var(--design-border);
   padding: 16px 24px 8px;
 }
 
 .app-header h1 {
   background: none;
-  color: #f0f7f6;
+  color: var(--design-foreground);
   font-family: 'Outfit', sans-serif;
   -webkit-text-fill-color: currentColor;
 }
 
 .app-header .logo-svg {
-  color: #00e5ff;
+  color: var(--design-accent);
 }
 
 .subtitle {
-  color: #8fa7a3;
+  color: var(--design-muted);
 }
 
 .app-version {
-  background: #111d27;
-  border: 1px solid #233e50;
+  background: var(--design-background);
+  border: 1px solid var(--design-border);
   border-radius: 4px;
-  color: #00e5ff;
+  color: var(--design-accent);
 }
 
 .app-main {
-  background: #111d27;
+  background: var(--design-background);
 }
 
 .app-nav {
   background: rgba(22, 42, 55, 0.96);
-  border-top: 1px solid #233e50;
+  border-top: 1px solid var(--design-border);
 }
 
 .nav-item {
-  color: #8fa7a3;
+  color: var(--design-muted);
 }
 
 .nav-item.active,
 .nav-item.active .nav-icon {
-  color: #00e5ff;
+  color: var(--design-accent);
 }
 
 /* DESIGN.md: 定番タブ */
 #tab-presets {
-  --presets-background: #111d27;
-  --presets-card: #162a37;
-  --presets-border: #233e50;
-  --presets-primary: #196a5b;
-  --presets-accent: #00e5ff;
-  --presets-foreground: #f0f7f6;
-  --presets-muted: #8fa7a3;
+  --presets-background: var(--design-background);
+  --presets-card: var(--design-card);
+  --presets-border: var(--design-border);
+  --presets-primary: var(--design-primary);
+  --presets-accent: var(--design-accent);
+  --presets-foreground: var(--design-foreground);
+  --presets-muted: var(--design-muted);
   background: var(--presets-background);
   color: var(--presets-foreground);
   margin-inline: auto;
@@ -3700,7 +3721,7 @@ body {
 }
 
 #tab-presets .macro-badge {
-  background: #111d27;
+  background: var(--design-background);
   border: 1px solid var(--presets-border);
   border-radius: 4px;
   color: var(--presets-muted);
@@ -3710,26 +3731,26 @@ body {
 
 #tab-presets .macro-badge.calories,
 #tab-presets .macro-badge.c {
-  background: #111d27;
+  background: var(--design-background);
   border-color: var(--presets-accent);
   color: var(--presets-accent);
 }
 
 #tab-presets .macro-badge.p {
-  background: #111d27;
+  background: var(--design-background);
   border-color: var(--presets-primary);
-  color: #5fb9a8;
+  color: var(--design-positive);
 }
 
 #tab-presets .macro-badge.f {
-  background: #111d27;
-  border-color: #ff9900;
-  color: #ff9900;
+  background: var(--design-background);
+  border-color: var(--design-chart-fat);
+  color: var(--design-chart-fat);
 }
 
 #tab-presets .preset-macro-edit-input,
 #tab-presets .preset-edit-input {
-  background: #111d27;
+  background: var(--design-background);
   border: 1px solid var(--presets-accent);
   border-radius: 4px;
   color: var(--presets-foreground);
@@ -3740,12 +3761,12 @@ body {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
-  color: #ff9900;
+  color: var(--design-danger);
 }
 
 #tab-presets .btn-delete-preset:hover {
-  background: rgba(255, 153, 0, 0.08);
-  border-color: #ff9900;
+  background: color-mix(in srgb, var(--design-danger) 8%, transparent);
+  border-color: var(--design-danger);
 }
 
 #tab-presets .presets-empty-state {
@@ -3763,6 +3784,807 @@ body {
   #tab-presets .presets-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* DESIGN.md: 全タブ共通ダークテーマ */
+.app-main {
+  --app-dark-background: var(--design-background);
+  --app-dark-card: var(--design-card);
+  --app-dark-border: var(--design-border);
+  --app-dark-primary: var(--design-primary);
+  --app-dark-accent: var(--design-accent);
+  --app-dark-foreground: var(--design-foreground);
+  --app-dark-muted: var(--design-muted);
+}
+
+#tab-analyze,
+#tab-history,
+#tab-weight,
+#tab-stats {
+  background: var(--app-dark-background);
+  color: var(--app-dark-foreground);
+  margin-inline: auto;
+  max-width: 800px;
+  padding: 8px;
+  width: 100%;
+}
+
+#tab-analyze .card,
+#tab-analyze .body-comp-results-edit-card,
+#tab-history .history-card,
+#tab-history .empty-state,
+#tab-weight .body-comp-history-card,
+#tab-stats .profile-goal-card,
+#tab-stats .stats-summary-card,
+#tab-stats .chart-card {
+  background: var(--app-dark-card) !important;
+  border: 1px solid var(--app-dark-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  color: var(--app-dark-foreground) !important;
+}
+
+#tab-analyze .card,
+#tab-analyze .body-comp-results-edit-card,
+#tab-weight .body-comp-history-card,
+#tab-stats .profile-goal-card,
+#tab-stats .stats-summary-card,
+#tab-stats .chart-card {
+  padding: 16px !important;
+}
+
+#tab-analyze h2,
+#tab-analyze h3,
+#tab-analyze .card-title-v2,
+#tab-analyze .results-edit-title,
+#tab-history h2,
+#tab-history h3,
+#tab-weight h2,
+#tab-weight h3,
+#tab-stats h2,
+#tab-stats h3,
+#tab-stats .summary-value,
+#tab-stats .profile-age-output {
+  color: var(--app-dark-foreground) !important;
+  font-family: 'Outfit', sans-serif;
+}
+
+#tab-analyze label,
+#tab-analyze .label,
+#tab-analyze .accordion-arrow,
+#tab-history .empty-state span,
+#tab-history .history-meta,
+#tab-weight .empty-row,
+#tab-weight .error-row,
+#tab-stats label > span,
+#tab-stats .summary-label {
+  color: var(--app-dark-muted) !important;
+}
+
+#tab-analyze input:not([type="file"]),
+#tab-analyze textarea,
+#tab-analyze select,
+#tab-weight input,
+#tab-weight select,
+#tab-stats input,
+#tab-stats select,
+#tab-stats output {
+  background: var(--app-dark-background) !important;
+  border: 1px solid var(--app-dark-border) !important;
+  border-radius: 4px !important;
+  color: var(--app-dark-foreground) !important;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  outline: none;
+}
+
+#tab-analyze input:focus,
+#tab-analyze textarea:focus,
+#tab-analyze select:focus,
+#tab-weight input:focus,
+#tab-weight select:focus,
+#tab-stats input:focus,
+#tab-stats select:focus {
+  border-color: var(--app-dark-accent) !important;
+  box-shadow: 0 0 0 1px var(--app-dark-accent) !important;
+}
+
+#tab-analyze input::placeholder,
+#tab-analyze textarea::placeholder,
+#tab-weight input::placeholder,
+#tab-stats input::placeholder {
+  color: var(--app-dark-muted);
+  opacity: 0.7;
+}
+
+#tab-analyze .upload-action-btn {
+  background: var(--app-dark-background);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  color: var(--app-dark-accent);
+}
+
+#tab-analyze .upload-action-btn:hover {
+  background: var(--app-dark-card);
+  border-color: var(--app-dark-accent);
+}
+
+#tab-analyze .btn-primary,
+#tab-analyze .btn-success,
+#tab-analyze .btn-secondary {
+  background: var(--app-dark-primary) !important;
+  border: 1px solid var(--app-dark-accent) !important;
+  border-radius: 4px !important;
+  color: var(--app-dark-foreground) !important;
+}
+
+#tab-analyze .btn:disabled {
+  background: var(--app-dark-border) !important;
+  border-color: var(--app-dark-border) !important;
+  color: var(--app-dark-muted) !important;
+  opacity: 0.65;
+}
+
+#tab-analyze .chip,
+#tab-analyze .weight-chip {
+  background: var(--app-dark-background);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  color: var(--app-dark-muted);
+}
+
+#tab-analyze .chip.active,
+#tab-analyze .weight-chip.active {
+  background: var(--app-dark-primary);
+  border-color: var(--app-dark-accent);
+  color: var(--app-dark-foreground);
+}
+
+#tab-analyze .accordion-content {
+  border-color: var(--app-dark-border) !important;
+}
+
+#tab-history .history-list {
+  gap: 8px;
+}
+
+#tab-history .history-table-wrapper {
+  max-height: calc(100dvh - 176px);
+  overflow: auto;
+  width: 100%;
+}
+
+#tab-history .history-summary-table {
+  background: var(--app-dark-card);
+  border-collapse: collapse;
+  color: var(--app-dark-foreground);
+  table-layout: fixed;
+  width: 100%;
+}
+
+#tab-history .history-summary-table th,
+#tab-history .history-summary-table td {
+  border-bottom: 1px solid var(--app-dark-border);
+  border-right: 1px solid var(--app-dark-border);
+  box-sizing: border-box;
+  height: 44px;
+  overflow: hidden;
+  padding: 8px 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-history .history-summary-table th:last-child,
+#tab-history .history-summary-table td:last-child {
+  border-right: 0;
+}
+
+#tab-history .history-summary-table th {
+  background: var(--app-dark-background);
+  color: var(--app-dark-muted);
+  font: 800 10px var(--font-sans);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+#tab-history .history-summary-table td {
+  color: var(--app-dark-foreground);
+  font: 800 12px var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+#tab-history .history-summary-table th:first-child,
+#tab-history .history-summary-table td:first-child {
+  text-align: left;
+  width: 148px;
+}
+
+#tab-history .history-summary-table th:nth-child(2),
+#tab-history .history-summary-table th:nth-child(3),
+#tab-history .history-summary-table th:nth-child(4) {
+  width: 48px;
+}
+
+#tab-history .history-summary-table th:nth-child(5) {
+  width: 102px;
+}
+
+#tab-history .history-summary-table th:nth-child(n + 2),
+#tab-history .history-summary-table td:nth-child(n + 2) {
+  text-align: right;
+}
+
+#tab-history .history-summary-date-inner {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+  min-width: 0;
+  width: 100%;
+}
+
+#tab-history .history-summary-date-inner > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-history .history-summary-row {
+  cursor: pointer;
+  outline: none;
+}
+
+#tab-history .history-summary-row:hover td,
+#tab-history .history-summary-row:focus-visible td {
+  background: color-mix(in srgb, var(--app-dark-accent) 5%, var(--app-dark-card));
+}
+
+#tab-history .history-summary-table .history-meal-count-badge {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#tab-history .history-group {
+  margin: 0;
+}
+
+#tab-history .history-date-header {
+  background: var(--app-dark-card);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  margin: 0;
+  height: var(--design-history-row-height);
+  min-height: var(--design-history-row-height);
+  overflow: hidden;
+  padding: 8px;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+#tab-history .history-date-header:hover {
+  background: color-mix(in srgb, var(--app-dark-accent) 5%, var(--app-dark-card));
+  border-color: var(--app-dark-accent);
+}
+
+#tab-history .history-date-meta {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+#tab-history .history-meal-count-badge {
+  background: var(--app-dark-background);
+  border: 1px solid var(--app-dark-accent);
+  border-radius: 4px;
+  color: var(--app-dark-accent);
+  flex: 0 0 auto;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  height: var(--design-badge-height);
+  line-height: calc(var(--design-badge-height) - 2px);
+  overflow: hidden;
+  padding: 0 4px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: var(--design-count-badge-width);
+}
+
+#tab-history .history-row-chevron {
+  color: var(--app-dark-accent);
+  flex: 0 0 auto;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  line-height: 1;
+}
+
+#tab-history .history-day-detail[hidden] {
+  display: none;
+}
+
+#tab-history .history-day-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#tab-history .history-day-detail-header {
+  align-items: center;
+  background: var(--app-dark-card);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  height: var(--design-history-row-height);
+  min-height: var(--design-history-row-height);
+  overflow: hidden;
+  padding: 8px;
+}
+
+#tab-history .history-date-header,
+#tab-history .history-day-detail-header {
+  align-items: stretch;
+  flex-direction: column-reverse;
+  gap: 8px;
+  justify-content: center;
+}
+
+#tab-history .history-left-group {
+  gap: 8px;
+  justify-content: space-between;
+  min-width: 0;
+  width: 100%;
+}
+
+#tab-history .history-back-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  color: var(--app-dark-foreground);
+  cursor: pointer;
+  font: 800 12px var(--font-sans);
+  min-height: 32px;
+  padding: 4px 8px;
+}
+
+#tab-history .history-back-btn:hover {
+  border-color: var(--app-dark-accent);
+  color: var(--app-dark-accent);
+}
+
+#tab-history .history-day-detail-header .history-date-header {
+  cursor: default !important;
+}
+
+#tab-history .history-day-detail-header .history-row-chevron {
+  display: none;
+}
+
+#tab-history .history-day-detail-meals .history-cards-container {
+  display: block !important;
+}
+
+#tab-history .history-detail-table-wrapper {
+  max-height: calc(100dvh - 280px);
+  overflow: auto;
+  width: 100%;
+}
+
+#tab-history .history-detail-table {
+  background: var(--app-dark-card);
+  border-collapse: collapse;
+  color: var(--app-dark-foreground);
+  table-layout: fixed;
+  width: 100%;
+}
+
+#tab-history .history-detail-table th,
+#tab-history .history-detail-table td {
+  border-bottom: 1px solid var(--app-dark-border);
+  border-right: 1px solid var(--app-dark-border);
+  box-sizing: border-box;
+  height: 44px;
+  overflow: hidden;
+  padding: 8px 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-history .history-detail-table th:last-child,
+#tab-history .history-detail-table td:last-child {
+  border-right: 0;
+}
+
+#tab-history .history-detail-table th {
+  background: var(--app-dark-background);
+  color: var(--app-dark-muted);
+  font: 800 10px var(--font-sans);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+#tab-history .history-detail-table td {
+  color: var(--app-dark-foreground);
+  font: 800 12px var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+#tab-history .history-detail-table th:first-child,
+#tab-history .history-detail-table td:first-child {
+  text-align: left;
+  width: 52px;
+}
+
+#tab-history .history-detail-table th:nth-child(2),
+#tab-history .history-detail-table td:nth-child(2) {
+  text-align: left;
+  width: 136px;
+}
+
+#tab-history .history-detail-table th:nth-child(3),
+#tab-history .history-detail-table th:nth-child(4),
+#tab-history .history-detail-table th:nth-child(5) {
+  width: 44px;
+}
+
+#tab-history .history-detail-table th:nth-child(6) {
+  line-height: 14px;
+  white-space: normal;
+  width: 72px;
+}
+
+#tab-history .history-detail-table th:nth-child(n + 3),
+#tab-history .history-detail-table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+#tab-weight .weight-history-table th,
+#tab-weight .weight-history-table td {
+  border-bottom: 1px solid var(--app-dark-border);
+  border-right: 1px solid var(--app-dark-border);
+}
+
+#tab-weight .weight-history-table th:last-child,
+#tab-weight .weight-history-table td:last-child {
+  border-right: 0;
+}
+
+#tab-history .history-detail-row {
+  cursor: pointer;
+  outline: none;
+}
+
+#tab-history .history-detail-row:hover td,
+#tab-history .history-detail-row:focus-visible td {
+  background: color-mix(in srgb, var(--app-dark-accent) 5%, var(--app-dark-card));
+}
+
+#tab-history .history-detail-name {
+  position: relative;
+}
+
+#tab-history .history-detail-name .history-meal-text {
+  display: block;
+  overflow: hidden;
+  padding-right: 26px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-history .history-detail-name .btn-delete-history {
+  height: 24px;
+  padding: 0;
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+}
+
+#tab-history .history-card {
+  height: var(--design-history-card-height);
+  margin-bottom: 8px;
+  min-height: var(--design-history-card-height);
+  overflow: hidden;
+}
+
+#tab-history .history-pfc-chip {
+  flex: 0 0 var(--design-pfc-chip-width);
+  height: var(--design-pfc-chip-height);
+  overflow: hidden;
+  width: var(--design-pfc-chip-width);
+}
+
+#tab-history .history-pfc-chip .val,
+#tab-history .history-calories,
+#tab-history .history-date-title,
+#tab-history .history-meal-count-badge {
+  font-variant-numeric: tabular-nums;
+}
+
+#tab-history .history-date-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 84px;
+}
+
+#tab-presets .macro-badge,
+.modal-nutrition-chip {
+  height: var(--design-badge-height);
+  min-height: var(--design-badge-height);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#tab-history .history-card:hover {
+  border-color: var(--app-dark-accent) !important;
+  box-shadow: none !important;
+}
+
+#tab-history .history-date,
+#tab-history .history-title,
+#tab-history .meal-name,
+#tab-history .history-calories,
+#tab-history .history-calories-v3 {
+  color: var(--app-dark-foreground) !important;
+}
+
+#tab-history .history-pfc-chip,
+#tab-history .meal-type-badge,
+#tab-history .history-meal-type {
+  background: var(--app-dark-background) !important;
+  border: 1px solid var(--app-dark-border) !important;
+  border-radius: 4px !important;
+}
+
+#tab-history .btn-delete-history {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--design-danger);
+}
+
+#tab-history .btn-delete-history:hover {
+  background: color-mix(in srgb, var(--design-danger) 8%, transparent);
+  border-color: var(--design-danger);
+}
+
+#tab-weight .table-wrapper {
+  border: 0;
+  border-radius: 0;
+  max-height: calc(100dvh - 176px);
+  overflow: auto;
+}
+
+#tab-weight .body-comp-history-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+#tab-weight .weight-history-table {
+  background: var(--app-dark-card);
+  color: var(--app-dark-foreground);
+}
+
+#tab-weight .weight-history-table th {
+  background: var(--app-dark-background);
+  border-color: var(--app-dark-border);
+  color: var(--app-dark-muted);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+#tab-weight .weight-history-table td {
+  background: var(--app-dark-card);
+  border-color: var(--app-dark-border);
+  color: var(--app-dark-foreground);
+}
+
+#tab-weight .weight-history-table .weight-num,
+#tab-weight .weight-cell-container .weight-num,
+#tab-weight .weight-history-table .bmr-num {
+  color: var(--app-dark-foreground);
+}
+
+#tab-weight .weight-history-table tr:hover td {
+  background: rgba(0, 229, 255, 0.05);
+}
+
+#tab-stats .profile-goal-grid {
+  gap: 8px;
+}
+
+#tab-stats .profile-goal-field {
+  gap: 8px;
+}
+
+#tab-stats .profile-age-output {
+  border-color: var(--app-dark-border) !important;
+  color: var(--app-dark-accent) !important;
+}
+
+#tab-stats .chart-title .icon-svg,
+#tab-analyze .results-edit-title .icon-svg {
+  color: var(--app-dark-accent) !important;
+}
+
+/* DESIGN.md: 詳細・編集モーダル共通テーマ */
+.modal-overlay {
+  background: color-mix(in srgb, var(--design-background) 86%, transparent);
+  padding: 8px;
+}
+
+.modal-content {
+  background: var(--design-background);
+  border: 1px solid var(--design-border);
+  border-radius: 4px;
+  color: var(--design-foreground);
+  max-width: 800px;
+}
+
+.modal-header-fixed,
+.modal-footer-fixed,
+.weight-modal-action-fixed {
+  background: var(--design-card) !important;
+  border-color: var(--design-border) !important;
+  border-radius: 0 !important;
+  color: var(--design-foreground);
+}
+
+.modal-body-scrollable,
+.modal-body,
+.weight-modal-details-card,
+.modal-inference-body {
+  background: var(--design-background);
+  color: var(--design-foreground);
+}
+
+.modal-title,
+.modal-comment-card,
+.modal-inference-text,
+.weight-details-list-table td.col-label,
+.weight-detail-item .label,
+.weight-detail-item .val {
+  color: var(--design-foreground);
+}
+
+.modal-close-btn {
+  background: var(--design-card);
+  border: 1px solid var(--design-border);
+  border-radius: 4px;
+  color: var(--design-muted);
+}
+
+.modal-close-btn:hover {
+  border-color: var(--design-accent);
+  color: var(--design-accent);
+}
+
+.modal-image-container,
+.modal-comment-card,
+.modal-inference-card,
+.modal-meta-edit,
+.weight-detail-item,
+.weight-details-table-wrapper {
+  background: var(--design-card) !important;
+  border-color: var(--design-border) !important;
+  border-radius: 4px !important;
+}
+
+.modal-inference-header,
+.weight-details-fixed-header,
+.weight-details-list-table td {
+  background: var(--design-card);
+  border-color: var(--design-border);
+  color: var(--design-foreground);
+}
+
+.modal-inference-title,
+.modal-inference-title .icon-svg,
+.weight-details-fixed-header span,
+.weight-details-list-table td.col-diff-val {
+  color: var(--design-accent);
+}
+
+.modal-date-input,
+.modal-time-input,
+.modal-type-select,
+.modal-textarea,
+.weight-modal-input,
+#weight-modal-date-input,
+#weight-modal-type-select {
+  background: var(--design-background) !important;
+  border: 1px solid var(--design-border) !important;
+  border-radius: 4px !important;
+  color: var(--design-foreground) !important;
+}
+
+.modal-date-input:focus,
+.modal-time-input:focus,
+.modal-type-select:focus,
+.modal-textarea:focus,
+.weight-modal-input:focus,
+#weight-modal-date-input:focus,
+#weight-modal-type-select:focus {
+  border-color: var(--design-accent) !important;
+  box-shadow: 0 0 0 1px var(--design-accent);
+  outline: none;
+}
+
+.modal-nutrition-chip {
+  background: var(--design-background);
+  border: 1px solid var(--design-border);
+  border-radius: 4px;
+  color: var(--design-foreground);
+}
+
+.modal-nutrition-chip.protein {
+  border-color: var(--design-primary);
+  color: var(--design-positive);
+}
+
+.modal-nutrition-chip.fat {
+  border-color: var(--design-chart-fat);
+  color: var(--design-chart-fat);
+}
+
+.modal-nutrition-chip.carbs,
+.modal-nutrition-chip.calorie {
+  border-color: var(--design-accent);
+  color: var(--design-accent);
+}
+
+.modal-reanalyze-btn,
+.modal-save-btn {
+  border-radius: 4px !important;
+}
+
+.modal-reanalyze-btn {
+  background: var(--design-background) !important;
+  border: 1px solid var(--design-accent) !important;
+  color: var(--design-accent) !important;
+}
+
+.modal-save-btn {
+  background: var(--design-primary) !important;
+  border: 1px solid var(--design-accent) !important;
+  color: var(--design-foreground) !important;
+}
+
+.modal-history-delete-btn {
+  background: transparent !important;
+  border: 1px solid var(--design-danger) !important;
+  border-radius: 4px !important;
+  color: var(--design-danger) !important;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 32px;
+  width: 100%;
+}
+
+.modal-history-delete-btn:hover {
+  background: color-mix(in srgb, var(--design-danger) 8%, transparent) !important;
+}
+
+.modal-body-scrollable::-webkit-scrollbar-track {
+  background: var(--design-background);
+}
+
+.modal-body-scrollable::-webkit-scrollbar-thumb {
+  background: var(--design-border);
+  border-radius: 4px;
 }
 
 #tab-overview .daily-summary-capsule,
@@ -3807,7 +4629,17 @@ body {
 #tab-overview .summary-weight-goal,
 #tab-overview .summary-chip-target {
   color: var(--overview-muted);
-  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-family: var(--font-sans);
+}
+
+#tab-overview .summary-today-label,
+#tab-overview .summary-calorie-label,
+#tab-overview .summary-weight-label,
+#tab-overview .summary-chip .label,
+#tab-overview .overview-energy-label {
+  font-family: var(--font-heading);
+  font-weight: var(--design-label-font-weight);
+  opacity: 1;
 }
 
 #tab-overview .summary-today-value,
@@ -3863,16 +4695,16 @@ body {
 
 #tab-overview .summary-chip.protein .label,
 #tab-overview .summary-chip.protein .summary-chip-target {
-  color: #5fb9a8;
+  color: var(--design-positive);
 }
 
 #tab-overview .summary-chip.fat {
-  border-color: #ff9900;
+  border-color: var(--design-chart-fat);
 }
 
 #tab-overview .summary-chip.fat .label,
 #tab-overview .summary-chip.fat .summary-chip-target {
-  color: #ff9900;
+  color: var(--design-chart-fat);
 }
 
 #tab-overview .summary-chip.carbs {

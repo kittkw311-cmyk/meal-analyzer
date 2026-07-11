@@ -10,6 +10,16 @@
     }).format(date);
   };
 
+  const formatDisplayDate = (dateLike) => {
+    const dateKey = jstDateKey(dateLike);
+    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return '';
+    const [, year, month, day] = match;
+    const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+    const weekday = weekdayLabels[new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay()];
+    return `${year}/${month}/${day}(${weekday})`;
+  };
+
   // ==========================================================================
   // DOM Elements
   // ==========================================================================
@@ -40,6 +50,17 @@
 
   // History & Stats Elements
   const historyList = document.getElementById('history-list');
+  const historyDayDetail = document.getElementById('history-day-detail');
+  const historyDayDetailHeader = document.getElementById('history-day-detail-header');
+  const historyDayDetailMeals = document.getElementById('history-day-detail-meals');
+  const btnHistoryBack = document.getElementById('btn-history-back');
+  const btnDeleteHistoryModal = document.getElementById('btn-delete-history-modal');
+  btnHistoryBack.addEventListener('click', () => {
+    historyDayDetail.hidden = true;
+    historyDayDetailMeals.replaceChildren();
+    historyList.style.display = '';
+    document.querySelector('.app-main')?.scrollTo({ top: 0, behavior: 'instant' });
+  });
   const statsTotalMeals = document.getElementById('stats-total-meals');
   const statsAvgCalories = document.getElementById('stats-avg-calories');
 
@@ -1126,6 +1147,9 @@
   // ==========================================================================
   async function loadHistory() {
     try {
+      historyList.style.display = '';
+      historyDayDetail.hidden = true;
+      historyDayDetailMeals.replaceChildren();
       const response = await fetch('/api/history');
       const history = await response.json();
 
@@ -1142,20 +1166,12 @@
       // 日付ごとにグループ化する (キー: YYYY-MM-DD)
       const groups = {};
       history.forEach(item => {
-        const dateObj = new Date(item.mealDate || item.date);
-        const yyyy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const dateKey = `${yyyy}-${mm}-${dd}`;
+        const dateSource = item.mealDate || item.date;
+        const dateKey = jstDateKey(dateSource);
         
         if (!groups[dateKey]) {
           groups[dateKey] = {
-            dateLabel: (() => {
-              const yyyyStr = dateObj.getFullYear();
-              const mmStr = String(dateObj.getMonth() + 1).padStart(2, '0');
-              const ddStr = String(dateObj.getDate()).padStart(2, '0');
-              return `${yyyyStr}/${mmStr}/${ddStr}`;
-            })(),
+            dateLabel: formatDisplayDate(dateSource),
             meals: [],
             totalCalories: 0,
             totalProtein: 0,
@@ -1172,13 +1188,27 @@
       });
 
       historyList.innerHTML = '';
+      const historyTableWrapper = document.createElement('div');
+      historyTableWrapper.className = 'history-table-wrapper';
+      historyTableWrapper.innerHTML = `
+        <table class="history-summary-table">
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>P (g)</th>
+              <th>F (g)</th>
+              <th>C (g)</th>
+              <th>摂取カロリー (kcal)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      `;
+      const historyTableBody = historyTableWrapper.querySelector('tbody');
+      historyList.appendChild(historyTableWrapper);
 
       // 日付の降順でソートして描画
       const sortedKeys = Object.keys(groups).sort().reverse();
-const _today = new Date();
-const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padStart(2, '0')}-${String(_today.getDate()).padStart(2, '0')}`;
-
-      
       sortedKeys.forEach(dateKey => {
         const group = groups[dateKey];
         
@@ -1204,27 +1234,52 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
             </div>
             <div class="history-calories">${group.totalCalories} <span class="unit">kcal</span></div>
           </div>
-          <span class="history-date-title">${group.dateLabel}</span>
+          <div class="history-date-meta">
+            <span class="history-meal-count-badge">${group.meals.length}件</span>
+            <span class="history-date-title">${group.dateLabel}</span>
+            <span class="history-row-chevron" aria-hidden="true">›</span>
+          </div>
         `;
         // Create container for this date's cards
         const cardsContainer = document.createElement('div');
         cardsContainer.className = 'history-cards-container';
-        // Show only today by default
-        cardsContainer.style.display = (dateKey === todayKey) ? 'block' : 'none';
-        // Toggle visibility on header click
-        headerEl.style.cursor = 'pointer';
-        headerEl.addEventListener('click', () => {
-          const isHidden = cardsContainer.style.display === 'none';
-          cardsContainer.style.display = isHidden ? 'block' : 'none';
-        });
-        // グループラッパーにまとめて追加
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'history-group';
-        groupDiv.appendChild(headerEl);
-        groupDiv.appendChild(cardsContainer);
-        historyList.appendChild(groupDiv);
+        cardsContainer.innerHTML = `
+          <div class="history-detail-table-wrapper">
+            <table class="history-detail-table">
+              <thead><tr><th>区分</th><th>内容</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>摂取カロリー (kcal)</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        `;
+        const detailTableBody = cardsContainer.querySelector('tbody');
+        const openDayDetail = () => {
+          historyDayDetailHeader.innerHTML = headerEl.innerHTML;
+          historyDayDetailMeals.replaceChildren(cardsContainer);
+          historyList.style.display = 'none';
+          historyDayDetail.hidden = false;
+          document.querySelector('.app-main')?.scrollTo({ top: 0, behavior: 'instant' });
+        };
 
-        // 2. その日の食事カードの生成
+        const listRow = document.createElement('tr');
+        listRow.className = 'history-summary-row';
+        listRow.tabIndex = 0;
+        listRow.innerHTML = `
+          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel}</span><span class="history-meal-count-badge">${group.meals.length}件</span></span></td>
+          <td>${pTotal}</td>
+          <td>${fTotal}</td>
+          <td>${cTotal}</td>
+          <td class="history-summary-calories">${group.totalCalories}</td>
+        `;
+        listRow.addEventListener('click', openDayDetail);
+        listRow.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openDayDetail();
+          }
+        });
+        historyTableBody.appendChild(listRow);
+
+        // 2. その日の食事明細行の生成
         group.meals.forEach(item => {
           const mealTypeJa = {
             morning: '朝食',
@@ -1233,12 +1288,19 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
             snack: '間食'
           }[item.mealType || 'snack'];
 
-          const card = document.createElement('div');
-          card.className = `card history-card ${item.status === 'failed' ? 'failed-analysis' : ''}`;
+          const card = document.createElement('tr');
+          card.className = `history-detail-row ${item.status === 'failed' ? 'failed-analysis' : ''}`;
+          card.tabIndex = 0;
           
           // 履歴カードクリックで単独モーダルを開く
           card.addEventListener('click', () => {
             openDetailModal(item);
+          });
+          card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openDetailModal(item);
+            }
           });
 
           // 表示用の料理名・テキスト（Geminiが解析した具体的な料理名 mealName を優先表示）
@@ -1251,80 +1313,21 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
             displayMealName = `⚠️ ${displayMealName} (解析未完了)`;
           }
 
-          let leftGroupHtml = '';
-          if (item.status === 'failed') {
-            leftGroupHtml = `
-              <div class="history-failed-badge">
-                <span class="warning-icon">⚠️</span>
-                <span class="badge-text">解析未完了 (クリックして再計算)</span>
-              </div>
-            `;
-          } else {
-            leftGroupHtml = `
-              <div class="history-pfc-chips">
-                <div class="history-pfc-chip protein"><span class="label">P</span><span class="val">${Number(item.nutrition.protein).toFixed(1)}</span></div>
-                <div class="history-pfc-chip fat"><span class="label">F</span><span class="val">${Number(item.nutrition.fat).toFixed(1)}</span></div>
-                <div class="history-pfc-chip carbs"><span class="label">C</span><span class="val">${Number(item.nutrition.carbohydrates).toFixed(1)}</span></div>
-              </div>
-              <div class="history-calories">${item.nutrition.calories} <span class="unit">kcal</span></div>
-            `;
-          }
+          const proteinValue = item.status === 'failed' ? '--' : Number(item.nutrition.protein).toFixed(1);
+          const fatValue = item.status === 'failed' ? '--' : Number(item.nutrition.fat).toFixed(1);
+          const carbValue = item.status === 'failed' ? '--' : Number(item.nutrition.carbohydrates).toFixed(1);
+          const calorieValue = item.status === 'failed' ? '--' : item.nutrition.calories;
 
-          // 写真なし：カロリー+PFCと食事区分が1行目、料理名とゴミ箱ボタンが2行目
           card.innerHTML = `
-            <div class="history-info">
-              <!-- 1行目: カロリーとPFCチップス、食事区分チップ -->
-              <div class="history-info-row-top">
-                <div class="history-left-group">
-                  ${leftGroupHtml}
-                </div>
-                <span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span>
-              </div>
-              <!-- 2行目: 料理名とゴミ箱ボタン (動的挿入) -->
-              <div class="history-info-row-bottom">
-                <span class="history-meal-text">${displayMealName}</span>
-              </div>
-            </div>
+            <td><span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span></td>
+            <td class="history-detail-name"><span class="history-meal-text">${displayMealName}</span></td>
+            <td>${proteinValue}</td>
+            <td>${fatValue}</td>
+            <td>${carbValue}</td>
+            <td>${calorieValue}</td>
           `;
 
-          // 削除ボタン (ゴミ箱) の生成と挿入 (削除中の画面ブロック制御を追加)
-          const deleteBtn = document.createElement('button');
-          deleteBtn.className = 'btn-delete-history';
-          deleteBtn.innerHTML = '🗑️';
-          deleteBtn.title = '履歴を削除';
-          deleteBtn.addEventListener('click', async (e) => {
-            e.stopPropagation(); // モーダル展開へのバブリングを防止
-            if (confirm('この食事履歴を削除しますか？\n登録されたデータ（および画像ファイル）が完全に削除されます。')) {
-              
-              // 削除中のローディング画面表示と操作ブロック
-              const loadingTextEl = loadingOverlay.querySelector('p');
-              const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-              loadingTextEl.textContent = '履歴を削除しています...';
-              loadingSubTextEl.textContent = 'Googleドライブからデータを消去中';
-              loadingOverlay.style.display = 'flex';
-
-              try {
-                const deleteRes = await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
-                if (deleteRes.ok) {
-                  await loadHistory();
-                  await updateDailySummary();
-                } else {
-                  alert('削除に失敗しました。');
-                }
-              } catch (err) {
-                console.error(err);
-                alert('削除処理中にエラーが発生しました。');
-              } finally {
-                loadingOverlay.style.display = 'none';
-                // 表示メッセージの初期復元
-                loadingTextEl.textContent = 'AIが栄養素を解析しています...';
-                loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
-              }
-            }
-          });
-          card.querySelector('.history-info-row-bottom').appendChild(deleteBtn);
-
-          cardsContainer.appendChild(card);
+          detailTableBody.appendChild(card);
         });
       });
 
@@ -1343,6 +1346,33 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
   };
 
   btnCloseModal.addEventListener('click', closeModal);
+
+  btnDeleteHistoryModal.addEventListener('click', async () => {
+    if (!currentEditingHistoryId) return;
+    if (!confirm('この食事履歴を削除しますか？\n登録されたデータ（および画像ファイル）が完全に削除されます。')) return;
+
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '履歴を削除しています...';
+    loadingSubTextEl.textContent = 'Googleドライブからデータを消去中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const deleteRes = await fetch(`/api/history/${currentEditingHistoryId}`, { method: 'DELETE' });
+      if (!deleteRes.ok) throw new Error('履歴の削除に失敗しました。');
+      closeModal();
+      activeDetailMeal = null;
+      await loadHistory();
+      await updateDailySummary();
+    } catch (err) {
+      console.error(err);
+      alert('削除処理中にエラーが発生しました。');
+    } finally {
+      loadingOverlay.style.display = 'none';
+      loadingTextEl.textContent = 'AIが栄養素を解析しています...';
+      loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
+    }
+  });
   
   const inferenceBody = document.getElementById('modal-inference-body');
   if (inferenceBody) inferenceBody.style.display = 'block';
@@ -1529,13 +1559,20 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
 
       // 直近30件のみ
       const slicedHistory = validHistory.slice(-30);
-      const weightLabels = slicedHistory.map(d => jstDateKey(d.date).replace(/-/g, '/'));
+      const weightLabels = slicedHistory.map(d => formatDisplayDate(d.date));
       const weightValues = slicedHistory.map(d => d.weight);
       if (weightTrendChart) weightTrendChart.destroy();
       if (bmiTrendChart) {
         bmiTrendChart.destroy();
         bmiTrendChart = null;
       }
+
+      const designStyles = getComputedStyle(document.documentElement);
+      const designColor = (name) => designStyles.getPropertyValue(name).trim();
+      const chartAccent = designColor('--design-accent');
+      const chartCard = designColor('--design-card');
+      const chartMuted = designColor('--design-muted');
+      const chartBorder = designColor('--design-border');
 
       weightTrendChart = new Chart(weightChartCanvas.getContext('2d'), {
         type: 'line',
@@ -1544,13 +1581,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           datasets: [{
             label: '体重 (kg)',
             data: weightValues,
-            borderColor: '#00e5ff',
-            backgroundColor: 'rgba(0, 229, 255, 0.10)',
+            borderColor: chartAccent,
+            backgroundColor: `${chartAccent}1a`,
             borderWidth: 3,
             fill: true,
             tension: 0.25,
-            pointBackgroundColor: '#00e5ff',
-            pointBorderColor: '#162a37',
+            pointBackgroundColor: chartAccent,
+            pointBorderColor: chartCard,
             pointBorderWidth: 2,
             pointRadius: 4,
             pointHoverRadius: 6
@@ -1565,13 +1602,13 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           scales: {
             y: {
               grace: '5%',
-              grid: { color: 'rgba(35, 62, 80, 0.3)' },
-              ticks: { color: '#8fa7a3', font: { size: 10, weight: '700' } }
+              grid: { color: chartBorder },
+              ticks: { color: chartMuted, font: { size: 10, weight: '700' } }
             },
             x: {
               grid: { display: false },
               ticks: {
-                color: '#8fa7a3',
+                color: chartMuted,
                 font: { size: 10, weight: '700' },
                 maxRotation: 0,
                 autoSkip: true,
@@ -2348,12 +2385,12 @@ const todayKey = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padSta
           bmrVal = morningItem.bmr;
         }
 
-        const dateDisp = dateKey.replace(/-/g, '/');
+        const dateWithWeekday = formatDisplayDate(dateKey);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="td-date-only clickable-cell">
-            <span class="date-text">${dateDisp}</span>
+            <span class="date-text">${dateWithWeekday}</span>
           </td>
           <td class="td-weight morning-cell clickable-cell" data-has-data="${!!morningItem}">${morningWeightHTML}</td>
           <td class="td-weight night-cell clickable-cell" data-has-data="${!!nightItem}">${nightWeightHTML}</td>
