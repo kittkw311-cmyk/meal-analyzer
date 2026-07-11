@@ -25,6 +25,7 @@
   --design-column-calorie-width: 34px;
   --design-column-weight-width: 52px;
   --design-column-category-width: 52px;
+  --design-column-row-number-width: 28px;
   --design-bg: var(--design-background);
   --design-text: var(--design-foreground);
   --design-radius: 4px;
@@ -3791,6 +3792,134 @@ body {
   }
 }
 
+#tab-presets .presets-list {
+  display: block;
+  padding-bottom: 0;
+}
+
+#tab-presets .presets-table-wrapper {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+}
+
+#tab-presets .presets-table {
+  background: var(--presets-card);
+  border-collapse: collapse;
+  color: var(--presets-foreground);
+  table-layout: fixed;
+  width: 100%;
+}
+
+#tab-presets .presets-table th,
+#tab-presets .presets-table td {
+  border-bottom: 1px solid var(--presets-border);
+  border-right: 1px solid var(--presets-border);
+  box-sizing: border-box;
+  height: 44px;
+  overflow: hidden;
+  padding: 6px 3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-presets .presets-table th:last-child,
+#tab-presets .presets-table td:last-child {
+  border-right: 0;
+}
+
+#tab-presets .presets-table th {
+  background: var(--presets-background);
+  color: var(--presets-muted);
+  font: 800 9px var(--font-sans);
+  line-height: 12px;
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+#tab-presets .presets-table th:first-child,
+#tab-presets .presets-table td:first-child {
+  text-align: left;
+}
+
+#tab-presets .presets-table th:nth-child(2),
+#tab-presets .presets-table th:nth-child(3),
+#tab-presets .presets-table th:nth-child(4) {
+  text-align: right;
+  width: var(--design-column-pfc-width);
+}
+
+#tab-presets .presets-table th:nth-child(5) {
+  text-align: right;
+  width: 52px;
+}
+
+#tab-presets .presets-table td:nth-child(n + 2):nth-child(-n + 5) {
+  text-align: right;
+}
+
+#tab-presets .preset-card-name-wrapper {
+  margin: 0;
+  max-width: 100%;
+  padding: 0;
+}
+
+#tab-presets .preset-card-name {
+  display: block;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-presets .presets-table .macro-badge {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 11px;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  text-align: right;
+  width: 100%;
+}
+
+#tab-presets .preset-table-row {
+  -webkit-touch-callout: none;
+  transition: background-color 160ms ease;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#tab-presets .preset-table-row.is-pressing td {
+  background: color-mix(in srgb, var(--presets-accent) 10%, var(--presets-card));
+}
+
+#tab-presets .presets-table .preset-edit-input,
+#tab-presets .presets-table .preset-macro-edit-input {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  height: 30px;
+  padding: 2px 4px;
+  width: 100%;
+}
+
+#tab-history .history-summary-table td:nth-child(n + 2),
+#tab-history .history-detail-table td:first-child,
+#tab-history .history-detail-table td:nth-child(n + 4),
+#tab-presets .presets-table td:nth-child(n + 2),
+#tab-stats .profile-settings-table input[type="number"],
+#tab-stats .profile-settings-table output {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /* DESIGN.md: 全タブ共通ダークテーマ */
 .app-main {
   --app-dark-background: var(--design-background);
@@ -4200,6 +4329,15 @@ body {
   justify-content: center;
 }
 
+#tab-history .history-day-detail-header {
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
+  height: 64px;
+  justify-content: space-between;
+  min-height: 64px;
+}
+
 #tab-history .history-left-group {
   gap: 8px;
   justify-content: space-between;
@@ -4286,29 +4424,36 @@ body {
 
 #tab-history .history-detail-table th:first-child,
 #tab-history .history-detail-table td:first-child {
-  text-align: left;
-  width: var(--design-column-category-width);
+  text-align: right;
+  width: var(--design-column-row-number-width);
 }
 
 #tab-history .history-detail-table th:nth-child(2),
 #tab-history .history-detail-table td:nth-child(2) {
-  text-align: left;
+  text-align: center;
+  width: var(--design-column-category-width);
 }
 
 #tab-history .history-detail-table th:nth-child(3),
+#tab-history .history-detail-table td:nth-child(3) {
+  text-align: left;
+}
+
 #tab-history .history-detail-table th:nth-child(4),
-#tab-history .history-detail-table th:nth-child(5) {
+#tab-history .history-detail-table th:nth-child(5),
+#tab-history .history-detail-table th:nth-child(6) {
   width: var(--design-column-pfc-width);
 }
 
-#tab-history .history-detail-table th:nth-child(6) {
+#tab-history .history-detail-table th:nth-child(7) {
   line-height: 14px;
   white-space: normal;
   width: 64px;
 }
 
-#tab-history .history-detail-table th:nth-child(n + 3),
-#tab-history .history-detail-table td:nth-child(n + 3) {
+#tab-history .history-detail-table th:nth-child(n + 4),
+#tab-history .history-detail-table td:nth-child(n + 4),
+#tab-history .history-detail-row-number {
   text-align: right;
 }
 
@@ -4318,10 +4463,20 @@ body {
   border-radius: 0;
   box-shadow: none;
   color: var(--app-dark-foreground);
-  display: inline;
+  display: inline-block;
   font: 700 12px var(--font-sans);
   padding: 0;
+  text-align: center;
+  width: 100%;
   white-space: nowrap;
+}
+
+.meal-type-chips .chip,
+.weight-type-chips .weight-chip,
+.modal-type-select,
+#weight-modal-type-select {
+  text-align: center;
+  text-align-last: center;
 }
 
 #tab-history .history-day-detail-header .history-left-group,
@@ -4330,9 +4485,44 @@ body {
   white-space: nowrap;
 }
 
+#tab-history .history-day-detail-header .history-left-group {
+  flex: 1 1 auto;
+  gap: 4px;
+  justify-content: flex-start;
+  width: auto;
+}
+
+#tab-history .history-day-detail-header .history-pfc-chips {
+  gap: 8px;
+}
+
 #tab-history .history-day-detail-header .history-pfc-chip {
-  flex: 0 0 54px;
-  width: 54px;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none;
+  flex: 0 0 auto;
+  font-size: 11px;
+  gap: 2px;
+  height: auto;
+  justify-content: flex-start;
+  padding: 0;
+  width: auto;
+}
+
+#tab-history .history-day-detail-header .history-calories {
+  font-size: 14px !important;
+  width: 64px;
+}
+
+#tab-history .history-day-detail-header .history-date-meta {
+  flex: 0 0 auto;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+#tab-history .history-day-detail-header .history-date-title {
+  width: auto;
 }
 
 #tab-overview .summary-chips-capsule {
@@ -4515,6 +4705,149 @@ body {
 #tab-stats .profile-age-output {
   border-color: var(--app-dark-border) !important;
   color: var(--app-dark-accent) !important;
+}
+
+#tab-stats .profile-goal-card {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+#tab-stats .profile-settings-sections {
+  display: grid;
+  gap: 16px;
+}
+
+#tab-stats .profile-settings-section {
+  display: grid;
+  gap: 8px;
+}
+
+#tab-stats .profile-settings-section > h3 {
+  color: var(--app-dark-foreground) !important;
+  font: var(--design-label-font-weight) 14px var(--font-heading);
+  margin: 0;
+}
+
+#tab-stats .profile-settings-table-wrapper {
+  max-height: calc(100dvh - 176px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+}
+
+#tab-stats .profile-settings-table {
+  background: var(--app-dark-card);
+  border-collapse: collapse;
+  color: var(--app-dark-foreground);
+  table-layout: fixed;
+  width: 100%;
+}
+
+#tab-stats .profile-settings-table th,
+#tab-stats .profile-settings-table td {
+  border-bottom: 1px solid var(--app-dark-border);
+  border-right: 1px solid var(--app-dark-border);
+  box-sizing: border-box;
+  height: 48px;
+  padding: 6px 8px;
+}
+
+#tab-stats .profile-settings-table th:last-child,
+#tab-stats .profile-settings-table td:last-child {
+  border-right: 0;
+}
+
+#tab-stats .profile-settings-table thead th {
+  background: var(--app-dark-background);
+  color: var(--app-dark-muted);
+  font: 800 11px var(--font-sans);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+#tab-stats .profile-settings-table thead th:first-child,
+#tab-stats .profile-settings-table tbody th {
+  text-align: left;
+  width: 42%;
+}
+
+#tab-stats .profile-settings-table thead th:last-child {
+  text-align: right;
+}
+
+#tab-stats .profile-settings-table tbody th {
+  color: var(--app-dark-foreground);
+  font: 700 12px var(--font-sans);
+}
+
+#tab-stats .profile-settings-table tbody td {
+  position: relative;
+  text-align: right;
+}
+
+#tab-stats .profile-settings-table input,
+#tab-stats .profile-settings-table select,
+#tab-stats .profile-settings-table textarea,
+#tab-stats .profile-settings-table output {
+  background: var(--app-dark-background) !important;
+  border: 1px solid var(--app-dark-border) !important;
+  border-radius: 4px !important;
+  color: var(--app-dark-foreground) !important;
+  display: block;
+  font: 700 12px var(--font-heading);
+  height: 34px;
+  margin: 0;
+  padding: 4px 8px;
+  width: 100%;
+}
+
+#tab-stats .profile-birthdate-value {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 64px;
+}
+
+#tab-stats .profile-birthdate-value .profile-age-output {
+  color: var(--app-dark-accent) !important;
+  text-align: right;
+  width: 64px;
+}
+
+#tab-stats .profile-settings-table textarea {
+  font-family: var(--font-sans);
+  height: auto;
+  line-height: 1.6;
+  min-height: 72px;
+  resize: vertical;
+  text-align: left;
+}
+
+#tab-stats .profile-activity-notes-row th,
+#tab-stats .profile-activity-notes-row td {
+  height: auto;
+  vertical-align: top;
+}
+
+#tab-stats .profile-settings-table input[type="number"],
+#tab-stats .profile-settings-table output {
+  text-align: right;
+}
+
+#tab-stats .profile-settings-table input[type="date"],
+#tab-stats .profile-settings-table select {
+  text-align: center;
+  text-align-last: center;
+}
+
+#tab-stats .profile-settings-table input:focus,
+#tab-stats .profile-settings-table select:focus,
+#tab-stats .profile-settings-table textarea:focus {
+  border-color: var(--app-dark-accent) !important;
+  box-shadow: 0 0 0 1px var(--app-dark-accent);
+  outline: none;
 }
 
 #tab-stats .chart-title .icon-svg,

@@ -139,6 +139,7 @@
   const profileHeightInput = document.getElementById('profile-height-input');
   const profileGenderSelect = document.getElementById('profile-gender-select');
   const profileActivitySelect = document.getElementById('profile-activity-select');
+  const profileActivityNotesInput = document.getElementById('profile-activity-notes-input');
   const profileBirthDateInput = document.getElementById('profile-birth-date-input');
   const profileAgeOutput = document.getElementById('profile-age-output');
   const profileTargetWeightInput = document.getElementById('profile-target-weight-input');
@@ -855,37 +856,38 @@
           return;
         }
 
-        presetsList.innerHTML = '';
+        presetsList.innerHTML = `
+          <div class="presets-table-wrapper">
+            <table class="presets-table">
+              <thead><tr><th>名称</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>カロリー</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        `;
+        const presetsTableBody = presetsList.querySelector('tbody');
         presets.forEach(p => {
-          const card = document.createElement('div');
-          card.className = 'preset-card';
+          const card = document.createElement('tr');
+          card.className = 'preset-table-row';
+          card.dataset.id = p.id;
+          card.title = '長押しで削除';
           card.innerHTML = `
-            <div class="preset-card-info">
+            <td class="preset-table-name-cell">
               <div class="preset-card-name-wrapper" data-id="${p.id}">
                 <span class="preset-card-name">${p.name}</span>
                 <span class="preset-edit-icon" title="名前を編集">
                   <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 </span>
               </div>
-              <div class="preset-card-macros">
-                <button type="button" class="macro-badge macro-editable calories" data-id="${p.id}" data-field="calories" data-value="${p.calories}" title="カロリーを編集">${p.calories} kcal</button>
-                <button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">P: ${p.protein}g</button>
-                <button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">F: ${p.fat}g</button>
-                <button type="button" class="macro-badge macro-editable c" data-id="${p.id}" data-field="carbohydrates" data-value="${p.carbohydrates}" title="炭水化物を編集">C: ${p.carbohydrates}g</button>
-              </div>
-            </div>
-            <button class="btn-delete-preset" data-id="${p.id}" title="定番メニューから削除">
-              <svg class="icon-svg" style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-            </button>
+            </td>
+            <td><button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">${Number(p.protein).toFixed(1)}</button></td>
+            <td><button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">${Number(p.fat).toFixed(1)}</button></td>
+            <td><button type="button" class="macro-badge macro-editable c" data-id="${p.id}" data-field="carbohydrates" data-value="${p.carbohydrates}" title="炭水化物を編集">${Number(p.carbohydrates).toFixed(1)}</button></td>
+            <td><button type="button" class="macro-badge macro-editable calories" data-id="${p.id}" data-field="calories" data-value="${p.calories}" title="カロリーを編集">${p.calories}</button></td>
           `;
-          presetsList.appendChild(card);
+          presetsTableBody.appendChild(card);
         });
 
-        // 削除ボタンのリスナー追加
-        document.querySelectorAll('.btn-delete-preset').forEach(btn => {
-          btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute('data-id');
+        const deletePreset = async (id) => {
             if (confirm('この定番メニューを削除してもよろしいですか？')) {
               try {
                 const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
@@ -899,7 +901,50 @@
                 alert('通信エラーが発生しました。');
               }
             }
+        };
+
+        document.querySelectorAll('.preset-table-row').forEach(row => {
+          let pressTimer = null;
+          let startX = 0;
+          let startY = 0;
+          let longPressTriggered = false;
+          const cancelLongPress = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+            pressTimer = null;
+          };
+
+          row.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('button, input')) return;
+            startX = event.clientX;
+            startY = event.clientY;
+            longPressTriggered = false;
+            row.classList.add('is-pressing');
+            pressTimer = setTimeout(() => {
+              longPressTriggered = true;
+              row.classList.remove('is-pressing');
+              navigator.vibrate?.(30);
+              deletePreset(row.dataset.id);
+            }, 650);
           });
+
+          row.addEventListener('pointermove', (event) => {
+            if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) {
+              cancelLongPress();
+              row.classList.remove('is-pressing');
+            }
+          });
+          ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => {
+            row.addEventListener(type, () => {
+              cancelLongPress();
+              row.classList.remove('is-pressing');
+            });
+          });
+          row.addEventListener('click', (event) => {
+            if (!longPressTriggered) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            longPressTriggered = false;
+          }, true);
         });
 
         // カロリー・PFC編集のリスナー追加
@@ -918,6 +963,7 @@
             input.className = 'preset-macro-edit-input';
             input.value = currentValue;
             input.min = '0';
+            if (field === 'calories') input.max = '9999';
             input.step = field === 'calories' ? '1' : '0.1';
 
             badge.textContent = '';
@@ -935,7 +981,7 @@
               if (badge.classList.contains('is-saving')) return;
               const rawValue = input.value;
               const numericValue = Number(rawValue);
-              if (rawValue === '' || !Number.isFinite(numericValue) || numericValue < 0) {
+              if (rawValue === '' || !Number.isFinite(numericValue) || numericValue < 0 || (field === 'calories' && numericValue > 9999)) {
                 restoreBadge();
                 return;
               }
@@ -1330,7 +1376,7 @@
         cardsContainer.innerHTML = `
           <div class="history-detail-table-wrapper">
             <table class="history-detail-table">
-              <thead><tr><th>区分</th><th>内容</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>摂取カロリー (kcal)</th></tr></thead>
+              <thead><tr><th>#</th><th>区分</th><th>内容</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>摂取カロリー (kcal)</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -1385,7 +1431,7 @@
         historyTableBody.appendChild(listRow);
 
         // 2. その日の食事明細行の生成
-        group.meals.forEach(item => {
+        group.meals.forEach((item, index) => {
           const mealTypeJa = {
             morning: '朝食',
             noon: '昼食',
@@ -1424,6 +1470,7 @@
           const calorieValue = item.status === 'failed' ? '--' : item.nutrition.calories;
 
           card.innerHTML = `
+            <td class="history-detail-row-number">${index + 1}</td>
             <td><span class="history-meal-type-chip ${item.mealType || 'snack'}">${mealTypeJa}</span></td>
             <td class="history-detail-name"><span class="history-meal-text">${displayMealName}</span></td>
             <td>${proteinValue}</td>
@@ -1738,6 +1785,7 @@
     { input: profileHeightInput, field: 'height', type: 'number' },
     { input: profileGenderSelect, field: 'gender', type: 'string' },
     { input: profileActivitySelect, field: 'activityLevel', type: 'string' },
+    { input: profileActivityNotesInput, field: 'activityNotes', type: 'string' },
     { input: profileBirthDateInput, field: 'birthDate', type: 'string' },
     { input: profileTargetWeightInput, field: 'targetWeight', type: 'number' },
     { input: profileTargetDateInput, field: 'targetDate', type: 'string' }
@@ -1765,7 +1813,7 @@
 
   const setProfileFieldSaving = (input, isSaving) => {
     if (!input) return;
-    const field = input.closest('.profile-goal-field');
+    const field = input.closest('.profile-goal-field, td');
     input.classList.toggle('is-saving', isSaving);
     input.disabled = isSaving;
     let spinner = field ? field.querySelector('.profile-field-spinner') : null;
@@ -1798,6 +1846,10 @@
       if (profileActivitySelect) {
         profileActivitySelect.value = profile.activityLevel || 'normal';
         profileActivitySelect.dataset.originalValue = profileActivitySelect.value;
+      }
+      if (profileActivityNotesInput) {
+        profileActivityNotesInput.value = profile.activityNotes || '';
+        profileActivityNotesInput.dataset.originalValue = profileActivityNotesInput.value;
       }
       if (profileBirthDateInput) {
         profileBirthDateInput.value = profile.birthDate || '';
@@ -1861,6 +1913,9 @@
     if (!config.input) return;
     if (config.input.tagName === 'SELECT' || config.input.type === 'date') {
       config.input.addEventListener('change', () => saveProfileField(config));
+    } else if (config.input.tagName === 'TEXTAREA') {
+      config.input.addEventListener('change', () => saveProfileField(config));
+      config.input.addEventListener('blur', () => saveProfileField(config));
     } else {
       config.input.addEventListener('change', () => saveProfileField(config));
       config.input.addEventListener('blur', () => saveProfileField(config));

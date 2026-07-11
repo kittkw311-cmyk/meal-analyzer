@@ -89,44 +89,40 @@
       <!-- 5. 情報タブ -->
       <section id="tab-stats" class="tab-content">
         <div class="card profile-goal-card">
-          <div class="profile-goal-grid">
-            <label class="profile-goal-field">
-              <span>身長 (cm)</span>
-              <input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0">
-            </label>
-            <label class="profile-goal-field">
-              <span>性別</span>
-              <select id="profile-gender-select">
+          <div class="profile-settings-sections">
+            <section class="profile-settings-section">
+              <h3>基本情報</h3>
+              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
+                <tr><th scope="row"><label for="profile-height-input">身長 (cm)</label></th><td><input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0"></td></tr>
+                <tr><th scope="row"><label for="profile-gender-select">性別</label></th><td><select id="profile-gender-select">
                 <option value="">未設定</option>
                 <option value="male">男性</option>
                 <option value="female">女性</option>
                 <option value="other">その他</option>
-              </select>
-            </label>
-            <label class="profile-goal-field">
-              <span>活動量</span>
-              <select id="profile-activity-select">
+              </select></td></tr>
+                <tr><th scope="row"><label for="profile-birth-date-input">生年月日</label></th><td><div class="profile-birthdate-value"><input type="date" id="profile-birth-date-input"><output id="profile-age-output" class="profile-age-output">-- 歳</output></div></td></tr>
+              </tbody></table>
+            </section>
+
+            <section class="profile-settings-section">
+              <h3>活動情報</h3>
+              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
+                <tr><th scope="row"><label for="profile-activity-select">活動量</label></th><td><select id="profile-activity-select">
                 <option value="low">低め</option>
                 <option value="normal">標準</option>
                 <option value="high">高め</option>
-              </select>
-            </label>
-            <label class="profile-goal-field">
-              <span>生年月日</span>
-              <input type="date" id="profile-birth-date-input">
-            </label>
-            <label class="profile-goal-field">
-              <span>年齢</span>
-              <output id="profile-age-output" class="profile-age-output">-- 歳</output>
-            </label>
-            <label class="profile-goal-field">
-              <span>目標体重 (kg)</span>
-              <input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0">
-            </label>
-            <label class="profile-goal-field">
-              <span>目標期限</span>
-              <input type="date" id="profile-target-date-input">
-            </label>
+              </select></td></tr>
+                <tr class="profile-activity-notes-row"><th scope="row"><label for="profile-activity-notes-input">活動量の補足</label></th><td><textarea id="profile-activity-notes-input" rows="3" maxlength="500" placeholder="例：週3回ジム、平日はデスクワーク"></textarea></td></tr>
+              </tbody></table>
+            </section>
+
+            <section class="profile-settings-section">
+              <h3>目標設定</h3>
+              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
+                <tr><th scope="row"><label for="profile-target-weight-input">目標体重 (kg)</label></th><td><input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0"></td></tr>
+                <tr><th scope="row"><label for="profile-target-date-input">目標期限</label></th><td><input type="date" id="profile-target-date-input"></td></tr>
+              </tbody></table>
+            </section>
           </div>
         </div>
       </section>
@@ -362,7 +358,6 @@
       <!-- 4. 定番タブ -->
       <section id="tab-presets" class="tab-content">
         <!-- 登録済み定番メニュー一覧 -->
-        <h3 class="section-subtitle">登録済みの定番メニュー</h3>
         <div id="presets-list" class="presets-list">
           <div class="presets-empty-state">
             登録されている定番メニューはありません。<br>AIタブの手動入力で登録してください。

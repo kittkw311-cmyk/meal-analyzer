@@ -34,6 +34,7 @@ const DEFAULT_PROFILE = {
   height: null,
   gender: '',
   activityLevel: 'normal',
+  activityNotes: '',
   birthDate: '',
   targetWeight: null,
   targetDate: ''
@@ -915,6 +916,11 @@ app.patch('/api/profile', async (req, res) => {
     if (Object.prototype.hasOwnProperty.call(req.body, 'activityLevel')) {
       const allowed = ['low', 'normal', 'high'];
       next.activityLevel = allowed.includes(req.body.activityLevel) ? req.body.activityLevel : 'normal';
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'activityNotes')) {
+      next.activityNotes = typeof req.body.activityNotes === 'string'
+        ? req.body.activityNotes.trim().slice(0, 500)
+        : '';
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'birthDate')) {
       next.birthDate = typeof req.body.birthDate === 'string' ? req.body.birthDate : '';
@@ -2002,6 +2008,7 @@ app.post('/api/ai-consultation', async (req, res) => {
       targetDate: profile.targetDate || null,
       heightCm: profile.height ?? null,
       activityLevel: profile.activityLevel || null,
+      activityNotes: profile.activityNotes || null,
     };
 
     const prompt = `あなたは食事・体重管理を支援するアドバイザーです。以下の現在状況と目標を必ず考慮し、ユーザーの質問に日本語で簡潔かつ具体的に回答してください。
