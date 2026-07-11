@@ -84,13 +84,6 @@
             <canvas id="weight-trend-chart"></canvas>
           </div>
         </div>
-        <div class="card overview-ai-consultation-card">
-          <h3 class="overview-ai-consultation-title">AIに相談</h3>
-          <p class="overview-ai-consultation-description">現在の体重・今日のPFC・目標体重・期限を踏まえて回答します。</p>
-          <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
-          <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
-          <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
-        </div>
       </section>
 
       <!-- 5. 情報タブ -->
@@ -138,8 +131,15 @@
         </div>
       </section>
 
-      <!-- 2. 解析タブ -->
+      <!-- 2. AIタブ -->
       <section id="tab-analyze" class="tab-content">
+        <div class="card overview-ai-consultation-card">
+          <h3 class="overview-ai-consultation-title">AIに相談</h3>
+          <p class="overview-ai-consultation-description">現在の体重・今日のPFC・目標体重・期限を踏まえて回答します。</p>
+          <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
+          <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
+          <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
+        </div>
         <div class="card upload-card">
           <!-- 定番メニューから選ぶドロップダウン -->
           <div class="preset-select-wrapper" style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left;">
@@ -359,41 +359,13 @@
         </div>
       </section>
 
-      <!-- 3. 体組成タブ -->
-      <section id="tab-weight" class="tab-content">
-        <!-- 体組成データの記録セクション (履歴のみ) -->
-        <div class="body-composition-section" style="margin-top: 0;">
-          <!-- 体組成の簡易履歴リスト -->
-          <div class="card body-comp-history-card">
-            <div class="table-wrapper">
-              <table class="weight-history-table">
-                <thead>
-                  <tr>
-                    <th>日付</th>
-                    <th>朝の体重 (前回比)</th>
-                    <th>夜の体重 (前回比)</th>
-                    <th>基礎代謝 (kcal)</th>
-                  </tr>
-                </thead>
-                <tbody id="weight-history-tbody">
-                  <!-- ここに体組成履歴行が動的に挿入されます -->
-                  <tr>
-                    <td colspan="4" class="empty-row">測定データがありません。</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- 4. 定番タブ -->
       <section id="tab-presets" class="tab-content">
         <!-- 登録済み定番メニュー一覧 -->
         <h3 class="section-subtitle">登録済みの定番メニュー</h3>
         <div id="presets-list" class="presets-list">
           <div class="presets-empty-state">
-            登録されている定番メニューはありません。<br>解析タブの手動入力で登録してください。
+            登録されている定番メニューはありません。<br>AIタブの手動入力で登録してください。
           </div>
         </div>
       </section>
@@ -407,15 +379,11 @@
       </button>
       <button class="nav-item" data-tab="tab-analyze">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
-        <span class="nav-label">解析</span>
+        <span class="nav-label">AI</span>
       </button>
       <button class="nav-item" data-tab="tab-history">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v8c0 1.1.9 2 2 2h3Zm0 0v5"/></svg></span>
         <span class="nav-label">食事</span>
-      </button>
-      <button class="nav-item" data-tab="tab-weight">
-        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 12L15 9"/><path d="M12 18A6 6 0 1 0 6 12"/></svg></span>
-        <span class="nav-label">体組成</span>
       </button>
       <button class="nav-item" data-tab="tab-stats">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>

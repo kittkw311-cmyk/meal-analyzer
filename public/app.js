@@ -383,8 +383,6 @@
         loadProfile();
       } else if (targetTabId === 'tab-overview') {
         loadStats();
-      } else if (targetTabId === 'tab-weight') {
-        loadWeightHistory();
       } else if (targetTabId === 'tab-presets') {
         loadPresets();
       }
@@ -851,7 +849,7 @@
         if (presets.length === 0) {
           presetsList.innerHTML = `
             <div class="presets-empty-state">
-              登録されている定番メニューはありません。<br>解析タブの手動入力で登録してください。
+              登録されている定番メニューはありません。<br>AIタブの手動入力で登録してください。
             </div>
           `;
           return;
@@ -1186,10 +1184,16 @@
       historyList.style.display = '';
       historyDayDetail.hidden = true;
       historyDayDetailMeals.replaceChildren();
-      const response = await fetch('/api/history');
-      const history = await response.json();
+      const [historyResponse, weightResponse] = await Promise.all([
+        fetch('/api/history'),
+        fetch('/api/body-composition'),
+      ]);
+      const [history, weightHistory] = await Promise.all([
+        historyResponse.json(),
+        weightResponse.json(),
+      ]);
 
-      if (history.length === 0) {
+      if (history.length === 0 && weightHistory.length === 0) {
         historyList.innerHTML = `
           <div class="empty-state">
             <p>まだ解析履歴がありません。</p>
@@ -1212,7 +1216,9 @@
             totalCalories: 0,
             totalProtein: 0,
             totalFat: 0,
-            totalCarbs: 0
+            totalCarbs: 0,
+            morningWeight: null,
+            nightWeight: null
           };
         }
         
@@ -1221,6 +1227,46 @@
         groups[dateKey].totalProtein += item.nutrition.protein;
         groups[dateKey].totalFat += item.nutrition.fat;
         groups[dateKey].totalCarbs += item.nutrition.carbohydrates;
+      });
+
+      const previousWeightByPeriod = { morning: null, night: null };
+      weightHistory
+        .filter(item => Number.isFinite(Number(item.weight)))
+        .slice()
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .forEach(item => {
+          const period = item.measurementType === 'night' ? 'night' : 'morning';
+          const currentWeight = Number(item.weight);
+          item.historyListDiff = previousWeightByPeriod[period] == null
+            ? null
+            : currentWeight - previousWeightByPeriod[period];
+          previousWeightByPeriod[period] = currentWeight;
+        });
+
+      weightHistory.forEach(item => {
+        const dateKey = jstDateKey(item.date);
+        if (!dateKey) return;
+        if (!groups[dateKey]) {
+          groups[dateKey] = {
+            dateLabel: formatDisplayDate(item.date),
+            meals: [],
+            totalCalories: 0,
+            totalProtein: 0,
+            totalFat: 0,
+            totalCarbs: 0,
+            morningWeight: null,
+            nightWeight: null,
+          };
+        }
+        if (item.measurementType === 'night') {
+          if (!groups[dateKey].nightWeight) groups[dateKey].nightWeight = item;
+        } else if (item.measurementType === 'morning') {
+          if (!groups[dateKey].morningWeight) groups[dateKey].morningWeight = item;
+        } else if (!groups[dateKey].morningWeight) {
+          groups[dateKey].morningWeight = item;
+        } else if (!groups[dateKey].nightWeight) {
+          groups[dateKey].nightWeight = item;
+        }
       });
 
       historyList.innerHTML = '';
@@ -1234,7 +1280,9 @@
               <th>P (g)</th>
               <th>F (g)</th>
               <th>C (g)</th>
-              <th>摂取カロリー (kcal)</th>
+              <th>カロリー</th>
+              <th>朝体重 (kg)</th>
+              <th>夜体重 (kg)</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -1271,7 +1319,7 @@
             <div class="history-calories">${group.totalCalories} <span class="unit">kcal</span></div>
           </div>
           <div class="history-date-meta">
-            <span class="history-meal-count-badge">${group.meals.length}件</span>
+            <span class="history-meal-count-badge">${group.meals.length}</span>
             <span class="history-date-title">${group.dateLabel}</span>
             <span class="history-row-chevron" aria-hidden="true">›</span>
           </div>
@@ -1289,6 +1337,7 @@
         `;
         const detailTableBody = cardsContainer.querySelector('tbody');
         const openDayDetail = () => {
+          if (group.meals.length === 0) return;
           historyDayDetailHeader.innerHTML = headerEl.innerHTML;
           historyDayDetailMeals.replaceChildren(cardsContainer);
           historyList.style.display = 'none';
@@ -1299,14 +1348,34 @@
         const listRow = document.createElement('tr');
         listRow.className = 'history-summary-row';
         listRow.tabIndex = 0;
+        const formatHistoryWeight = (record) => {
+          if (!record || record.weight == null) return '--.-';
+          const diff = Number(record.historyListDiff);
+          const hasDiff = Number.isFinite(diff);
+          const sign = hasDiff && diff > 0 ? '+' : '';
+          const diffClass = !hasDiff ? 'none' : diff > 0 ? 'up' : diff < 0 ? 'down' : 'same';
+          const diffText = hasDiff ? `${sign}${diff.toFixed(1)}` : '--';
+          return `<button type="button" class="history-weight-link" data-period="${record.measurementType === 'night' ? 'night' : 'morning'}"><span>${Number(record.weight).toFixed(1)}</span><span class="history-weight-diff ${diffClass}">(${diffText})</span></button>`;
+        };
+
         listRow.innerHTML = `
-          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel}</span><span class="history-meal-count-badge">${group.meals.length}件</span></span></td>
+          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel}</span><span class="history-meal-count-badge">${group.meals.length}</span></span></td>
           <td>${pTotal}</td>
           <td>${fTotal}</td>
           <td>${cTotal}</td>
           <td class="history-summary-calories">${group.totalCalories}</td>
+          <td class="history-summary-weight-cell">${formatHistoryWeight(group.morningWeight)}</td>
+          <td class="history-summary-weight-cell">${formatHistoryWeight(group.nightWeight)}</td>
         `;
         listRow.addEventListener('click', openDayDetail);
+        listRow.querySelector('[data-period="morning"]')?.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openWeightDetailModal(group.morningWeight);
+        });
+        listRow.querySelector('[data-period="night"]')?.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openWeightDetailModal(group.nightWeight);
+        });
         listRow.addEventListener('keydown', (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -2306,6 +2375,10 @@
 
   // 4. 体組成履歴のロードと描画
   async function loadWeightHistory() {
+    if (!weightHistoryTbody) {
+      await loadHistory();
+      return;
+    }
     try {
       const response = await fetch('/api/body-composition');
       if (!response.ok) throw new Error('履歴の読み込みに失敗しました。');
@@ -2770,9 +2843,8 @@
 
   const navLabelMap = {
     'tab-overview': '総合',
-    'tab-analyze': '解析',
+    'tab-analyze': 'AI',
     'tab-history': '履歴',
-    'tab-weight': '体重',
     'tab-stats': '情報',
     'tab-presets': '定番',
   };

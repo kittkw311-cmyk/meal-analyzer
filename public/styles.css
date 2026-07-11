@@ -3958,6 +3958,7 @@ body {
   border-collapse: collapse;
   color: var(--app-dark-foreground);
   table-layout: fixed;
+  min-width: 548px;
   width: 100%;
 }
 
@@ -4007,7 +4008,12 @@ body {
 }
 
 #tab-history .history-summary-table th:nth-child(5) {
-  width: 102px;
+  width: 72px;
+}
+
+#tab-history .history-summary-table th:nth-child(6),
+#tab-history .history-summary-table th:nth-child(7) {
+  width: 92px;
 }
 
 #tab-history .history-summary-table th:nth-child(n + 2),
@@ -4033,6 +4039,46 @@ body {
 #tab-history .history-summary-row {
   cursor: pointer;
   outline: none;
+}
+
+#tab-history .history-weight-link {
+  background: transparent;
+  border: 0;
+  color: var(--app-dark-accent);
+  cursor: pointer;
+  font: 800 12px var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  padding: 0;
+  align-items: baseline;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  text-align: right;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--app-dark-accent) 50%, transparent);
+  text-underline-offset: 3px;
+  width: 100%;
+}
+
+#tab-history .history-weight-diff {
+  color: var(--app-dark-muted);
+  flex: 0 0 auto;
+  font-size: 10px;
+}
+
+#tab-history .history-weight-diff.down {
+  color: var(--design-positive);
+}
+
+#tab-history .history-weight-diff.up {
+  color: var(--design-chart-fat);
+}
+
+#tab-history .history-weight-link:hover,
+#tab-history .history-weight-link:focus-visible {
+  color: var(--app-dark-foreground);
+  outline: none;
+  text-decoration-color: var(--app-dark-accent);
 }
 
 #tab-history .history-summary-row:hover td,
@@ -4711,34 +4757,34 @@ body {
   border-color: var(--overview-accent);
 }
 
-#tab-overview .overview-ai-consultation-card {
-  background: var(--overview-card);
-  border: 1px solid var(--overview-border);
+#tab-analyze .overview-ai-consultation-card {
+  background: var(--app-dark-card);
+  border: 1px solid var(--app-dark-border);
   border-radius: 4px;
   display: grid;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 0;
   padding: 16px;
 }
 
-#tab-overview .overview-ai-consultation-title {
-  color: var(--overview-foreground);
+#tab-analyze .overview-ai-consultation-title {
+  color: var(--app-dark-foreground);
   font: var(--design-label-font-weight) 16px var(--font-heading);
   margin: 0;
 }
 
-#tab-overview .overview-ai-consultation-description {
-  color: var(--overview-muted);
+#tab-analyze .overview-ai-consultation-description {
+  color: var(--app-dark-muted);
   font-size: 12px;
   line-height: 1.6;
   margin: 0;
 }
 
-#tab-overview .overview-ai-question {
-  background: var(--overview-background);
-  border: 1px solid var(--overview-border);
+#tab-analyze .overview-ai-question {
+  background: var(--app-dark-background);
+  border: 1px solid var(--app-dark-border);
   border-radius: 4px;
-  color: var(--overview-foreground);
+  color: var(--app-dark-foreground);
   font: 500 13px var(--font-sans);
   line-height: 1.6;
   min-height: 80px;
@@ -4747,44 +4793,44 @@ body {
   width: 100%;
 }
 
-#tab-overview .overview-ai-question:focus {
-  border-color: var(--overview-accent);
-  box-shadow: 0 0 0 1px var(--overview-accent);
+#tab-analyze .overview-ai-question:focus {
+  border-color: var(--app-dark-accent);
+  box-shadow: 0 0 0 1px var(--app-dark-accent);
   outline: none;
 }
 
-#tab-overview .overview-ai-question::placeholder {
-  color: var(--overview-muted);
+#tab-analyze .overview-ai-question::placeholder {
+  color: var(--app-dark-muted);
 }
 
-#tab-overview .overview-ai-consultation-button {
-  background: var(--overview-primary);
-  border: 1px solid var(--overview-accent);
+#tab-analyze .overview-ai-consultation-button {
+  background: var(--app-dark-primary);
+  border: 1px solid var(--app-dark-accent);
   border-radius: 4px;
-  color: var(--overview-foreground);
+  color: var(--app-dark-foreground);
   font: 800 13px var(--font-sans);
   min-height: 40px;
   width: 100%;
 }
 
-#tab-overview .overview-ai-consultation-button:disabled {
+#tab-analyze .overview-ai-consultation-button:disabled {
   cursor: wait;
   opacity: 0.65;
 }
 
-#tab-overview .overview-ai-consultation-answer {
-  background: var(--overview-background);
-  border: 1px solid var(--overview-border);
-  border-left: 4px solid var(--overview-accent);
+#tab-analyze .overview-ai-consultation-answer {
+  background: var(--app-dark-background);
+  border: 1px solid var(--app-dark-border);
+  border-left: 4px solid var(--app-dark-accent);
   border-radius: 4px;
-  color: var(--overview-foreground);
+  color: var(--app-dark-foreground);
   font-size: 13px;
   line-height: 1.7;
   padding: 12px;
   white-space: pre-wrap;
 }
 
-#tab-overview .overview-ai-consultation-answer[hidden] {
+#tab-analyze .overview-ai-consultation-answer[hidden] {
   display: none;
 }
 
