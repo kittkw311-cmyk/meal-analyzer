@@ -55,7 +55,7 @@ body {
    ========================================================================== */
 .app-container {
   width: 100%;
-  max-width: 412px;
+  max-width: 800px;
   height: 100vh;
   background-color: var(--design-bg);
   box-shadow: none;
@@ -3475,7 +3475,7 @@ body {
   box-sizing: border-box;
   color: var(--overview-foreground);
   margin-inline: auto;
-  max-width: 412px;
+  max-width: 800px;
   padding: 8px;
   width: 100%;
 }
@@ -3558,7 +3558,7 @@ body {
   text-align: center;
 }
 
-/* DESIGN.md: 412px外フレーム */
+/* DESIGN.md: 最大800pxの外フレーム */
 body {
   background: #0a1219;
 }
@@ -3613,6 +3613,156 @@ body {
 .nav-item.active,
 .nav-item.active .nav-icon {
   color: #00e5ff;
+}
+
+/* DESIGN.md: 定番タブ */
+#tab-presets {
+  --presets-background: #111d27;
+  --presets-card: #162a37;
+  --presets-border: #233e50;
+  --presets-primary: #196a5b;
+  --presets-accent: #00e5ff;
+  --presets-foreground: #f0f7f6;
+  --presets-muted: #8fa7a3;
+  background: var(--presets-background);
+  color: var(--presets-foreground);
+  margin-inline: auto;
+  max-width: 800px;
+  padding: 8px;
+  width: 100%;
+}
+
+#tab-presets .section-subtitle {
+  color: var(--presets-foreground);
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+#tab-presets .presets-list {
+  align-content: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+#tab-presets .preset-card {
+  align-items: center;
+  background: var(--presets-card);
+  border: 1px solid var(--presets-border);
+  border-radius: 4px;
+  box-shadow: none;
+  min-height: 96px;
+  padding: 16px !important;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+#tab-presets .preset-card:hover {
+  border-color: var(--presets-accent);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+#tab-presets .preset-card-info {
+  gap: 8px;
+  min-width: 0;
+}
+
+#tab-presets .preset-card-name {
+  color: var(--presets-foreground);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#tab-presets .preset-card-name-wrapper {
+  border-radius: 4px;
+  margin-left: -4px;
+  padding: 4px;
+}
+
+#tab-presets .preset-card-name-wrapper:hover {
+  background: rgba(0, 229, 255, 0.08);
+}
+
+#tab-presets .preset-edit-icon,
+#tab-presets .preset-name-saving-text {
+  color: var(--presets-accent);
+}
+
+#tab-presets .preset-card-macros {
+  gap: 8px;
+}
+
+#tab-presets .macro-badge {
+  background: #111d27;
+  border: 1px solid var(--presets-border);
+  border-radius: 4px;
+  color: var(--presets-muted);
+  min-height: 24px;
+  padding: 3px 8px;
+}
+
+#tab-presets .macro-badge.calories,
+#tab-presets .macro-badge.c {
+  background: #111d27;
+  border-color: var(--presets-accent);
+  color: var(--presets-accent);
+}
+
+#tab-presets .macro-badge.p {
+  background: #111d27;
+  border-color: var(--presets-primary);
+  color: #5fb9a8;
+}
+
+#tab-presets .macro-badge.f {
+  background: #111d27;
+  border-color: #ff9900;
+  color: #ff9900;
+}
+
+#tab-presets .preset-macro-edit-input,
+#tab-presets .preset-edit-input {
+  background: #111d27;
+  border: 1px solid var(--presets-accent);
+  border-radius: 4px;
+  color: var(--presets-foreground);
+  outline: none;
+}
+
+#tab-presets .btn-delete-preset {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #ff9900;
+}
+
+#tab-presets .btn-delete-preset:hover {
+  background: rgba(255, 153, 0, 0.08);
+  border-color: #ff9900;
+}
+
+#tab-presets .presets-empty-state {
+  background: var(--presets-card);
+  border: 1px dashed var(--presets-border);
+  border-radius: 4px;
+  color: var(--presets-muted);
+  font-size: 12px;
+  grid-column: 1 / -1;
+  padding: 24px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  #tab-presets .presets-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 #tab-overview .daily-summary-capsule,

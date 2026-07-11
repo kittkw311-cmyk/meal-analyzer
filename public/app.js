@@ -793,7 +793,7 @@
       if (presetsList) {
         if (presets.length === 0) {
           presetsList.innerHTML = `
-            <div class="presets-empty-state" style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px; background: rgba(255,255,255,0.7); border-radius: 12px; border: 1.5px dashed var(--border-color);">
+            <div class="presets-empty-state">
               登録されている定番メニューはありません。<br>解析タブの手動入力で登録してください。
             </div>
           `;
