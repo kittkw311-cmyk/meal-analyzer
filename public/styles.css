@@ -3888,6 +3888,22 @@ body {
   width: 100%;
 }
 
+#tab-presets .presets-table .macro-badge.p,
+#tab-presets .presets-table .macro-badge.f,
+#tab-presets .presets-table .macro-badge.c {
+  display: grid;
+  grid-template-columns: 3ch 2ch;
+  justify-content: end;
+}
+
+#tab-presets .preset-number-integer {
+  text-align: right;
+}
+
+#tab-presets .preset-number-decimal {
+  text-align: left;
+}
+
 #tab-presets .preset-table-row {
   -webkit-touch-callout: none;
   transition: background-color 160ms ease;

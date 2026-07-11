@@ -865,6 +865,10 @@
           </div>
         `;
         const presetsTableBody = presetsList.querySelector('tbody');
+        const formatPresetDecimal = (value) => {
+          const [integerPart, decimalPart] = Number(value).toFixed(1).split('.');
+          return `<span class="preset-number-integer">${integerPart}</span><span class="preset-number-decimal">.${decimalPart}</span>`;
+        };
         presets.forEach(p => {
           const card = document.createElement('tr');
           card.className = 'preset-table-row';
@@ -879,9 +883,9 @@
                 </span>
               </div>
             </td>
-            <td><button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">${Number(p.protein).toFixed(1)}</button></td>
-            <td><button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">${Number(p.fat).toFixed(1)}</button></td>
-            <td><button type="button" class="macro-badge macro-editable c" data-id="${p.id}" data-field="carbohydrates" data-value="${p.carbohydrates}" title="炭水化物を編集">${Number(p.carbohydrates).toFixed(1)}</button></td>
+            <td><button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">${formatPresetDecimal(p.protein)}</button></td>
+            <td><button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">${formatPresetDecimal(p.fat)}</button></td>
+            <td><button type="button" class="macro-badge macro-editable c" data-id="${p.id}" data-field="carbohydrates" data-value="${p.carbohydrates}" title="炭水化物を編集">${formatPresetDecimal(p.carbohydrates)}</button></td>
             <td><button type="button" class="macro-badge macro-editable calories" data-id="${p.id}" data-field="calories" data-value="${p.calories}" title="カロリーを編集">${p.calories}</button></td>
           `;
           presetsTableBody.appendChild(card);
@@ -956,7 +960,7 @@
             const id = badge.getAttribute('data-id');
             const field = badge.getAttribute('data-field');
             const currentValue = badge.getAttribute('data-value');
-            const originalText = badge.textContent;
+            const originalHtml = badge.innerHTML;
 
             const input = document.createElement('input');
             input.type = 'number';
@@ -974,7 +978,7 @@
             const restoreBadge = () => {
               badge.classList.remove('is-saving');
               badge.disabled = false;
-              badge.textContent = originalText;
+              badge.innerHTML = originalHtml;
             };
 
             const saveMacroEdit = async () => {
