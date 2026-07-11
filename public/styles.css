@@ -20,9 +20,9 @@
   --design-count-badge-width: 40px;
   --design-pfc-chip-width: 64px;
   --design-pfc-chip-height: 26px;
-  --design-column-pfc-width: 42px;
-  --design-column-calorie-width: 38px;
-  --design-column-weight-width: 58px;
+  --design-column-pfc-width: 38px;
+  --design-column-calorie-width: 34px;
+  --design-column-weight-width: 52px;
   --design-column-category-width: 52px;
   --design-bg: var(--design-background);
   --design-text: var(--design-foreground);
@@ -3997,7 +3997,7 @@ body {
 #tab-history .history-summary-table td {
   color: var(--app-dark-foreground);
   font: 800 10px var(--font-heading);
-  height: 56px;
+  height: 44px;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -4028,16 +4028,22 @@ body {
 }
 
 #tab-history .history-summary-date-inner {
-  align-items: flex-start;
+  align-items: center;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-content: center;
+  flex-direction: row;
+  gap: 3px;
+  justify-content: space-between;
   min-width: 0;
   width: 100%;
 }
 
+#tab-history .history-summary-date {
+  font-size: 9px !important;
+}
+
 #tab-history .history-summary-date-inner > span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4096,10 +4102,12 @@ body {
 
 #tab-history .history-summary-table .history-meal-count-badge {
   display: inline-block;
+  flex: 0 0 24px;
   height: 18px;
   line-height: 16px;
   padding: 0 3px;
   vertical-align: middle;
+  white-space: nowrap;
   width: 24px;
 }
 
