@@ -20,6 +20,10 @@
   --design-count-badge-width: 40px;
   --design-pfc-chip-width: 64px;
   --design-pfc-chip-height: 26px;
+  --design-column-pfc-width: 42px;
+  --design-column-calorie-width: 38px;
+  --design-column-weight-width: 58px;
+  --design-column-category-width: 52px;
   --design-bg: var(--design-background);
   --design-text: var(--design-foreground);
   --design-radius: 4px;
@@ -3949,7 +3953,8 @@ body {
 
 #tab-history .history-table-wrapper {
   max-height: calc(100dvh - 176px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   width: 100%;
 }
 
@@ -3958,7 +3963,6 @@ body {
   border-collapse: collapse;
   color: var(--app-dark-foreground);
   table-layout: fixed;
-  min-width: 548px;
   width: 100%;
 }
 
@@ -3969,7 +3973,7 @@ body {
   box-sizing: border-box;
   height: 44px;
   overflow: hidden;
-  padding: 8px 6px;
+  padding: 6px 3px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3982,7 +3986,9 @@ body {
 #tab-history .history-summary-table th {
   background: var(--app-dark-background);
   color: var(--app-dark-muted);
-  font: 800 10px var(--font-sans);
+  font: 800 9px var(--font-sans);
+  line-height: 12px;
+  white-space: normal;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -3990,7 +3996,8 @@ body {
 
 #tab-history .history-summary-table td {
   color: var(--app-dark-foreground);
-  font: 800 12px var(--font-heading);
+  font: 800 10px var(--font-heading);
+  height: 56px;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -3998,22 +4005,21 @@ body {
 #tab-history .history-summary-table th:first-child,
 #tab-history .history-summary-table td:first-child {
   text-align: left;
-  width: 148px;
 }
 
 #tab-history .history-summary-table th:nth-child(2),
 #tab-history .history-summary-table th:nth-child(3),
 #tab-history .history-summary-table th:nth-child(4) {
-  width: 48px;
+  width: var(--design-column-pfc-width);
 }
 
 #tab-history .history-summary-table th:nth-child(5) {
-  width: 72px;
+  width: var(--design-column-calorie-width);
 }
 
 #tab-history .history-summary-table th:nth-child(6),
 #tab-history .history-summary-table th:nth-child(7) {
-  width: 92px;
+  width: var(--design-column-weight-width);
 }
 
 #tab-history .history-summary-table th:nth-child(n + 2),
@@ -4022,10 +4028,11 @@ body {
 }
 
 #tab-history .history-summary-date-inner {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
-  gap: 4px;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
   min-width: 0;
   width: 100%;
 }
@@ -4049,9 +4056,10 @@ body {
   font: 800 12px var(--font-heading);
   font-variant-numeric: tabular-nums;
   padding: 0;
-  align-items: baseline;
+  align-items: flex-end;
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 0;
   justify-content: flex-end;
   text-align: right;
   text-decoration: underline;
@@ -4063,7 +4071,7 @@ body {
 #tab-history .history-weight-diff {
   color: var(--app-dark-muted);
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 #tab-history .history-weight-diff.down {
@@ -4088,7 +4096,11 @@ body {
 
 #tab-history .history-summary-table .history-meal-count-badge {
   display: inline-block;
+  height: 18px;
+  line-height: 16px;
+  padding: 0 3px;
   vertical-align: middle;
+  width: 24px;
 }
 
 #tab-history .history-group {
@@ -4216,7 +4228,8 @@ body {
 
 #tab-history .history-detail-table-wrapper {
   max-height: calc(100dvh - 280px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   width: 100%;
 }
 
@@ -4235,7 +4248,7 @@ body {
   box-sizing: border-box;
   height: 44px;
   overflow: hidden;
-  padding: 8px 6px;
+  padding: 6px 3px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4264,25 +4277,24 @@ body {
 #tab-history .history-detail-table th:first-child,
 #tab-history .history-detail-table td:first-child {
   text-align: left;
-  width: 52px;
+  width: var(--design-column-category-width);
 }
 
 #tab-history .history-detail-table th:nth-child(2),
 #tab-history .history-detail-table td:nth-child(2) {
   text-align: left;
-  width: 136px;
 }
 
 #tab-history .history-detail-table th:nth-child(3),
 #tab-history .history-detail-table th:nth-child(4),
 #tab-history .history-detail-table th:nth-child(5) {
-  width: 44px;
+  width: var(--design-column-pfc-width);
 }
 
 #tab-history .history-detail-table th:nth-child(6) {
   line-height: 14px;
   white-space: normal;
-  width: 72px;
+  width: 64px;
 }
 
 #tab-history .history-detail-table th:nth-child(n + 3),
