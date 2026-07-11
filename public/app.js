@@ -1359,7 +1359,7 @@
         };
 
         listRow.innerHTML = `
-          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel}</span><span class="history-meal-count-badge">${group.meals.length}</span></span></td>
+          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel.replace(/^\d{4}\//, '')}</span><span class="history-meal-count-badge">${group.meals.length}</span></span></td>
           <td>${pTotal}</td>
           <td>${fTotal}</td>
           <td>${cTotal}</td>

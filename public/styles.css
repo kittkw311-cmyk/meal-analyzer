@@ -18,6 +18,7 @@
   --design-history-card-height: 56px;
   --design-badge-height: 24px;
   --design-count-badge-width: 40px;
+  --design-compact-count-badge-width: 26px;
   --design-pfc-chip-width: 64px;
   --design-pfc-chip-height: 26px;
   --design-column-pfc-width: 38px;
@@ -3986,7 +3987,7 @@ body {
 #tab-history .history-summary-table th {
   background: var(--app-dark-background);
   color: var(--app-dark-muted);
-  font: 800 9px var(--font-sans);
+  font: 800 10px var(--font-sans);
   line-height: 12px;
   white-space: normal;
   position: sticky;
@@ -3996,7 +3997,7 @@ body {
 
 #tab-history .history-summary-table td {
   color: var(--app-dark-foreground);
-  font: 800 10px var(--font-heading);
+  font: 800 12px var(--font-heading);
   height: 44px;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -4005,21 +4006,22 @@ body {
 #tab-history .history-summary-table th:first-child,
 #tab-history .history-summary-table td:first-child {
   text-align: left;
+  width: 20%;
 }
 
 #tab-history .history-summary-table th:nth-child(2),
 #tab-history .history-summary-table th:nth-child(3),
 #tab-history .history-summary-table th:nth-child(4) {
-  width: var(--design-column-pfc-width);
+  width: 10.5%;
 }
 
 #tab-history .history-summary-table th:nth-child(5) {
-  width: var(--design-column-calorie-width);
+  width: 14.5%;
 }
 
 #tab-history .history-summary-table th:nth-child(6),
 #tab-history .history-summary-table th:nth-child(7) {
-  width: var(--design-column-weight-width);
+  width: 17%;
 }
 
 #tab-history .history-summary-table th:nth-child(n + 2),
@@ -4031,18 +4033,18 @@ body {
   align-items: center;
   display: flex;
   flex-direction: row;
-  gap: 3px;
-  justify-content: space-between;
+  gap: 1px;
+  justify-content: flex-start;
   min-width: 0;
   width: 100%;
 }
 
 #tab-history .history-summary-date {
-  font-size: 9px !important;
+  font-size: 12px !important;
 }
 
 #tab-history .history-summary-date-inner > span:first-child {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4102,13 +4104,13 @@ body {
 
 #tab-history .history-summary-table .history-meal-count-badge {
   display: inline-block;
-  flex: 0 0 24px;
+  flex: 0 0 var(--design-compact-count-badge-width);
   height: 18px;
   line-height: 16px;
   padding: 0 3px;
   vertical-align: middle;
   white-space: nowrap;
-  width: 24px;
+  width: var(--design-compact-count-badge-width);
 }
 
 #tab-history .history-group {
@@ -4308,6 +4310,40 @@ body {
 #tab-history .history-detail-table th:nth-child(n + 3),
 #tab-history .history-detail-table td:nth-child(n + 3) {
   text-align: right;
+}
+
+#tab-history .history-detail-table .history-meal-type-chip {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--app-dark-foreground);
+  display: inline;
+  font: 700 12px var(--font-sans);
+  padding: 0;
+  white-space: nowrap;
+}
+
+#tab-history .history-day-detail-header .history-left-group,
+#tab-history .history-day-detail-header .history-pfc-chips {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+#tab-history .history-day-detail-header .history-pfc-chip {
+  flex: 0 0 54px;
+  width: 54px;
+}
+
+#tab-overview .summary-chips-capsule {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+#tab-overview .summary-chip .label,
+#tab-overview .summary-chip .val,
+#tab-overview .summary-chip-target,
+#tab-overview .pfc-progress-status {
+  white-space: nowrap;
 }
 
 #tab-weight .weight-history-table th,
