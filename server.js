@@ -29,6 +29,30 @@ const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
 const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
 const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
 const AI_CONSULTATIONS_FILE = path.join(DATA_DIR, 'ai_consultations.json');
+const SUMMARY_PROMPT_FILE = path.join(DATA_DIR, 'summary_prompt.txt');
+
+const DEFAULT_SUMMARY_PROMPT_TEMPLATE = `あなたはプロのダイエットトレーナーです。
+以下のデータをもとに、{{date}}（1日分）の総括分析を日本語で行ってください。
+
+【食事内容】
+{{mealsText}}
+
+【体組成データ】
+{{bodyText}}
+
+【ユーザーコメント・メモ】
+{{commentText}}
+
+【ユーザープロファイル】
+{{profileText}}
+
+以下の観点で具体的にアドバイスしてください。
+1. この日の食事評価（カロリー・PFCバランス）
+2. 体組成の状態コメント（データがある場合）
+3. 良かった点・改善すべき点
+4. 明日以降への具体的なアドバイス（食事・生活習慣）
+
+マークダウン記法は使わず、読みやすいプレーンテキストで、200〜500文字程度でまとめてください。`;
 
 const DEFAULT_PROFILE = {
   height: null,
@@ -109,6 +133,9 @@ if (!fs.existsSync(PROFILE_FILE)) {
 if (!fs.existsSync(AI_CONSULTATIONS_FILE)) {
   fs.writeFileSync(AI_CONSULTATIONS_FILE, JSON.stringify([], null, 2));
 }
+if (!fs.existsSync(SUMMARY_PROMPT_FILE)) {
+  fs.writeFileSync(SUMMARY_PROMPT_FILE, DEFAULT_SUMMARY_PROMPT_TEMPLATE);
+}
 
 // Multer設定（メモリ上にバッファとして保存）
 const storage = multer.memoryStorage();
@@ -159,6 +186,7 @@ let drivePresetsFileId = null;
 let driveSummaryFileId = null;
 let driveProfileFileId = null;
 let driveAiConsultationsFileId = null;
+let driveSummaryPromptFileId = null;
 
 // 体組成ファイルを検索または新規作成してファイルIDを設定する
 async function initDriveProfile() {
@@ -1770,6 +1798,7 @@ app.post('/api/analyze-summary', async (req, res) => {
 
     // 該当日の体組成データを取得（±1日以内で最も近いもの）
     const weightData = await readWeight();
+    const profile = await readProfile();
     const dayWeights = weightData.filter(w => getJstDateKey(w.date) === date);
     const weightPriority = { night: 3, morning: 2, other: 1 };
     const bodyComp = dayWeights
@@ -1801,8 +1830,9 @@ app.post('/api/analyze-summary', async (req, res) => {
       : '（体組成データなし）';
 
     const commentText = comment && comment.trim() ? comment.trim() : '（コメントなし）';
+    const profileText = formatSummaryProfile(profile);
 
-    const prompt = `あなたはプロのダイエットトレーナーです。以下のデータをもとに、${date}（1日分）の総括分析を日本語で行ってください。
+    let prompt = `あなたはプロのダイエットトレーナーです。以下のデータをもとに、${date}（1日分）の総括分析を日本語で行ってください。
 
 【食事内容】
 ${mealsText}
@@ -1820,6 +1850,14 @@ ${commentText}
 4. 明日以降への具体的なアドバイス（食事・生活習慣）
 
 200〜400文字程度でまとめてください。`;
+    const summaryPromptTemplate = await readSummaryPromptTemplate();
+    prompt = buildSummaryPrompt(summaryPromptTemplate, {
+      date,
+      mealsText,
+      bodyText,
+      commentText,
+      profileText,
+    });
 
     // 429対策: 最大2回リトライ
     let response;
@@ -1842,7 +1880,20 @@ ${commentText}
       }
     }
 
-    const analysisText = response?.candidates?.[0]?.content?.parts?.[0]?.text || '分析結果を取得できませんでした。';
+    const forbiddenNames = dayMeals
+      .flatMap(item => [
+        item.mealName,
+        item.nutrition?.mealName,
+        item.textInput,
+      ])
+      .filter(Boolean)
+      .map(value => String(value).trim())
+      .filter(value => value.length >= 3);
+    let analysisText = response?.candidates?.[0]?.content?.parts?.[0]?.text || '分析結果を取得できませんでした。';
+    analysisText = await repairSummaryOutputIfNeeded(analysisText, {
+      template: summaryPromptTemplate,
+      forbiddenNames,
+    });
 
     // 分析結果をJSONに保存
     const summaryRecord = {
@@ -1933,6 +1984,140 @@ async function writeSummary(data) {
 }
 
 // GET 総括履歴一覧
+async function initDriveSummaryPrompt() {
+  if (!drive || !folderId) return;
+  try {
+    console.log('Searching for summary_prompt.txt in Google Drive...');
+    const res = await drive.files.list({
+      q: `name = 'summary_prompt.txt' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    if (res.data.files && res.data.files.length > 0) {
+      driveSummaryPromptFileId = res.data.files[0].id;
+      console.log(`Found summary_prompt.txt. File ID: ${driveSummaryPromptFileId}`);
+    } else {
+      const driveResponse = await drive.files.create({
+        requestBody: { name: 'summary_prompt.txt', parents: [folderId], mimeType: 'text/plain' },
+        media: { mimeType: 'text/plain', body: Readable.from(DEFAULT_SUMMARY_PROMPT_TEMPLATE) },
+        fields: 'id',
+      });
+      driveSummaryPromptFileId = driveResponse.data.id;
+      console.log(`Created summary_prompt.txt. File ID: ${driveSummaryPromptFileId}`);
+    }
+  } catch (err) {
+    console.error('Failed to initialize summary_prompt.txt:', err.message);
+  }
+}
+
+async function readSummaryPromptTemplate() {
+  if (drive && driveSummaryPromptFileId) {
+    try {
+      const res = await drive.files.get(
+        { fileId: driveSummaryPromptFileId, alt: 'media' },
+        { responseType: 'text' }
+      );
+      const text = typeof res.data === 'string' ? res.data : String(res.data || '');
+      return text.trim() || DEFAULT_SUMMARY_PROMPT_TEMPLATE;
+    } catch (err) {
+      console.error('Error reading summary_prompt.txt from Drive:', err.message);
+    }
+  }
+
+  try {
+    if (!fs.existsSync(SUMMARY_PROMPT_FILE)) {
+      fs.writeFileSync(SUMMARY_PROMPT_FILE, DEFAULT_SUMMARY_PROMPT_TEMPLATE);
+    }
+    const text = fs.readFileSync(SUMMARY_PROMPT_FILE, 'utf8');
+    return text.trim() || DEFAULT_SUMMARY_PROMPT_TEMPLATE;
+  } catch (err) {
+    console.error('Error reading local summary_prompt.txt:', err.message);
+    return DEFAULT_SUMMARY_PROMPT_TEMPLATE;
+  }
+}
+
+function buildSummaryPrompt(template, values) {
+  const replacements = {
+    '{{date}}': values.date,
+    '{{mealsText}}': values.mealsText,
+    '{{bodyText}}': values.bodyText,
+    '{{commentText}}': values.commentText,
+    '{{profileText}}': values.profileText,
+  };
+  let prompt = template;
+  Object.entries(replacements).forEach(([key, value]) => {
+    prompt = prompt.split(key).join(value || '');
+  });
+
+  if (!template.includes('{{mealsText}}') && !template.includes('{{bodyText}}')) {
+    prompt += `\n\n【分析対象データ】\n日付: ${values.date}\n\n【食事内容】\n${values.mealsText}\n\n【体組成データ】\n${values.bodyText}\n\n【ユーザーコメント・メモ】\n${values.commentText}`;
+  }
+  if (!template.includes('{{profileText}}')) {
+    prompt += `\n\n【ユーザープロファイル】\n${values.profileText}`;
+  }
+  prompt += `\n\n【出力制約の最終確認】\n最終回答では思考プロセスを出さず、完成したチャット文章だけを出力してください。固定見出し、番号付きリスト、箇条書き、商品名、外食チェーン店名は禁止です。指定されたキャラクター、二人称、文字量、水分量、一般名詞の食材名、改行ルールを最優先で守ってください。`;
+  return prompt;
+}
+
+function formatSummaryProfile(profile) {
+  if (!profile || typeof profile !== 'object') return '（プロファイル未設定）';
+  return [
+    profile.height != null ? `身長: ${profile.height}cm` : null,
+    profile.gender ? `性別: ${profile.gender}` : null,
+    profile.birthDate ? `生年月日: ${profile.birthDate}` : null,
+    profile.targetWeight != null ? `目標体重: ${profile.targetWeight}kg` : null,
+    profile.targetDate ? `目標期限: ${profile.targetDate}` : null,
+    profile.activityLevel ? `活動レベル: ${profile.activityLevel}` : null,
+    profile.activityNotes ? `活動メモ: ${profile.activityNotes}` : null,
+  ].filter(Boolean).join('\n') || '（プロファイル未設定）';
+}
+
+function hasSummaryOutputViolation(text, options = {}) {
+  if (!text || typeof text !== 'string') return true;
+  const trimmed = text.trim();
+  const structuralViolation = [
+    /^#{1,6}\s/m,
+    /^【.+】/m,
+    /^\s*(?:\d+\.|[-・])\s/m,
+    /(?:^|\n)\s*Step\s*\d/i,
+  ].some(pattern => pattern.test(trimmed));
+  const template = options.template || '';
+  const toneViolation = (template.includes('キミ') && !trimmed.includes('キミ'))
+    || /お客様|ございます|お勧めします|お伝えします/.test(trimmed);
+  const lengthViolation = trimmed.length > 650;
+  const forbiddenNameViolation = (options.forbiddenNames || [])
+    .some(name => name && name.length >= 3 && trimmed.includes(name));
+  return structuralViolation || toneViolation || lengthViolation || forbiddenNameViolation;
+}
+
+async function repairSummaryOutputIfNeeded(text, options = {}) {
+  if (!hasSummaryOutputViolation(text, options)) return text;
+  const forbiddenNamesText = (options.forbiddenNames || [])
+    .filter(name => name && name.length >= 3)
+    .slice(0, 20)
+    .join('、') || 'なし';
+  const repairPrompt = `以下の文章を、制約に完全準拠する最終回答だけに書き直してください。
+
+制約:
+固定見出し、番号付きリスト、箇条書き、マークダウン、商品名、外食チェーン店名は禁止。
+「大人のお姉さん」の落ち着いた親しみやすい口調で、ユーザーを自然に「キミ」と呼ぶ。
+2〜3センテンスごとに改行する。
+全体で400〜500文字程度。
+水分量はリットル単位で具体的に書く。
+食材名は一般名詞だけを複数入れる。
+次の固有名詞・料理名・商品名は絶対に出さない: ${forbiddenNamesText}
+思考プロセスや説明は出さず、書き直した本文だけを出力する。
+
+元の文章:
+${text}`;
+
+  const repairResponse = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [{ role: 'user', parts: [{ text: repairPrompt }] }],
+  });
+  return repairResponse?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text;
+}
+
 app.get('/api/summary-history', async (req, res) => {
   try {
     const data = await readSummary();
@@ -2087,6 +2272,7 @@ ${question}`;
     await initDriveWeight();
     await initDrivePresets();
     await initDriveSummary();
+    await initDriveSummaryPrompt();
     await initDriveAiConsultations();
   }
   app.listen(PORT, () => {
