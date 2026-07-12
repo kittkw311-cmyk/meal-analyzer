@@ -73,6 +73,10 @@
   
   // Presets Elements
   const presetSelector = document.getElementById('preset-selector');
+  const presetServingControls = document.getElementById('preset-serving-controls');
+  const presetServingAmountInput = document.getElementById('preset-serving-amount');
+  const presetServingUnitOutput = document.getElementById('preset-serving-unit');
+  const presetServingPreview = document.getElementById('preset-serving-preview');
   const presetsList = document.getElementById('presets-list');
   const formPresetsManual = document.getElementById('form-presets-manual');
   const presetsManualToggle = document.getElementById('presets-manual-toggle');
@@ -95,6 +99,7 @@
   // Selected file reference
   let selectedFile = null;
   let activeMealType = 'snack';
+  let loadedPresets = [];
   
   // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
@@ -351,6 +356,8 @@
     // 定番メニューセレクタをリセット
     if (presetSelector) {
       presetSelector.value = '';
+      if (presetServingAmountInput) presetServingAmountInput.value = '1.0';
+      updatePresetServingControls();
       btnAnalyze.textContent = "食事を解析する";
       btnAnalyze.style.backgroundColor = "";
     }
@@ -484,10 +491,71 @@
   // ==========================================================================
   function validateInputs() {
     const hasPreset = presetSelector && presetSelector.value !== "";
+    const presetAmount = presetServingAmountInput ? Number(presetServingAmountInput.value) : 1;
+    const hasValidPresetAmount = !hasPreset || (Number.isFinite(presetAmount) && presetAmount > 0);
     const hasImage = !!selectedFile;
     const hasText = mealTextInput.value.trim().length > 0;
-    btnAnalyze.disabled = !(hasPreset || hasImage || hasText);
+    btnAnalyze.disabled = !((hasPreset && hasValidPresetAmount) || hasImage || hasText);
   }
+
+  const roundTo1 = (value) => Math.round(Number(value) * 10) / 10;
+  const roundCalories = (value) => Math.round(Number(value));
+
+  const getSelectedPresetOption = () => {
+    if (!presetSelector || presetSelector.value === '') return null;
+    return presetSelector.options[presetSelector.selectedIndex] || null;
+  };
+
+  const getPresetServingValues = (opt = getSelectedPresetOption()) => {
+    const baseAmount = Number(opt?.dataset.baseAmount || 1);
+    const servingAmount = Number(presetServingAmountInput?.value || baseAmount || 1);
+    const ratio = Number.isFinite(servingAmount) && Number.isFinite(baseAmount) && baseAmount > 0
+      ? servingAmount / baseAmount
+      : 1;
+    return {
+      baseAmount: Number.isFinite(baseAmount) && baseAmount > 0 ? roundTo1(baseAmount) : 1,
+      servingAmount: Number.isFinite(servingAmount) && servingAmount > 0 ? roundTo1(servingAmount) : null,
+      servingUnit: opt?.dataset.servingUnit || '個',
+      ratio,
+    };
+  };
+
+  const calculatePresetNutrition = (opt = getSelectedPresetOption()) => {
+    if (!opt) return null;
+    const { ratio } = getPresetServingValues(opt);
+    return {
+      calories: roundCalories(Number(opt.dataset.calories || 0) * ratio),
+      protein: roundTo1(Number(opt.dataset.protein || 0) * ratio),
+      fat: roundTo1(Number(opt.dataset.fat || 0) * ratio),
+      carbohydrates: roundTo1(Number(opt.dataset.carbohydrates || 0) * ratio),
+    };
+  };
+
+  const updatePresetServingControls = () => {
+    const opt = getSelectedPresetOption();
+    if (!presetServingControls || !presetServingAmountInput || !presetServingUnitOutput || !presetServingPreview) return;
+    if (!opt) {
+      presetServingControls.hidden = true;
+      presetServingPreview.textContent = '-- kcal / P --.- F --.- C --.-';
+      return;
+    }
+
+    const baseAmount = Number(opt.dataset.baseAmount || 1);
+    const unit = opt.dataset.servingUnit || '個';
+    presetServingControls.hidden = false;
+    presetServingUnitOutput.textContent = unit;
+    if (!presetServingAmountInput.value || Number(presetServingAmountInput.value) <= 0) {
+      presetServingAmountInput.value = (Number.isFinite(baseAmount) && baseAmount > 0 ? baseAmount : 1).toFixed(1);
+    }
+
+    const nutrition = calculatePresetNutrition(opt);
+    const { servingAmount } = getPresetServingValues(opt);
+    if (!nutrition || servingAmount == null) {
+      presetServingPreview.textContent = '今回量を入力';
+      return;
+    }
+    presetServingPreview.textContent = `${nutrition.calories} kcal / P ${nutrition.protein.toFixed(1)} F ${nutrition.fat.toFixed(1)} C ${nutrition.carbohydrates.toFixed(1)}`;
+  };
 
   function validateWeightInputs() {
     const hasImage = !!selectedWeightFile;
@@ -501,6 +569,11 @@
     presetSelector.addEventListener('change', () => {
       const selectedId = presetSelector.value;
       if (selectedId !== "") {
+        const opt = presetSelector.options[presetSelector.selectedIndex];
+        const baseAmount = Number(opt?.dataset.baseAmount || 1);
+        if (presetServingAmountInput) {
+          presetServingAmountInput.value = (Number.isFinite(baseAmount) && baseAmount > 0 ? baseAmount : 1).toFixed(1);
+        }
         // 定番メニューが選ばれたらボタン表記を切替 (写真はクリアせず併用可能にする)
         btnAnalyze.textContent = "定番メニューで記録する";
         btnAnalyze.style.backgroundColor = "var(--primary-dark)";
@@ -509,6 +582,14 @@
         btnAnalyze.textContent = "食事を解析する";
         btnAnalyze.style.backgroundColor = "";
       }
+      updatePresetServingControls();
+      validateInputs();
+    });
+  }
+
+  if (presetServingAmountInput) {
+    presetServingAmountInput.addEventListener('input', () => {
+      updatePresetServingControls();
       validateInputs();
     });
   }
@@ -528,10 +609,17 @@
     if (selectedPresetId !== "") {
       const opt = presetSelector.options[presetSelector.selectedIndex];
       const presetName = opt.dataset.name;
-      const cVal = opt.dataset.calories;
-      const pVal = opt.dataset.protein;
-      const fVal = opt.dataset.fat;
-      const carbVal = opt.dataset.carbohydrates;
+      const calculatedNutrition = calculatePresetNutrition(opt);
+      const servingValues = getPresetServingValues(opt);
+      if (!calculatedNutrition || servingValues.servingAmount == null) {
+        alert('今回量を正しく入力してください。');
+        validateInputs();
+        return;
+      }
+      const cVal = calculatedNutrition.calories;
+      const pVal = calculatedNutrition.protein;
+      const fVal = calculatedNutrition.fat;
+      const carbVal = calculatedNutrition.carbohydrates;
 
       btnAnalyze.disabled = true;
 
@@ -558,6 +646,9 @@
       formData.append('mealDate', mealDateToSend);
       formData.append('mealType', activeMealType);
       formData.append('presetId', selectedPresetId);
+      formData.append('servingAmount', servingValues.servingAmount.toFixed(1));
+      formData.append('baseServingAmount', servingValues.baseAmount.toFixed(1));
+      formData.append('servingUnit', servingValues.servingUnit);
       if (selectedFile) {
         formData.append('image', selectedFile);
       }
@@ -828,26 +919,32 @@
     try {
       const response = await fetch('/api/presets');
       const presets = await response.json();
+      loadedPresets = Array.isArray(presets) ? presets : [];
 
       // A. 解析画面のドロップダウンを更新
       if (presetSelector) {
         presetSelector.innerHTML = '<option value="">定番メニューから選択</option>';
-        presets.forEach(p => {
+        loadedPresets.forEach(p => {
           const opt = document.createElement('option');
+          const baseAmount = Number.isFinite(Number(p.baseAmount)) && Number(p.baseAmount) > 0 ? roundTo1(p.baseAmount) : 1;
+          const servingUnit = p.servingUnit || '個';
           opt.value = p.id;
           opt.dataset.calories = p.calories;
           opt.dataset.protein = p.protein;
           opt.dataset.fat = p.fat;
           opt.dataset.carbohydrates = p.carbohydrates;
           opt.dataset.name = p.name;
-          opt.textContent = `${p.name} (${p.calories} kcal - P:${p.protein} F:${p.fat} C:${p.carbohydrates})`;
+          opt.dataset.baseAmount = baseAmount;
+          opt.dataset.servingUnit = servingUnit;
+          opt.textContent = `${p.name} (${baseAmount.toFixed(1)}${servingUnit} / ${p.calories} kcal - P:${p.protein} F:${p.fat} C:${p.carbohydrates})`;
           presetSelector.appendChild(opt);
         });
+        updatePresetServingControls();
       }
 
       // B. 定番タブの一覧リストを更新
       if (presetsList) {
-        if (presets.length === 0) {
+        if (loadedPresets.length === 0) {
           presetsList.innerHTML = `
             <div class="presets-empty-state">
               登録されている定番メニューはありません。<br>AIタブの手動入力で登録してください。
@@ -859,7 +956,7 @@
         presetsList.innerHTML = `
           <div class="presets-table-wrapper">
             <table class="presets-table">
-              <thead><tr><th>名称</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>カロリー</th></tr></thead>
+              <thead><tr><th>名称</th><th>基準量</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>カロリー</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -869,7 +966,9 @@
           const [integerPart, decimalPart] = Number(value).toFixed(1).split('.');
           return `<span class="preset-number-integer">${integerPart}</span><span class="preset-number-decimal">.${decimalPart}</span>`;
         };
-        presets.forEach(p => {
+        loadedPresets.forEach(p => {
+          const baseAmount = Number.isFinite(Number(p.baseAmount)) && Number(p.baseAmount) > 0 ? roundTo1(p.baseAmount) : 1;
+          const servingUnit = p.servingUnit || '個';
           const card = document.createElement('tr');
           card.className = 'preset-table-row';
           card.dataset.id = p.id;
@@ -882,6 +981,13 @@
                   <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 </span>
               </div>
+            </td>
+            <td class="preset-serving-cell">
+              <button type="button" class="macro-badge macro-editable serving" data-id="${p.id}" data-field="baseAmount" data-value="${baseAmount}" title="基準量を編集">${formatPresetDecimal(baseAmount)}</button>
+              <select class="preset-unit-select" data-id="${p.id}" title="単位を編集">
+                <option value="個"${servingUnit === '個' ? ' selected' : ''}>個</option>
+                <option value="g"${servingUnit === 'g' ? ' selected' : ''}>g</option>
+              </select>
             </td>
             <td><button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">${formatPresetDecimal(p.protein)}</button></td>
             <td><button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">${formatPresetDecimal(p.fat)}</button></td>
@@ -968,6 +1074,7 @@
             input.value = currentValue;
             input.min = '0';
             if (field === 'calories') input.max = '9999';
+            if (field === 'baseAmount') input.min = '0.1';
             input.step = field === 'calories' ? '1' : '0.1';
 
             badge.textContent = '';
@@ -985,7 +1092,7 @@
               if (badge.classList.contains('is-saving')) return;
               const rawValue = input.value;
               const numericValue = Number(rawValue);
-              if (rawValue === '' || !Number.isFinite(numericValue) || numericValue < 0 || (field === 'calories' && numericValue > 9999)) {
+              if (rawValue === '' || !Number.isFinite(numericValue) || numericValue < 0 || (field === 'baseAmount' && numericValue <= 0) || (field === 'calories' && numericValue > 9999)) {
                 restoreBadge();
                 return;
               }
@@ -1034,6 +1141,32 @@
             });
 
             input.addEventListener('blur', saveMacroEdit);
+          });
+        });
+
+        document.querySelectorAll('.preset-unit-select').forEach(select => {
+          select.addEventListener('click', event => event.stopPropagation());
+          select.addEventListener('change', async () => {
+            const id = select.getAttribute('data-id');
+            const servingUnit = select.value === 'g' ? 'g' : '個';
+            select.disabled = true;
+            try {
+              const res = await fetch(`/api/presets/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ servingUnit })
+              });
+              if (res.ok) {
+                loadPresets();
+              } else {
+                alert('単位の更新に失敗しました。');
+                loadPresets();
+              }
+            } catch (err) {
+              console.error(err);
+              alert('更新中に通信エラーが発生しました。');
+              loadPresets();
+            }
           });
         });
 
@@ -1158,6 +1291,8 @@
       const protein = document.getElementById('preset-manual-protein').value;
       const fat = document.getElementById('preset-manual-fat').value;
       const carbs = document.getElementById('preset-manual-carbs').value;
+      const baseAmount = document.getElementById('preset-manual-serving-amount').value;
+      const servingUnit = document.getElementById('preset-manual-serving-unit').value;
 
       if (!name) return;
 
@@ -1165,7 +1300,7 @@
         const response = await fetch('/api/presets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, calories, protein, fat, carbohydrates: carbs })
+          body: JSON.stringify({ name, calories, protein, fat, carbohydrates: carbs, baseAmount, servingUnit })
         });
 
         if (response.ok) {
@@ -1206,6 +1341,8 @@
             protein: pVal,
             fat: fVal,
             carbohydrates: carbVal,
+            baseAmount: 1,
+            servingUnit: '個',
             imageSource: activeDetailMeal.imageSource || '',
             imageId: activeDetailMeal.imageId || ''
           })
@@ -1380,7 +1517,7 @@
         cardsContainer.innerHTML = `
           <div class="history-detail-table-wrapper">
             <table class="history-detail-table">
-              <thead><tr><th>#</th><th>区分</th><th>内容</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>摂取カロリー (kcal)</th></tr></thead>
+              <thead><tr><th>#</th><th>区分</th><th>内容</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>カロリー</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>

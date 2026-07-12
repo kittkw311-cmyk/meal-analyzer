@@ -954,10 +954,11 @@ app.get('/api/presets', async (req, res) => {
 // 2. 定番メニュー手動登録 API
 app.post('/api/presets', async (req, res) => {
   try {
-    const { name, calories, protein, fat, carbohydrates, imageSource, imageId } = req.body;
+    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '必須項目が不足しています。' });
     }
+    const normalizedBaseAmount = Number(baseAmount);
     const presets = await readPresets();
     const newPreset = {
       id: `preset_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -966,6 +967,8 @@ app.post('/api/presets', async (req, res) => {
       protein: Math.round(Number(protein) * 10) / 10,
       fat: Math.round(Number(fat) * 10) / 10,
       carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
+      baseAmount: Number.isFinite(normalizedBaseAmount) && normalizedBaseAmount > 0 ? Math.round(normalizedBaseAmount * 10) / 10 : 1,
+      servingUnit: servingUnit === 'g' ? 'g' : '個',
       imageSource: imageSource || '',
       imageId: imageId || ''
     };
@@ -1088,6 +1091,8 @@ app.post('/api/presets/analyze', upload.single('image'), async (req, res) => {
       protein: Math.round(Number(nutritionData.protein) * 10) / 10,
       fat: Math.round(Number(nutritionData.fat) * 10) / 10,
       carbohydrates: Math.round(Number(nutritionData.carbohydrates) * 10) / 10,
+      baseAmount: 1,
+      servingUnit: '個',
       imageSource,
       imageId
     };
@@ -1122,15 +1127,19 @@ app.delete('/api/presets/:id', async (req, res) => {
 app.patch('/api/presets/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, calories, protein, fat, carbohydrates } = req.body;
-    const hasMacroUpdate = [calories, protein, fat, carbohydrates].some(value => value !== undefined);
-    const hasInvalidMacroUpdate = [calories, protein, fat, carbohydrates]
+    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit } = req.body;
+    const hasMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount].some(value => value !== undefined);
+    const hasUnitUpdate = servingUnit !== undefined;
+    const hasInvalidMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount]
       .filter(value => value !== undefined)
-      .some(value => !Number.isFinite(Number(value)) || Number(value) < 0);
+      .some(value => !Number.isFinite(Number(value)) || Number(value) < 0 || (value === baseAmount && Number(value) <= 0));
     if (hasInvalidMacroUpdate) {
       return res.status(400).json({ error: 'Preset nutrition values must be zero or greater.' });
     }
-    if ((!name || name.trim() === '') && !hasMacroUpdate) {
+    if (hasUnitUpdate && servingUnit !== 'g' && servingUnit !== '個') {
+      return res.status(400).json({ error: 'Preset serving unit must be g or 個.' });
+    }
+    if ((!name || name.trim() === '') && !hasMacroUpdate && !hasUnitUpdate) {
       return res.status(400).json({ error: 'メニュー名を入力してください。' });
     }
 
@@ -1156,6 +1165,10 @@ app.patch('/api/presets/:id', async (req, res) => {
     applyMacroUpdate('protein', protein);
     applyMacroUpdate('fat', fat);
     applyMacroUpdate('carbohydrates', carbohydrates);
+    applyMacroUpdate('baseAmount', baseAmount);
+    if (servingUnit === 'g' || servingUnit === '個') {
+      preset.servingUnit = servingUnit;
+    }
     await writePresets(presets);
 
     res.json({ success: true, preset });
@@ -1168,7 +1181,7 @@ app.patch('/api/presets/:id', async (req, res) => {
 // 5. 定番メニューからの食事履歴登録 API
 app.post('/api/history/preset', upload.single('image'), async (req, res) => {
   try {
-    const { name, calories, protein, fat, carbohydrates, mealDate, mealType, presetId } = req.body;
+    const { name, calories, protein, fat, carbohydrates, mealDate, mealType, presetId, servingAmount, baseServingAmount, servingUnit } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '食事データの作成に失敗しました。値が正しくありません。' });
     }
@@ -1179,6 +1192,11 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
 
     const mealDateParsed = mealDate ? new Date(mealDate).toISOString() : new Date().toISOString();
     const actualMealType = mealType || 'snack';
+    let presetMaster = null;
+    if (presetId) {
+      const presets = await readPresets();
+      presetMaster = presets.find(p => p.id === presetId) || null;
+    }
 
     if (req.file) {
       imageSource = 'local';
@@ -1218,16 +1236,32 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
         imageId = filename;
         console.log('Saved preset record image locally:', filename);
       }
-    } else if (presetId) {
+    } else if (presetMaster) {
       // 今回新しい画像がアップロードされていない場合、定番マスタから登録済みの画像を引き継ぐ
-      const presets = await readPresets();
-      const preset = presets.find(p => p.id === presetId);
-      if (preset && preset.imageId) {
-        imageSource = preset.imageSource || 'local';
-        imageId = preset.imageId;
+      if (presetMaster.imageId) {
+        imageSource = presetMaster.imageSource || 'local';
+        imageId = presetMaster.imageId;
         console.log(`Inherited image from preset master: ${imageId} (${imageSource})`);
       }
     }
+
+    const normalizePositiveDecimal = (value, fallback) => {
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) && numericValue > 0 ? Math.round(numericValue * 10) / 10 : fallback;
+    };
+    const normalizedBaseAmount = normalizePositiveDecimal(presetMaster?.baseAmount ?? baseServingAmount, 1);
+    const normalizedServingAmount = normalizePositiveDecimal(servingAmount, normalizedBaseAmount);
+    const normalizedServingUnit = servingUnit === 'g' || servingUnit === '個'
+      ? servingUnit
+      : presetMaster?.servingUnit === 'g'
+        ? 'g'
+        : '個';
+    const servingRatio = normalizedBaseAmount > 0 ? normalizedServingAmount / normalizedBaseAmount : 1;
+    const sourceNutrition = presetMaster || { calories, protein, fat, carbohydrates };
+    const calculatedCalories = Math.round(Number(sourceNutrition.calories) * servingRatio);
+    const calculatedProtein = Math.round(Number(sourceNutrition.protein) * servingRatio * 10) / 10;
+    const calculatedFat = Math.round(Number(sourceNutrition.fat) * servingRatio * 10) / 10;
+    const calculatedCarbohydrates = Math.round(Number(sourceNutrition.carbohydrates) * servingRatio * 10) / 10;
 
     const history = await readHistory();
     const newRecord = {
@@ -1239,16 +1273,17 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
       imageId,
       textInput: name,
       nutrition: {
-        calories: Math.round(Number(calories)),
-        protein: Math.round(Number(protein) * 10) / 10,
-        fat: Math.round(Number(fat) * 10) / 10,
-        carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
+        calories: calculatedCalories,
+        protein: calculatedProtein,
+        fat: calculatedFat,
+        carbohydrates: calculatedCarbohydrates,
         inference: `定番メニュー: ${name}\n\n・登録済みの情報から直接追加しました。\n  - カロリー  : ${calories} kcal\n  - タンパク質: ${protein} g\n  - 脂質      : ${fat} g\n  - 炭水化物  : ${carbohydrates} g`,
         comment: '事前登録された定番メニューから登録されました。'
       }
     };
     
     // 通常の解析履歴登録と同様に unshift で先頭（最新）に配置
+    newRecord.nutrition.inference = `定番メニュー: ${name}\n\n・登録済みの情報から量に応じて追加しました。\n  - 基準量: ${normalizedBaseAmount.toFixed(1)} ${normalizedServingUnit}\n  - 今回量: ${normalizedServingAmount.toFixed(1)} ${normalizedServingUnit}\n  - カロリー  : ${calculatedCalories} kcal\n  - タンパク質: ${calculatedProtein} g\n  - 脂質      : ${calculatedFat} g\n  - 炭水化物  : ${calculatedCarbohydrates} g`;
     history.unshift(newRecord);
     await writeHistory(history);
     res.status(201).json(newRecord);
