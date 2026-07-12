@@ -5291,3 +5291,20 @@ body {
   width: 100%;
 }
 
+#tab-overview .summary-chip-target,
+#tab-overview .pfc-progress-status,
+#tab-overview .calorie-progress-status,
+#tab-overview .weight-diff-badge {
+  font-size: 11px !important;
+  line-height: 16px !important;
+}
+
+#tab-presets .presets-table .macro-badge {
+  font-size: 12px;
+  line-height: 32px;
+}
+
+#tab-presets .presets-table .macro-badge.calories {
+  font-size: 13px;
+}
+
