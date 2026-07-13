@@ -3619,6 +3619,14 @@ body.modal-open {
     -webkit-overflow-scrolling: touch;
   }
 
+  #tab-analyze .ai-consultation-history-card .ai-consultation-history-scroll {
+    overflow: hidden !important;
+  }
+
+  #tab-analyze .ai-consultation-history-card .ai-consultation-history-table-wrapper {
+    overflow-y: auto !important;
+  }
+
   #tab-analyze {
     padding: 2px;
   }
@@ -5684,6 +5692,24 @@ body {
   min-height: 0;
   overflow-y: auto;
   max-height: 260px;
+}
+
+#tab-analyze .ai-consultation-history-card .ai-card-scroll-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#tab-analyze .ai-consultation-history-card .ai-consultation-history-scroll {
+  overflow: hidden;
+  max-height: none;
+}
+
+#tab-analyze .ai-consultation-history-card .ai-consultation-history-table-wrapper {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 #tab-history .history-quick-actions {
