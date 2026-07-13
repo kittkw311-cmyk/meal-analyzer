@@ -4112,9 +4112,6 @@ body {
 #tab-stats {
   background: var(--app-dark-background);
   color: var(--app-dark-foreground);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   margin-inline: auto;
   min-height: 0;
   max-width: 800px;
@@ -4122,7 +4119,10 @@ body {
   width: 100%;
 }
 
-#tab-analyze {
+#tab-analyze.active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   height: calc(100dvh - 176px);
   overflow: hidden;
 }
