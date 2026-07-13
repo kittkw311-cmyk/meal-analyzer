@@ -139,178 +139,14 @@
           <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
           <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
         </div>
-        <div class="card upload-card">
-          <!-- 定番メニューから選ぶドロップダウン -->
-          <div class="preset-select-wrapper" style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left;">
-            <select id="preset-selector" style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid var(--design-border); font-size: 13px; font-weight: 700; color: var(--design-foreground); background: var(--design-card); outline: none; cursor: pointer; box-sizing: border-box;">
-              <option value="">定番メニューから選択</option>
-            </select>
-            <div id="preset-serving-controls" class="preset-serving-controls" hidden>
-              <div class="preset-serving-field">
-                <label for="preset-serving-amount">今回量</label>
-                <input type="number" id="preset-serving-amount" min="0.1" step="0.1" inputmode="decimal" value="1.0">
-              </div>
-              <output id="preset-serving-unit" class="preset-serving-unit">個</output>
-              <output id="preset-serving-preview" class="preset-serving-preview">-- kcal / P --.- F --.- C --.-</output>
-            </div>
-          </div>
-
-          <!-- カメラ起動 / アルバム選択の2つのボタン -->
-          <div class="upload-action-buttons" id="drop-zone">
-            <button type="button" class="btn upload-action-btn" id="btn-camera-trigger">
-              <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
-            </button>
-            <button type="button" class="btn upload-action-btn" id="btn-gallery-trigger">
-              <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
-              <span class="upload-badge" id="meal-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-meal-badge">×</span></span>
-            </button>
-            <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
-            <input type="file" id="gallery-input" accept="image/*" hidden>
-          </div>
-          
-          <!-- プレビュー表示エリア -->
-          <div class="preview-container" id="preview-container" style="display: none;">
-            <img id="image-preview" src="#" alt="食事プレビュー">
-            <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を消去</button>
-          </div>
-          
-          <!-- 食事内容のテキスト入力エリア -->
-          <div class="text-input-area">
-            <textarea id="meal-text-input" class="meal-textarea" placeholder="または料理名、レシピのURL、商品のURLを入力..." rows="2"></textarea>
-          </div>
-          
-          <!-- 食事日時と区分の選択 (見出し無しの横1行インライン構成) -->
-          <div class="selectors-inline-row">
-            <input type="date" id="meal-date-input" class="date-input">
-            <div class="meal-type-chips">
-              <button type="button" class="chip" data-type="morning">朝</button>
-              <button type="button" class="chip" data-type="noon">昼</button>
-              <button type="button" class="chip" data-type="night">夕</button>
-              <button type="button" class="chip" data-type="snack">間</button>
-            </div>
-          </div>
-
-          <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
-        </div>
-
-        <!-- 体組成データの記録セクション (食事解析の下に追加) -->
-        <div class="body-composition-section">
-          <div class="card upload-card body-comp-card">
-            <!-- カメラ起動 / アルバム選択 of two buttons -->
-            <div class="upload-action-buttons" id="weight-drop-zone">
-              <button type="button" class="btn upload-action-btn" id="btn-weight-camera-trigger">
-                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
-              </button>
-              <button type="button" class="btn upload-action-btn" id="btn-weight-gallery-trigger">
-                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
-                <span class="upload-badge" id="weight-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-weight-badge">×</span></span>
-              </button>
-              <input type="file" id="weight-camera-input" accept="image/*" capture="environment" hidden>
-              <input type="file" id="weight-gallery-input" accept="image/*" hidden>
-            </div>
-            
-            <!-- プレビュー表示エリア -->
-            <div class="preview-container" id="weight-preview-container" style="display: none;">
-              <img id="weight-image-preview" src="#" alt="体組成プレビュー">
-              <button class="btn btn-danger btn-sm" id="btn-remove-weight-image">写真を消去</button>
-            </div>
-            
-            <!-- 体組成テキスト入力エリア -->
-            <div class="text-input-area">
-              <textarea id="weight-text-input" class="meal-textarea" placeholder="または体組成計の数値テキストなどを貼り付け..." rows="2"></textarea>
-            </div>
-            
-            <!-- 測定日と区分の選択 (見出し無しの横1行インライン構成) -->
-            <div class="selectors-inline-row">
-              <input type="date" id="weight-date-input" class="date-input">
-              <div class="weight-type-chips" id="weight-type-chips">
-                <button type="button" class="weight-chip" data-type="morning">朝</button>
-                <button type="button" class="weight-chip" data-type="night">夜</button>
-              </div>
-            </div>
-
-            <button class="btn btn-primary btn-block" id="btn-analyze-weight" disabled>体組成データを登録する</button>
-          </div>
-
-          <!-- 解析結果確認・編集フォーム (最初は非表示) -->
-          <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
-            <h3 class="results-edit-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--design-accent); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>解析結果の確認・修正</h3>
-            <div class="body-comp-results-grid">
-              <div class="result-edit-field">
-                <span class="label">体重 (kg)</span>
-                <input type="number" step="0.01" id="input-weight-val" class="input-number-v2" placeholder="--.--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">BMI</span>
-                <input type="number" step="0.1" id="input-bmi-val" class="input-number-v2" placeholder="--.-">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">体脂肪率 (%)</span>
-                <input type="number" step="0.1" id="input-fat-val" class="input-number-v2" placeholder="--.-">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">心拍数 (bpm)</span>
-                <input type="number" step="1" id="input-heart-val" class="input-number-v2" placeholder="--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">筋肉量 (kg)</span>
-                <input type="number" step="0.01" id="input-muscle-val" class="input-number-v2" placeholder="--.--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">基礎代謝 (kcal)</span>
-                <input type="number" step="1" id="input-bmr-val" class="input-number-v2" placeholder="----">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">水分量 (%)</span>
-                <input type="number" step="0.1" id="input-water-val" class="input-number-v2" placeholder="--.-">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">体脂肪量 (kg)</span>
-                <input type="number" step="0.01" id="input-fatmass-val" class="input-number-v2" placeholder="--.--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">除脂肪体重 (kg)</span>
-                <input type="number" step="0.01" id="input-leanbody-val" class="input-number-v2" placeholder="--.--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">骨量 (kg)</span>
-                <input type="number" step="0.01" id="input-bone-val" class="input-number-v2" placeholder="--.--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">内臓脂肪</span>
-                <input type="number" step="0.5" id="input-visceralfat-val" class="input-number-v2" placeholder="--.-">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">タンパク質 (%)</span>
-                <input type="number" step="0.1" id="input-proteinrate-val" class="input-number-v2" placeholder="--.-">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">骨格筋量 (kg)</span>
-                <input type="number" step="0.01" id="input-skeletalmuscle-val" class="input-number-v2" placeholder="--.--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">皮下脂肪 (%)</span>
-                <input type="number" step="0.1" id="input-subcutaneous-val" class="input-number-v2" placeholder="--.-">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">体内年齢 (歳)</span>
-                <input type="number" step="1" id="input-bodyage-val" class="input-number-v2" placeholder="--">
-              </div>
-              <div class="result-edit-field">
-                <span class="label">ボディタイプ</span>
-                <input type="text" id="input-bodytype-val" class="input-number-v2" style="font-family: inherit; font-size: 13px;" placeholder="標準的">
-              </div>
-            </div>
-            
-            <div class="result-action-row">
-              <button class="btn btn-success w-full" id="btn-save-weight">この内容でDriveに保存する</button>
-            </div>
-          </div>
-        </div>
       </section>
 
       <!-- 2. 履歴タブ -->
       <section id="tab-history" class="tab-content">
+        <div class="history-quick-actions">
+          <button type="button" class="history-quick-action-btn" id="btn-open-meal-analysis">メニュー登録</button>
+          <button type="button" class="history-quick-action-btn" id="btn-open-weight-entry">体組成登録</button>
+        </div>
         <div id="history-list" class="history-list">
           <!-- 履歴カードが動的に挿入されます -->
           <div class="empty-state">
@@ -339,15 +175,15 @@
             <form id="form-presets-manual">
               <div class="preset-manual-top-row">
                 <div class="form-group-compact preset-manual-name-field">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">メニュー名 / 商品名</label>
-                  <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground);">
+                  <label class="preset-manual-field-label">メニュー名 / 商品名</label>
+                  <input type="text" id="preset-manual-name" class="preset-manual-name-input" placeholder="例：プロテインパウダー" required>
                 </div>
                 <div class="form-group-compact preset-manual-amount-field">
-                  <label for="preset-manual-serving-amount">基準量</label>
+                  <label for="preset-manual-serving-amount" class="preset-manual-field-label">基準量</label>
                   <input type="number" id="preset-manual-serving-amount" placeholder="1.0" value="1.0" required step="0.1" min="0.1">
                 </div>
                 <div class="form-group-compact preset-manual-unit-field">
-                  <label for="preset-manual-serving-unit">単位</label>
+                  <label for="preset-manual-serving-unit" class="preset-manual-field-label">単位</label>
                   <select id="preset-manual-serving-unit">
                     <option value="個">個</option>
                     <option value="g">g</option>
@@ -387,6 +223,123 @@
         </div>
       </section>
     </main>
+
+    <div class="modal-overlay" id="meal-analysis-modal" style="display: none;">
+      <div class="modal-content">
+        <button class="modal-close-btn" id="btn-close-meal-analysis-modal">✕</button>
+        <div class="modal-header-fixed" style="padding-bottom: 8px;">
+          <h3 class="modal-title" style="margin-bottom: 6px;">メニュー登録</h3>
+        </div>
+        <div class="modal-body-scrollable" style="display: grid; gap: 12px;">
+          <div class="card upload-card">
+            <div class="preset-select-wrapper" style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left;">
+              <select id="preset-selector" style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid var(--design-border); font-size: 13px; font-weight: 700; color: var(--design-foreground); background: var(--design-card); outline: none; cursor: pointer; box-sizing: border-box;">
+                <option value="">定番メニューから選択</option>
+              </select>
+              <div id="preset-serving-controls" class="preset-serving-controls" hidden>
+                <div class="preset-serving-field">
+                  <label for="preset-serving-amount">今回量</label>
+                  <input type="number" id="preset-serving-amount" min="0.1" step="0.1" inputmode="decimal" value="1.0">
+                </div>
+                <output id="preset-serving-unit" class="preset-serving-unit">個</output>
+                <output id="preset-serving-preview" class="preset-serving-preview">-- kcal / P --.- F --.- C --.-</output>
+              </div>
+            </div>
+            <div class="upload-action-buttons" id="drop-zone">
+              <button type="button" class="btn upload-action-btn" id="btn-camera-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
+              </button>
+              <button type="button" class="btn upload-action-btn" id="btn-gallery-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
+                <span class="upload-badge" id="meal-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-meal-badge">×</span></span>
+              </button>
+              <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+              <input type="file" id="gallery-input" accept="image/*" hidden>
+            </div>
+            <div class="preview-container" id="preview-container" style="display: none;">
+              <img id="image-preview" src="#" alt="食事プレビュー">
+              <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を消去</button>
+            </div>
+            <div class="text-input-area">
+              <textarea id="meal-text-input" class="meal-textarea" placeholder="または料理名、レシピのURL、商品のURLを入力..." rows="2"></textarea>
+            </div>
+            <div class="selectors-inline-row">
+              <input type="date" id="meal-date-input" class="date-input">
+              <div class="meal-type-chips">
+                <button type="button" class="chip" data-type="morning">朝</button>
+                <button type="button" class="chip" data-type="noon">昼</button>
+                <button type="button" class="chip" data-type="night">夕</button>
+                <button type="button" class="chip" data-type="snack">間</button>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="weight-entry-modal" style="display: none;">
+      <div class="modal-content">
+        <button class="modal-close-btn" id="btn-close-weight-entry-modal">✕</button>
+        <div class="modal-header-fixed" style="padding-bottom: 8px;">
+          <h3 class="modal-title" style="margin-bottom: 6px;">体組成登録</h3>
+        </div>
+        <div class="modal-body-scrollable" style="display: grid; gap: 12px;">
+          <div class="card upload-card body-comp-card">
+            <div class="upload-action-buttons" id="weight-drop-zone">
+              <button type="button" class="btn upload-action-btn" id="btn-weight-camera-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
+              </button>
+              <button type="button" class="btn upload-action-btn" id="btn-weight-gallery-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
+                <span class="upload-badge" id="weight-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-weight-badge">×</span></span>
+              </button>
+              <input type="file" id="weight-camera-input" accept="image/*" capture="environment" hidden>
+              <input type="file" id="weight-gallery-input" accept="image/*" hidden>
+            </div>
+            <div class="preview-container" id="weight-preview-container" style="display: none;">
+              <img id="weight-image-preview" src="#" alt="体組成プレビュー">
+              <button class="btn btn-danger btn-sm" id="btn-remove-weight-image">写真を消去</button>
+            </div>
+            <div class="text-input-area">
+              <textarea id="weight-text-input" class="meal-textarea" placeholder="または体組成計の数値テキストなどを貼り付け..." rows="2"></textarea>
+            </div>
+            <div class="selectors-inline-row">
+              <input type="date" id="weight-date-input" class="date-input">
+              <div class="weight-type-chips" id="weight-type-chips">
+                <button type="button" class="weight-chip" data-type="morning">朝</button>
+                <button type="button" class="weight-chip" data-type="night">夜</button>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-analyze-weight" disabled>体組成データを登録する</button>
+          </div>
+          <div class="body-comp-results-edit-card" id="weight-result-edit-container" style="display: none;">
+            <h3 class="results-edit-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--design-accent); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>解析結果の確認・修正</h3>
+            <div class="body-comp-results-grid">
+              <div class="result-edit-field"><span class="label">体重 (kg)</span><input type="number" step="0.01" id="input-weight-val" class="input-number-v2" placeholder="--.--"></div>
+              <div class="result-edit-field"><span class="label">BMI</span><input type="number" step="0.1" id="input-bmi-val" class="input-number-v2" placeholder="--.-"></div>
+              <div class="result-edit-field"><span class="label">体脂肪率 (%)</span><input type="number" step="0.1" id="input-fat-val" class="input-number-v2" placeholder="--.-"></div>
+              <div class="result-edit-field"><span class="label">心拍数 (bpm)</span><input type="number" step="1" id="input-heart-val" class="input-number-v2" placeholder="--"></div>
+              <div class="result-edit-field"><span class="label">筋肉量 (kg)</span><input type="number" step="0.01" id="input-muscle-val" class="input-number-v2" placeholder="--.--"></div>
+              <div class="result-edit-field"><span class="label">基礎代謝 (kcal)</span><input type="number" step="1" id="input-bmr-val" class="input-number-v2" placeholder="----"></div>
+              <div class="result-edit-field"><span class="label">水分量 (%)</span><input type="number" step="0.1" id="input-water-val" class="input-number-v2" placeholder="--.-"></div>
+              <div class="result-edit-field"><span class="label">体脂肪量 (kg)</span><input type="number" step="0.01" id="input-fatmass-val" class="input-number-v2" placeholder="--.--"></div>
+              <div class="result-edit-field"><span class="label">除脂肪体重 (kg)</span><input type="number" step="0.01" id="input-leanbody-val" class="input-number-v2" placeholder="--.--"></div>
+              <div class="result-edit-field"><span class="label">骨量 (kg)</span><input type="number" step="0.01" id="input-bone-val" class="input-number-v2" placeholder="--.--"></div>
+              <div class="result-edit-field"><span class="label">内臓脂肪</span><input type="number" step="0.5" id="input-visceralfat-val" class="input-number-v2" placeholder="--.-"></div>
+              <div class="result-edit-field"><span class="label">タンパク質 (%)</span><input type="number" step="0.1" id="input-proteinrate-val" class="input-number-v2" placeholder="--.-"></div>
+              <div class="result-edit-field"><span class="label">骨格筋量 (kg)</span><input type="number" step="0.01" id="input-skeletalmuscle-val" class="input-number-v2" placeholder="--.--"></div>
+              <div class="result-edit-field"><span class="label">皮下脂肪 (%)</span><input type="number" step="0.1" id="input-subcutaneous-val" class="input-number-v2" placeholder="--.-"></div>
+              <div class="result-edit-field"><span class="label">体内年齢 (歳)</span><input type="number" step="1" id="input-bodyage-val" class="input-number-v2" placeholder="--"></div>
+              <div class="result-edit-field"><span class="label">ボディタイプ</span><input type="text" id="input-bodytype-val" class="input-number-v2" style="font-family: inherit; font-size: 13px;" placeholder="標準的"></div>
+            </div>
+            <div class="result-action-row">
+              <button class="btn btn-success w-full" id="btn-save-weight">この内容でDriveに保存する</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 下部ナビゲーションバー（スマホ向け） -->
     <nav class="app-nav">

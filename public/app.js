@@ -70,6 +70,9 @@
   const btnSaveModal = document.getElementById('btn-save-modal');
   const btnReanalyzeModal = document.getElementById('btn-reanalyze-modal');
   const btnPresetModal = document.getElementById('btn-preset-modal');
+  const mealAnalysisModal = document.getElementById('meal-analysis-modal');
+  const btnOpenMealAnalysis = document.getElementById('btn-open-meal-analysis');
+  const btnCloseMealAnalysisModal = document.getElementById('btn-close-meal-analysis-modal');
   
   // Presets Elements
   const presetSelector = document.getElementById('preset-selector');
@@ -156,6 +159,9 @@
   const weightModalDateInput = document.getElementById('weight-modal-date-input');
   const weightModalTypeSelect = document.getElementById('weight-modal-type-select');
   const btnDeleteWeightModal = document.getElementById('btn-delete-weight-modal');
+  const weightEntryModal = document.getElementById('weight-entry-modal');
+  const btnOpenWeightEntry = document.getElementById('btn-open-weight-entry');
+  const btnCloseWeightEntryModal = document.getElementById('btn-close-weight-entry-modal');
   // 解析タブのサマリー要素
   const dailyWeightSummaryBar = document.getElementById('daily-weight-box');
   const summaryWeightVal = document.getElementById('summary-weight-val');
@@ -195,6 +201,25 @@
   const wModalBodyType = document.getElementById('w-modal-bodytype');
 
   let selectedWeightFile = null;
+
+  const updateModalBodyLock = () => {
+    const anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay')).some((modal) => {
+      return getComputedStyle(modal).display !== 'none';
+    });
+    document.body.classList.toggle('modal-open', anyModalOpen);
+  };
+
+  const showModal = (modalEl) => {
+    if (!modalEl) return;
+    modalEl.style.display = 'flex';
+    updateModalBodyLock();
+  };
+
+  const hideModal = (modalEl) => {
+    if (!modalEl) return;
+    modalEl.style.display = 'none';
+    updateModalBodyLock();
+  };
 
   // ==========================================================================
   // Selector Initializer
@@ -264,6 +289,46 @@
       setMealTypeActive(chip.getAttribute('data-type'));
     });
   });
+
+  if (btnOpenMealAnalysis) {
+    btnOpenMealAnalysis.addEventListener('click', () => {
+      showModal(mealAnalysisModal);
+    });
+  }
+
+  if (btnCloseMealAnalysisModal) {
+    btnCloseMealAnalysisModal.addEventListener('click', () => {
+      hideModal(mealAnalysisModal);
+    });
+  }
+
+  if (mealAnalysisModal) {
+    mealAnalysisModal.addEventListener('click', (event) => {
+      if (event.target === mealAnalysisModal) {
+        hideModal(mealAnalysisModal);
+      }
+    });
+  }
+
+  if (btnOpenWeightEntry) {
+    btnOpenWeightEntry.addEventListener('click', () => {
+      showModal(weightEntryModal);
+    });
+  }
+
+  if (btnCloseWeightEntryModal) {
+    btnCloseWeightEntryModal.addEventListener('click', () => {
+      hideModal(weightEntryModal);
+    });
+  }
+
+  if (weightEntryModal) {
+    weightEntryModal.addEventListener('click', (event) => {
+      if (event.target === weightEntryModal) {
+        hideModal(weightEntryModal);
+      }
+    });
+  }
 
   // 詳細モーダルを開いてデータをバインドする共通関数
   function openDetailModal(item) {
@@ -337,7 +402,7 @@
     }
 
     // モーダルを表示
-    historyDetailModal.style.display = 'flex';
+    showModal(historyDetailModal);
   }
 
   // 解析画面のフォームをリセットする関数
@@ -663,12 +728,13 @@
 
         const record = await response.json();
 
-        // 成功後の各種同期 ＆ 自動遷移 ＆ モーダル起動
-        updateDailySummary();
-        await loadHistory();
+      // 成功後の各種同期 ＆ 自動遷移 ＆ モーダル起動
+      updateDailySummary();
+      await loadHistory();
+      hideModal(mealAnalysisModal);
 
-        const historyNavItem = document.querySelector('[data-tab="tab-history"]');
-        if (historyNavItem) {
+      const historyNavItem = document.querySelector('[data-tab="tab-history"]');
+      if (historyNavItem) {
           historyNavItem.click();
         }
 
@@ -737,6 +803,7 @@
 
       // 履歴一覧も同期してリロード
       await loadHistory();
+      hideModal(mealAnalysisModal);
 
       // 自動で食事（履歴）タブ（tab-history）へ遷移
       const historyNavItem = document.querySelector('[data-tab="tab-history"]');
@@ -1637,7 +1704,7 @@
   // History Detail Modal Control & Inline Save/Reanalyze Handlers
   // ==========================================================================
   const closeModal = () => {
-    historyDetailModal.style.display = 'none';
+    hideModal(historyDetailModal);
     currentEditingHistoryId = null;
   };
 
@@ -2433,6 +2500,7 @@
       // 履歴テーブルの更新＆サマリー更新
       await loadWeightHistory();
       await updateDailyWeightSummary();
+      hideModal(weightEntryModal);
       alert('体組成データを登録しました。');
 
     } catch (err) {
@@ -3000,7 +3068,7 @@
       diffBodyTypeEl.className = 'col-diff-val val-neutral';
     }
 
-    weightDetailModal.style.display = 'flex';
+    showModal(weightDetailModal);
   };
 
   // モーダル内の「削除」ボタンの処理
@@ -3018,7 +3086,7 @@
       const delRes = await fetch(`/api/body-composition/${currentEditingWeightId}`, { method: 'DELETE' });
       if (!delRes.ok) throw new Error('削除に失敗しました。');
       
-      weightDetailModal.style.display = 'none';
+      hideModal(weightDetailModal);
       await loadWeightHistory();
       await updateDailyWeightSummary();
     } catch (err) {
@@ -3030,13 +3098,13 @@
   });
 
   btnCloseWeightModal.addEventListener('click', () => {
-    weightDetailModal.style.display = 'none';
+    hideModal(weightDetailModal);
   });
 
   // モーダル外側クリックで閉じる
   weightDetailModal.addEventListener('click', (e) => {
     if (e.target === weightDetailModal) {
-      weightDetailModal.style.display = 'none';
+      hideModal(weightDetailModal);
     }
   });
 

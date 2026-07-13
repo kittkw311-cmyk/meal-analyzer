@@ -71,6 +71,10 @@ body {
   margin: 0;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 /* ==========================================================================
    App Container (Mobile Frame on Desktop)
    ========================================================================== */
@@ -3232,6 +3236,18 @@ body {
   width: 100%;
 }
 
+.preset-manual-field-label {
+  display: block;
+  height: 12px;
+  line-height: 12px;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.preset-manual-name-input {
+  text-align: left;
+}
+
 .preset-manual-top-row select {
   font-family: var(--font-sans);
   text-align: center;
@@ -3259,6 +3275,19 @@ body {
   gap: 8px;
   grid-template-columns: minmax(0, 1fr) minmax(88px, 96px) minmax(52px, 60px);
   margin-bottom: 12px;
+}
+
+.preset-manual-top-row .form-group-compact {
+  align-content: start;
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.preset-manual-name-field,
+.preset-manual-amount-field,
+.preset-manual-unit-field {
+  align-items: start;
 }
 
 .preset-manual-name-field {
@@ -4202,6 +4231,62 @@ body {
   border-color: var(--app-dark-border) !important;
   color: var(--app-dark-muted) !important;
   opacity: 0.65;
+}
+
+#meal-analysis-modal .modal-content,
+#weight-entry-modal .modal-content {
+  background: var(--design-background);
+  color: var(--design-foreground);
+}
+
+#meal-analysis-modal .card.upload-card,
+#weight-entry-modal .card.upload-card,
+#weight-entry-modal .body-comp-results-edit-card {
+  background: var(--design-card);
+  border: 1px solid var(--design-border);
+  color: var(--design-foreground);
+}
+
+#meal-analysis-modal .upload-action-btn,
+#weight-entry-modal .upload-action-btn {
+  background: var(--design-card) !important;
+  border: 1px solid var(--design-border) !important;
+  color: var(--design-foreground) !important;
+  box-shadow: none;
+}
+
+#meal-analysis-modal .upload-action-btn:hover,
+#meal-analysis-modal .upload-action-btn:focus-visible,
+#weight-entry-modal .upload-action-btn:hover,
+#weight-entry-modal .upload-action-btn:focus-visible {
+  border-color: var(--design-accent) !important;
+  color: var(--design-accent) !important;
+  outline: none;
+}
+
+#meal-analysis-modal .meal-textarea,
+#weight-entry-modal .meal-textarea,
+#meal-analysis-modal .preset-serving-controls,
+#meal-analysis-modal .preset-serving-field input,
+#meal-analysis-modal #preset-selector,
+#meal-analysis-modal .date-input,
+#meal-analysis-modal .meal-type-chips .chip,
+#weight-entry-modal .date-input,
+#weight-entry-modal .weight-type-chips .weight-chip,
+#weight-entry-modal .input-number-v2 {
+  background: var(--design-card) !important;
+  border-color: var(--design-border) !important;
+  color: var(--design-foreground) !important;
+}
+
+#meal-analysis-modal .meal-textarea::placeholder,
+#weight-entry-modal .meal-textarea::placeholder {
+  color: var(--design-muted);
+}
+
+#meal-analysis-modal .preset-serving-preview,
+#meal-analysis-modal .preset-serving-unit {
+  color: var(--design-foreground);
 }
 
 #tab-analyze .chip,
@@ -5413,6 +5498,38 @@ body {
 
 #tab-analyze .overview-ai-consultation-answer[hidden] {
   display: none;
+}
+
+.tab-empty-note {
+  color: var(--app-dark-muted);
+  font-size: 12px;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+#tab-history .history-quick-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 8px;
+}
+
+#tab-history .history-quick-action-btn {
+  background: var(--app-dark-card);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  color: var(--app-dark-foreground);
+  font: 800 13px var(--font-heading);
+  min-height: 40px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+#tab-history .history-quick-action-btn:hover,
+#tab-history .history-quick-action-btn:focus-visible {
+  border-color: var(--app-dark-accent);
+  color: var(--app-dark-accent);
+  outline: none;
 }
 
 #tab-overview .summary-chip.carbs .label,
