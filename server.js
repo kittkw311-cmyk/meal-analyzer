@@ -15,6 +15,9 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ASSET_VERSION = process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT_SHA || process.env.COMMIT_SHA || 'dev';
+const INDEX_HTML_PATH = path.join(__dirname, 'public', 'index.html');
+const INDEX_HTML_TEMPLATE = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
 // JSONパーサーと静的ファイル配信の設定
 app.use(express.json());
@@ -25,6 +28,9 @@ app.use((req, res, next) => {
     res.setHeader('Expires', '0');
   }
   next();
+});
+app.get(['/', '/index.html'], (req, res) => {
+  res.type('html').send(INDEX_HTML_TEMPLATE.replaceAll('__ASSET_VERSION__', ASSET_VERSION));
 });
 app.use(express.static(path.join(__dirname, 'public')));
 
