@@ -186,7 +186,6 @@
   const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
   const overviewAiQuestion = document.getElementById('overview-ai-question');
   const btnOverviewAiConsultation = document.getElementById('btn-overview-ai-consultation');
-  const overviewAiConsultationAnswer = document.getElementById('overview-ai-consultation-answer');
   const dailyTargetProtein = document.getElementById('daily-target-protein');
   const dailyTargetFat = document.getElementById('daily-target-fat');
   const dailyTargetCarbs = document.getElementById('daily-target-carbs');
@@ -1068,8 +1067,6 @@
 
     btnOverviewAiConsultation.disabled = true;
     btnOverviewAiConsultation.textContent = '回答を作成中...';
-    overviewAiConsultationAnswer.hidden = false;
-    overviewAiConsultationAnswer.textContent = '現在の体重・PFC・目標を確認しています...';
 
     try {
       const response = await fetch('/api/ai-consultation', {
@@ -1083,10 +1080,10 @@
       }
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || '回答を取得できませんでした。');
-      overviewAiConsultationAnswer.textContent = result.answer;
       await loadAiConsultations();
+      openAiConsultationModal(result);
     } catch (err) {
-      overviewAiConsultationAnswer.textContent = err.message;
+      window.alert(err.message);
     } finally {
       btnOverviewAiConsultation.disabled = false;
       btnOverviewAiConsultation.textContent = '質問する';
