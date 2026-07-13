@@ -36,6 +36,9 @@ const DEFAULT_CONSULTATION_PROMPT_TEMPLATE = `あなたは食事・体重管理�
 現在状況(JSON):
 {{contextJson}}
 
+食事の扱い:
+記録回数は食事回数ではありません。朝食・昼食・夕食・間食の区分ごとに登録されたメニューを、その区分で食べた内容として扱ってください。
+
 現在の体組成:
 {{currentBodyCompositionText}}
 
@@ -1824,6 +1827,7 @@ async function writeAiConsultations(data) {
 async function initDriveConsultationPrompt() {
   if (!drive || !folderId) return;
   try {
+    const localPromptText = readLocalConsultationPromptTemplate();
     console.log('Searching for ai_prompt.txt in Google Drive...');
     const res = await drive.files.list({
       q: `name = 'ai_prompt.txt' and '${folderId}' in parents and trashed = false`,
@@ -1833,10 +1837,15 @@ async function initDriveConsultationPrompt() {
     if (res.data.files && res.data.files.length > 0) {
       driveConsultationPromptFileId = res.data.files[0].id;
       console.log(`Found ai_prompt.txt. File ID: ${driveConsultationPromptFileId}`);
+      await drive.files.update({
+        fileId: driveConsultationPromptFileId,
+        media: { mimeType: 'text/plain', body: Readable.from(localPromptText) },
+      });
+      console.log('Synced ai_prompt.txt to Google Drive.');
     } else {
       const driveResponse = await drive.files.create({
         requestBody: { name: 'ai_prompt.txt', parents: [folderId], mimeType: 'text/plain' },
-        media: { mimeType: 'text/plain', body: Readable.from(DEFAULT_CONSULTATION_PROMPT_TEMPLATE) },
+        media: { mimeType: 'text/plain', body: Readable.from(localPromptText) },
         fields: 'id',
       });
       driveConsultationPromptFileId = driveResponse.data.id;
@@ -1862,20 +1871,25 @@ async function readConsultationPromptTemplate() {
   }
 
   try {
-    if (!fs.existsSync(AI_PROMPT_FILE)) {
-      fs.writeFileSync(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
-    }
-    const text = fs.readFileSync(AI_PROMPT_FILE, 'utf8');
-    return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
+    return readLocalConsultationPromptTemplate();
   } catch (err) {
     console.error('Error reading local ai_prompt.txt:', err.message);
     return DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
   }
 }
 
+function readLocalConsultationPromptTemplate() {
+  if (!fs.existsSync(AI_PROMPT_FILE)) {
+    fs.writeFileSync(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
+  }
+  const text = fs.readFileSync(AI_PROMPT_FILE, 'utf8');
+  return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
+}
+
 function buildConsultationPrompt(template, values) {
   return template
     .split('{{contextJson}}').join(values.contextJson || '')
+    .split('{{mealGroupsText}}').join(values.mealGroupsText || '（本日の食事記録なし）')
     .split('{{currentBodyCompositionText}}').join(values.currentBodyCompositionText || '（データなし）')
     .split('{{previousBodyCompositionText}}').join(values.previousBodyCompositionText || '（データなし）')
     .split('{{bodyCompositionDeltaText}}').join(values.bodyCompositionDeltaText || '（比較対象なし）')
@@ -1890,7 +1904,27 @@ function sortBodyCompositionRecords(weightHistory) {
     .sort((a, b) => {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
       return dateDiff || (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
-    });
+  });
+}
+
+function groupMealEntriesByType(meals) {
+  const labels = { morning: '朝食', noon: '昼食', night: '夕食', snack: '間食' };
+  const grouped = { morning: [], noon: [], night: [], snack: [] };
+  meals.forEach(item => {
+    const key = ['morning', 'noon', 'night', 'snack'].includes(item.mealType) ? item.mealType : 'snack';
+    grouped[key].push(item);
+  });
+  return Object.entries(grouped)
+    .map(([key, items]) => ({
+      mealType: key,
+      mealTypeLabel: labels[key],
+      items,
+      calories: items.reduce((sum, item) => sum + Number(item.nutrition?.calories || 0), 0),
+      protein: items.reduce((sum, item) => sum + Number(item.nutrition?.protein || 0), 0),
+      fat: items.reduce((sum, item) => sum + Number(item.nutrition?.fat || 0), 0),
+      carbohydrates: items.reduce((sum, item) => sum + Number(item.nutrition?.carbohydrates || 0), 0),
+    }))
+    .filter(group => group.items.length > 0);
 }
 
 function formatBodyCompositionValue(value, unit = '') {
@@ -1959,6 +1993,17 @@ function formatBodyCompositionDelta(current, previous) {
   return parts.length ? parts.join(' / ') : '（数値比較なし）';
 }
 
+function formatMealGroups(mealGroups) {
+  if (!mealGroups || mealGroups.length === 0) return '（本日の食事記録なし）';
+  return mealGroups.map(group => {
+    const entries = group.items.map(item => {
+      const name = item.mealName || item.nutrition?.mealName || item.textInput || '不明';
+      return `- ${name} (${Math.round(Number(item.nutrition?.calories || 0))}kcal / P:${Math.round(Number(item.nutrition?.protein || 0) * 10) / 10}g / F:${Math.round(Number(item.nutrition?.fat || 0) * 10) / 10}g / C:${Math.round(Number(item.nutrition?.carbohydrates || 0) * 10) / 10}g)`;
+    }).join('\n');
+    return `${group.mealTypeLabel}\n${entries}`;
+  }).join('\n\n');
+}
+
 app.post('/api/ai-consultation', async (req, res) => {
   try {
     const question = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
@@ -1975,6 +2020,7 @@ app.post('/api/ai-consultation', async (req, res) => {
       fat: sum.fat + Number(item.nutrition?.fat || 0),
       carbohydrates: sum.carbohydrates + Number(item.nutrition?.carbohydrates || 0),
     }), { calories: 0, protein: 0, fat: 0, carbohydrates: 0 });
+    const mealGroups = groupMealEntriesByType(todayMeals);
 
     const bodyCompositionHistory = sortBodyCompositionRecords(weights);
     const currentBodyComposition = bodyCompositionHistory[0] || null;
@@ -1989,8 +2035,10 @@ app.post('/api/ai-consultation', async (req, res) => {
         proteinG: Math.round(totals.protein * 10) / 10,
         fatG: Math.round(totals.fat * 10) / 10,
         carbohydratesG: Math.round(totals.carbohydrates * 10) / 10,
-        mealCount: todayMeals.length,
+        recordedEntryCount: todayMeals.length,
+        mealTypeCount: mealGroups.length,
       },
+      mealGroups,
       targetWeightKg: profile.targetWeight ?? null,
       targetDate: profile.targetDate || null,
       heightCm: profile.height ?? null,
@@ -2021,6 +2069,7 @@ app.post('/api/ai-consultation', async (req, res) => {
     const consultationPromptTemplate = await readConsultationPromptTemplate();
     const prompt = buildConsultationPrompt(consultationPromptTemplate, {
       contextJson: JSON.stringify(context, null, 2),
+      mealGroupsText: formatMealGroups(mealGroups),
       currentBodyCompositionText: formatBodyCompositionRecord(currentBodyComposition),
       previousBodyCompositionText: formatBodyCompositionRecord(previousBodyComposition),
       bodyCompositionDeltaText: formatBodyCompositionDelta(currentBodyComposition, previousBodyComposition),
