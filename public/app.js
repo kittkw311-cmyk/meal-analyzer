@@ -1472,10 +1472,14 @@
               <th>夜体重 (kg)</th>
             </tr>
           </thead>
-          <tbody></tbody>
         </table>
+        <div class="history-summary-scroll">
+          <table class="history-summary-table">
+            <tbody></tbody>
+          </table>
+        </div>
       `;
-      const historyTableBody = historyTableWrapper.querySelector('tbody');
+      const historyTableBody = historyTableWrapper.querySelector('.history-summary-scroll tbody');
       historyList.appendChild(historyTableWrapper);
 
       // 日付の降順でソートして描画
@@ -1506,7 +1510,6 @@
             <div class="history-calories">${group.totalCalories} <span class="unit">kcal</span></div>
           </div>
           <div class="history-date-meta">
-            <span class="history-meal-count-badge">${group.meals.length}</span>
             <span class="history-date-title">${group.dateLabel}</span>
             <span class="history-row-chevron" aria-hidden="true">›</span>
           </div>
@@ -1546,7 +1549,7 @@
         };
 
         listRow.innerHTML = `
-          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel.replace(/^\d{4}\//, '')}</span><span class="history-meal-count-badge">${group.meals.length}</span></span></td>
+          <td class="history-summary-date"><span class="history-summary-date-inner"><span>${group.dateLabel.replace(/^\d{4}\//, '')}</span></span></td>
           <td>${pTotal}</td>
           <td>${fTotal}</td>
           <td>${cTotal}</td>
@@ -2215,20 +2218,20 @@
           if (validHistory.length > 1) {
             const prevRecord = validHistory[validHistory.length - 2];
             const diff = latest.weight - prevRecord.weight;
-            diffEl.style.display = 'inline-block';
+            diffEl.hidden = false;
             if (diff > 0) {
               diffEl.textContent = `前回比 +${diff.toFixed(1)}`;
-              diffEl.className = 'weight-diff-badge up';
+              diffEl.className = 'weight-diff-inline up';
             } else if (diff < 0) {
               diffEl.textContent = `前回比 ${diff.toFixed(1)}`;
-              diffEl.className = 'weight-diff-badge down';
+              diffEl.className = 'weight-diff-inline down';
             } else {
               diffEl.textContent = `前回比 ±0`;
-              diffEl.className = 'weight-diff-badge same';
+              diffEl.className = 'weight-diff-inline same';
             }
           } else {
             diffEl.textContent = '';
-            diffEl.style.display = 'none';
+            diffEl.hidden = true;
           }
         }
         
@@ -2254,7 +2257,7 @@
         const diffEl = document.getElementById('daily-weight-diff');
         if (diffEl) {
           diffEl.textContent = '';
-          diffEl.style.display = 'none';
+          diffEl.hidden = true;
         }
         updateTargetPfcSummary(null);
         updateDailyCalorieProgress();

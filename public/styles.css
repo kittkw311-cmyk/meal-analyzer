@@ -4144,10 +4144,12 @@ body {
 }
 
 #tab-history .history-table-wrapper {
+  display: flex;
+  flex-direction: column;
   max-height: calc(100dvh - 176px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  width: 100%;
+  margin-inline: -6px;
+  overflow: hidden;
+  width: calc(100% + 12px);
 }
 
 #tab-history .history-summary-table {
@@ -4155,6 +4157,14 @@ body {
   border-collapse: collapse;
   color: var(--app-dark-foreground);
   table-layout: fixed;
+  width: 100%;
+}
+
+#tab-history .history-summary-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   width: 100%;
 }
 
@@ -4185,7 +4195,7 @@ body {
   justify-content: flex-end;
   min-width: 0;
   overflow: hidden;
-  padding: 6px 3px;
+  padding: 6px 2px;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: auto;
@@ -4202,14 +4212,12 @@ body {
   font: 800 10px var(--font-sans);
   line-height: 12px;
   white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: relative;
 }
 
 #tab-history .history-summary-table td {
   color: var(--app-dark-foreground);
-  font: 800 12px var(--font-heading);
+  font: 800 13px var(--font-heading);
   height: 44px;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -4261,14 +4269,14 @@ body {
   align-items: center;
   display: flex;
   flex-direction: row;
-  gap: 1px;
+  gap: 0;
   justify-content: flex-start;
   min-width: 0;
   width: max-content;
 }
 
 #tab-history .history-summary-date {
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 
 #tab-history .history-summary-date-inner > span:first-child {
@@ -4289,25 +4297,27 @@ body {
   border: 0;
   color: var(--app-dark-accent);
   cursor: pointer;
-  font: 800 12px var(--font-heading);
+  font: 800 13px var(--font-heading);
   font-variant-numeric: tabular-nums;
-  padding: 0;
-  align-items: flex-end;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
   justify-content: flex-end;
+  line-height: 1;
+  padding: 0;
   text-align: right;
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--app-dark-accent) 50%, transparent);
   text-underline-offset: 3px;
+  white-space: nowrap;
   width: 100%;
 }
 
 #tab-history .history-weight-diff {
   color: var(--app-dark-muted);
   flex: 0 0 auto;
-  font-size: 9px;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 #tab-history .history-weight-diff.down {
@@ -4328,17 +4338,6 @@ body {
 #tab-history .history-summary-row:hover td,
 #tab-history .history-summary-row:focus-visible td {
   background: color-mix(in srgb, var(--app-dark-accent) 5%, var(--app-dark-card));
-}
-
-#tab-history .history-summary-table .history-meal-count-badge {
-  display: inline-block;
-  flex: 0 0 var(--design-compact-count-badge-width);
-  height: 18px;
-  line-height: 16px;
-  padding: 0 3px;
-  vertical-align: middle;
-  white-space: nowrap;
-  width: var(--design-compact-count-badge-width);
 }
 
 #tab-history .history-group {
@@ -4368,25 +4367,6 @@ body {
   gap: 8px;
   justify-content: flex-end;
   min-width: 0;
-}
-
-#tab-history .history-meal-count-badge {
-  background: var(--app-dark-background);
-  border: 1px solid var(--app-dark-accent);
-  border-radius: 4px;
-  color: var(--app-dark-accent);
-  flex: 0 0 auto;
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 800;
-  height: var(--design-badge-height);
-  line-height: calc(var(--design-badge-height) - 2px);
-  overflow: hidden;
-  padding: 0 4px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: var(--design-count-badge-width);
 }
 
 #tab-history .history-row-chevron {
@@ -4705,8 +4685,7 @@ body {
 
 #tab-history .history-pfc-chip .val,
 #tab-history .history-calories,
-#tab-history .history-date-title,
-#tab-history .history-meal-count-badge {
+#tab-history .history-date-title {
   font-variant-numeric: tabular-nums;
 }
 
@@ -5210,15 +5189,31 @@ body {
   white-space: normal;
 }
 
-#tab-overview .weight-diff-badge,
-#tab-overview .weight-diff-badge.up,
-#tab-overview .weight-diff-badge.down,
-#tab-overview .weight-diff-badge.same {
+#tab-overview .weight-diff-inline,
+#tab-overview .weight-diff-inline.up,
+#tab-overview .weight-diff-inline.down,
+#tab-overview .weight-diff-inline.same {
   background: transparent;
   border: 0;
   color: var(--overview-accent);
-  margin-top: 8px;
+  display: block;
+  flex-basis: 100%;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  margin: 4px 0 0;
   position: static;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#tab-overview .summary-weight-value {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  white-space: normal;
 }
 
 #tab-overview .calorie-progress {
