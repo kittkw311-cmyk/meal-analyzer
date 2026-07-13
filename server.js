@@ -26,33 +26,27 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 const WEIGHT_FILE = path.join(DATA_DIR, 'weight_history.json');
 const PRESETS_FILE = path.join(DATA_DIR, 'presets.json');
-const SUMMARY_FILE = path.join(DATA_DIR, 'summary_history.json');
 const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
 const AI_CONSULTATIONS_FILE = path.join(DATA_DIR, 'ai_consultations.json');
-const SUMMARY_PROMPT_FILE = path.join(DATA_DIR, 'summary_prompt.txt');
+const AI_PROMPT_FILE = path.join(DATA_DIR, 'ai_prompt.txt');
 
-const DEFAULT_SUMMARY_PROMPT_TEMPLATE = `あなたはプロのダイエットトレーナーです。
-以下のデータをもとに、{{date}}（1日分）の総括分析を日本語で行ってください。
+const DEFAULT_CONSULTATION_PROMPT_TEMPLATE = `あなたは食事・体重管理を支援するアドバイザーです。以下の現在状況と目標を必ず考慮し、ユーザーの質問に日本語で簡潔かつ具体的に回答してください。
+断定的な医療診断は避け、食べてよいかを聞かれた場合は、可否だけでなく量・タイミング・その後の調整案を示してください。
 
-【食事内容】
-{{mealsText}}
+現在状況(JSON):
+{{contextJson}}
 
-【体組成データ】
-{{bodyText}}
+現在の体組成:
+{{currentBodyCompositionText}}
 
-【ユーザーコメント・メモ】
-{{commentText}}
+前回の体組成:
+{{previousBodyCompositionText}}
 
-【ユーザープロファイル】
-{{profileText}}
+体組成の増減:
+{{bodyCompositionDeltaText}}
 
-以下の観点で具体的にアドバイスしてください。
-1. この日の食事評価（カロリー・PFCバランス）
-2. 体組成の状態コメント（データがある場合）
-3. 良かった点・改善すべき点
-4. 明日以降への具体的なアドバイス（食事・生活習慣）
-
-マークダウン記法は使わず、読みやすいプレーンテキストで、200〜500文字程度でまとめてください。`;
+質問:
+{{question}}`;
 
 const DEFAULT_PROFILE = {
   height: null,
@@ -124,17 +118,14 @@ if (!fs.existsSync(WEIGHT_FILE)) {
 if (!fs.existsSync(PRESETS_FILE)) {
   fs.writeFileSync(PRESETS_FILE, JSON.stringify([], null, 2));
 }
-if (!fs.existsSync(SUMMARY_FILE)) {
-  fs.writeFileSync(SUMMARY_FILE, JSON.stringify([], null, 2));
-}
 if (!fs.existsSync(PROFILE_FILE)) {
   fs.writeFileSync(PROFILE_FILE, JSON.stringify(DEFAULT_PROFILE, null, 2));
 }
 if (!fs.existsSync(AI_CONSULTATIONS_FILE)) {
   fs.writeFileSync(AI_CONSULTATIONS_FILE, JSON.stringify([], null, 2));
 }
-if (!fs.existsSync(SUMMARY_PROMPT_FILE)) {
-  fs.writeFileSync(SUMMARY_PROMPT_FILE, DEFAULT_SUMMARY_PROMPT_TEMPLATE);
+if (!fs.existsSync(AI_PROMPT_FILE)) {
+  fs.writeFileSync(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
 }
 
 // Multer設定（メモリ上にバッファとして保存）
@@ -183,10 +174,9 @@ if (clientId && clientSecret && refreshToken) {
 let driveHistoryFileId = null;
 let driveWeightFileId = null;
 let drivePresetsFileId = null;
-let driveSummaryFileId = null;
 let driveProfileFileId = null;
 let driveAiConsultationsFileId = null;
-let driveSummaryPromptFileId = null;
+let driveConsultationPromptFileId = null;
 
 // 体組成ファイルを検索または新規作成してファイルIDを設定する
 async function initDriveProfile() {
@@ -1783,362 +1773,6 @@ async function updateBodyCompositionRecord(req, res) {
 app.patch('/api/body-composition/:id', updateBodyCompositionRecord);
 app.put('/api/body-composition/:id', updateBodyCompositionRecord);
 
-// ==========================================================================
-// 総括AI分析エンドポイント
-// ==========================================================================
-app.post('/api/analyze-summary', async (req, res) => {
-  try {
-    const { date, comment } = req.body;
-    if (!date) return res.status(400).json({ error: '日付が指定されていません。' });
-    if (!ai) return res.status(500).json({ error: 'Gemini APIが初期化されていません。' });
-
-    // 該当日の食事データを取得
-    const historyData = await readHistory();
-    const dayMeals = historyData.filter(item => getJstDateKey(item.mealDate || item.date) === date);
-
-    // 該当日の体組成データを取得（±1日以内で最も近いもの）
-    const weightData = await readWeight();
-    const profile = await readProfile();
-    const dayWeights = weightData.filter(w => getJstDateKey(w.date) === date);
-    const weightPriority = { night: 3, morning: 2, other: 1 };
-    const bodyComp = dayWeights
-      .slice()
-      .sort((a, b) => (weightPriority[b.measurementType] || 0) - (weightPriority[a.measurementType] || 0))[0] || null;
-
-    // プロンプト構築
-    const mealsText = dayMeals.length > 0
-      ? dayMeals.map(m => {
-          const typeJa = { morning: '朝食', noon: '昼食', night: '夕食', snack: '間食' }[m.mealType || 'snack'];
-          const name = m.mealName || m.nutrition?.mealName || m.textInput || '不明';
-          const cal = m.nutrition?.calories ?? '-';
-          const p = m.nutrition?.protein ?? '-';
-          const f = m.nutrition?.fat ?? '-';
-          const c = m.nutrition?.carbohydrates ?? '-';
-          return `・${typeJa}「${name}」: ${cal}kcal (P:${p}g / F:${f}g / C:${c}g)`;
-        }).join('\n')
-      : '（この日の食事記録なし）';
-
-    const bodyText = bodyComp
-      ? [
-          bodyComp.weight != null ? `体重: ${bodyComp.weight}kg` : null,
-          bodyComp.bmi != null ? `BMI: ${bodyComp.bmi}` : null,
-          bodyComp.bodyFat != null ? `体脂肪率: ${bodyComp.bodyFat}%` : null,
-          bodyComp.muscleMass != null ? `筋肉量: ${bodyComp.muscleMass}kg` : null,
-          bodyComp.bmr != null ? `基礎代謝: ${bodyComp.bmr}kcal` : null,
-          bodyComp.visceralFat != null ? `内臓脂肪: ${bodyComp.visceralFat}` : null,
-        ].filter(Boolean).join(' / ')
-      : '（体組成データなし）';
-
-    const commentText = comment && comment.trim() ? comment.trim() : '（コメントなし）';
-    const profileText = formatSummaryProfile(profile);
-
-    let prompt = `あなたはプロのダイエットトレーナーです。以下のデータをもとに、${date}（1日分）の総括分析を日本語で行ってください。
-
-【食事内容】
-${mealsText}
-
-【体組成データ】
-${bodyText}
-
-【ユーザーコメント・メモ】
-${commentText}
-
-以下の観点で具体的にアドバイスしてください（マークダウン記号は使わず、読みやすいプレーンテキストで）：
-1. この日の食事評価（カロリー・栄養バランス）
-2. 体組成の状態コメント（データがある場合）
-3. 良かった点・改善すべき点
-4. 明日以降への具体的なアドバイス（食事・生活習慣）
-
-200〜400文字程度でまとめてください。`;
-    const summaryPromptTemplate = await readSummaryPromptTemplate();
-    prompt = buildSummaryPrompt(summaryPromptTemplate, {
-      date,
-      mealsText,
-      bodyText,
-      commentText,
-      profileText,
-    });
-
-    // 429対策: 最大2回リトライ
-    let response;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        });
-        break; // 成功したらループ脱出
-      } catch (retryErr) {
-        const is429 = retryErr.message?.includes('429') || retryErr.status === 429;
-        if (is429 && attempt < 2) {
-          const waitMs = (attempt + 1) * 3000; // 3秒 → 6秒
-          console.warn(`Gemini 429 rate limit. Retrying in ${waitMs}ms... (attempt ${attempt + 1})`);
-          await new Promise(r => setTimeout(r, waitMs));
-        } else {
-          throw retryErr;
-        }
-      }
-    }
-
-    const forbiddenNames = dayMeals
-      .flatMap(item => [
-        item.mealName,
-        item.nutrition?.mealName,
-        item.textInput,
-      ])
-      .filter(Boolean)
-      .map(value => String(value).trim())
-      .filter(value => value.length >= 3);
-    let analysisText = response?.candidates?.[0]?.content?.parts?.[0]?.text || '分析結果を取得できませんでした。';
-    analysisText = await repairSummaryOutputIfNeeded(analysisText, {
-      template: summaryPromptTemplate,
-      forbiddenNames,
-    });
-
-    // 分析結果をJSONに保存
-    const summaryRecord = {
-      id: `summary-${Date.now()}`,
-      date,
-      comment: commentText !== '（コメントなし）' ? commentText : '',
-      analysis: analysisText,
-      createdAt: new Date().toISOString(),
-      mealCount: dayMeals.length,
-      totalCalories: dayMeals.reduce((s, m) => s + (m.nutrition?.calories || 0), 0),
-      hasBodyComp: !!bodyComp,
-    };
-    const summaryHistory = await readSummary();
-    summaryHistory.push(summaryRecord);
-    await writeSummary(summaryHistory);
-
-    res.json({ analysis: analysisText, date, id: summaryRecord.id });
-
-
-  } catch (err) {
-    console.error('analyze-summary error:', err);
-    const is429 = err.message?.includes('429') || err.status === 429;
-    const msg = is429
-      ? 'APIの利用制限に達しました。しばらく待ってから再試行してください。'
-      : 'AI分析中にエラーが発生しました: ' + err.message;
-    res.status(is429 ? 429 : 500).json({ error: msg });
-  }
-
-});
-
-
-// ==========================================================================
-// 総括履歴 Drive初期化・読み書き
-// ==========================================================================
-async function initDriveSummary() {
-  if (!drive || !folderId) return;
-  try {
-    console.log('Searching for summary_history.json in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'summary_history.json' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
-    });
-    if (res.data.files && res.data.files.length > 0) {
-      driveSummaryFileId = res.data.files[0].id;
-      console.log(`Found summary_history.json. File ID: ${driveSummaryFileId}`);
-    } else {
-      const driveResponse = await drive.files.create({
-        requestBody: { name: 'summary_history.json', parents: [folderId], mimeType: 'application/json' },
-        media: { mimeType: 'application/json', body: Readable.from(JSON.stringify([], null, 2)) },
-        fields: 'id',
-      });
-      driveSummaryFileId = driveResponse.data.id;
-      console.log(`Created summary_history.json. File ID: ${driveSummaryFileId}`);
-    }
-  } catch (err) {
-    console.error('Failed to initialize summary_history.json:', err.message);
-  }
-}
-
-async function readSummary() {
-  if (drive && driveSummaryFileId) {
-    try {
-      const res = await drive.files.get({ fileId: driveSummaryFileId, alt: 'media' }, { responseType: 'text' });
-      const text = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
-      return JSON.parse(text);
-    } catch (err) {
-      console.error('Error reading summary_history from Drive:', err.message);
-      return [];
-    }
-  }
-  try { return JSON.parse(fs.readFileSync(SUMMARY_FILE, 'utf8')); } catch { return []; }
-}
-
-async function writeSummary(data) {
-  if (drive && driveSummaryFileId) {
-    try {
-      await drive.files.update({
-        fileId: driveSummaryFileId,
-        media: { mimeType: 'application/json', body: Readable.from(JSON.stringify(data, null, 2)) },
-      });
-    } catch (err) {
-      console.error('Error writing summary_history to Drive:', err.message);
-    }
-  } else {
-    fs.writeFileSync(SUMMARY_FILE, JSON.stringify(data, null, 2));
-  }
-}
-
-// GET 総括履歴一覧
-async function initDriveSummaryPrompt() {
-  if (!drive || !folderId) return;
-  try {
-    console.log('Searching for summary_prompt.txt in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'summary_prompt.txt' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
-    });
-    if (res.data.files && res.data.files.length > 0) {
-      driveSummaryPromptFileId = res.data.files[0].id;
-      console.log(`Found summary_prompt.txt. File ID: ${driveSummaryPromptFileId}`);
-    } else {
-      const driveResponse = await drive.files.create({
-        requestBody: { name: 'summary_prompt.txt', parents: [folderId], mimeType: 'text/plain' },
-        media: { mimeType: 'text/plain', body: Readable.from(DEFAULT_SUMMARY_PROMPT_TEMPLATE) },
-        fields: 'id',
-      });
-      driveSummaryPromptFileId = driveResponse.data.id;
-      console.log(`Created summary_prompt.txt. File ID: ${driveSummaryPromptFileId}`);
-    }
-  } catch (err) {
-    console.error('Failed to initialize summary_prompt.txt:', err.message);
-  }
-}
-
-async function readSummaryPromptTemplate() {
-  if (drive && driveSummaryPromptFileId) {
-    try {
-      const res = await drive.files.get(
-        { fileId: driveSummaryPromptFileId, alt: 'media' },
-        { responseType: 'text' }
-      );
-      const text = typeof res.data === 'string' ? res.data : String(res.data || '');
-      return text.trim() || DEFAULT_SUMMARY_PROMPT_TEMPLATE;
-    } catch (err) {
-      console.error('Error reading summary_prompt.txt from Drive:', err.message);
-    }
-  }
-
-  try {
-    if (!fs.existsSync(SUMMARY_PROMPT_FILE)) {
-      fs.writeFileSync(SUMMARY_PROMPT_FILE, DEFAULT_SUMMARY_PROMPT_TEMPLATE);
-    }
-    const text = fs.readFileSync(SUMMARY_PROMPT_FILE, 'utf8');
-    return text.trim() || DEFAULT_SUMMARY_PROMPT_TEMPLATE;
-  } catch (err) {
-    console.error('Error reading local summary_prompt.txt:', err.message);
-    return DEFAULT_SUMMARY_PROMPT_TEMPLATE;
-  }
-}
-
-function buildSummaryPrompt(template, values) {
-  const replacements = {
-    '{{date}}': values.date,
-    '{{mealsText}}': values.mealsText,
-    '{{bodyText}}': values.bodyText,
-    '{{commentText}}': values.commentText,
-    '{{profileText}}': values.profileText,
-  };
-  let prompt = template;
-  Object.entries(replacements).forEach(([key, value]) => {
-    prompt = prompt.split(key).join(value || '');
-  });
-
-  if (!template.includes('{{mealsText}}') && !template.includes('{{bodyText}}')) {
-    prompt += `\n\n【分析対象データ】\n日付: ${values.date}\n\n【食事内容】\n${values.mealsText}\n\n【体組成データ】\n${values.bodyText}\n\n【ユーザーコメント・メモ】\n${values.commentText}`;
-  }
-  if (!template.includes('{{profileText}}')) {
-    prompt += `\n\n【ユーザープロファイル】\n${values.profileText}`;
-  }
-  prompt += `\n\n【出力制約の最終確認】\n最終回答では思考プロセスを出さず、完成したチャット文章だけを出力してください。固定見出し、番号付きリスト、箇条書き、商品名、外食チェーン店名は禁止です。指定されたキャラクター、二人称、文字量、水分量、一般名詞の食材名、改行ルールを最優先で守ってください。`;
-  return prompt;
-}
-
-function formatSummaryProfile(profile) {
-  if (!profile || typeof profile !== 'object') return '（プロファイル未設定）';
-  return [
-    profile.height != null ? `身長: ${profile.height}cm` : null,
-    profile.gender ? `性別: ${profile.gender}` : null,
-    profile.birthDate ? `生年月日: ${profile.birthDate}` : null,
-    profile.targetWeight != null ? `目標体重: ${profile.targetWeight}kg` : null,
-    profile.targetDate ? `目標期限: ${profile.targetDate}` : null,
-    profile.activityLevel ? `活動レベル: ${profile.activityLevel}` : null,
-    profile.activityNotes ? `活動メモ: ${profile.activityNotes}` : null,
-  ].filter(Boolean).join('\n') || '（プロファイル未設定）';
-}
-
-function hasSummaryOutputViolation(text, options = {}) {
-  if (!text || typeof text !== 'string') return true;
-  const trimmed = text.trim();
-  const structuralViolation = [
-    /^#{1,6}\s/m,
-    /^【.+】/m,
-    /^\s*(?:\d+\.|[-・])\s/m,
-    /(?:^|\n)\s*Step\s*\d/i,
-  ].some(pattern => pattern.test(trimmed));
-  const template = options.template || '';
-  const toneViolation = (template.includes('キミ') && !trimmed.includes('キミ'))
-    || /お客様|ございます|お勧めします|お伝えします/.test(trimmed);
-  const lengthViolation = trimmed.length > 650;
-  const forbiddenNameViolation = (options.forbiddenNames || [])
-    .some(name => name && name.length >= 3 && trimmed.includes(name));
-  return structuralViolation || toneViolation || lengthViolation || forbiddenNameViolation;
-}
-
-async function repairSummaryOutputIfNeeded(text, options = {}) {
-  if (!hasSummaryOutputViolation(text, options)) return text;
-  const forbiddenNamesText = (options.forbiddenNames || [])
-    .filter(name => name && name.length >= 3)
-    .slice(0, 20)
-    .join('、') || 'なし';
-  const repairPrompt = `以下の文章を、制約に完全準拠する最終回答だけに書き直してください。
-
-制約:
-固定見出し、番号付きリスト、箇条書き、マークダウン、商品名、外食チェーン店名は禁止。
-「大人のお姉さん」の落ち着いた親しみやすい口調で、ユーザーを自然に「キミ」と呼ぶ。
-2〜3センテンスごとに改行する。
-全体で400〜500文字程度。
-水分量はリットル単位で具体的に書く。
-食材名は一般名詞だけを複数入れる。
-次の固有名詞・料理名・商品名は絶対に出さない: ${forbiddenNamesText}
-思考プロセスや説明は出さず、書き直した本文だけを出力する。
-
-元の文章:
-${text}`;
-
-  const repairResponse = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: [{ role: 'user', parts: [{ text: repairPrompt }] }],
-  });
-  return repairResponse?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text;
-}
-
-app.get('/api/summary-history', async (req, res) => {
-  try {
-    const data = await readSummary();
-    res.json(data.slice().reverse()); // 新しい順
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE 総括履歴削除
-app.delete('/api/summary-history/:id', async (req, res) => {
-  try {
-    const data = await readSummary();
-    const filtered = data.filter(d => d.id !== req.params.id);
-    await writeSummary(filtered);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 async function initDriveAiConsultations() {
   if (!drive || !folderId) return;
   try {
@@ -2187,6 +1821,144 @@ async function writeAiConsultations(data) {
   }
 }
 
+async function initDriveConsultationPrompt() {
+  if (!drive || !folderId) return;
+  try {
+    console.log('Searching for ai_prompt.txt in Google Drive...');
+    const res = await drive.files.list({
+      q: `name = 'ai_prompt.txt' and '${folderId}' in parents and trashed = false`,
+      fields: 'files(id)',
+      spaces: 'drive',
+    });
+    if (res.data.files && res.data.files.length > 0) {
+      driveConsultationPromptFileId = res.data.files[0].id;
+      console.log(`Found ai_prompt.txt. File ID: ${driveConsultationPromptFileId}`);
+    } else {
+      const driveResponse = await drive.files.create({
+        requestBody: { name: 'ai_prompt.txt', parents: [folderId], mimeType: 'text/plain' },
+        media: { mimeType: 'text/plain', body: Readable.from(DEFAULT_CONSULTATION_PROMPT_TEMPLATE) },
+        fields: 'id',
+      });
+      driveConsultationPromptFileId = driveResponse.data.id;
+      console.log(`Created ai_prompt.txt. File ID: ${driveConsultationPromptFileId}`);
+    }
+  } catch (err) {
+    console.error('Failed to initialize ai_prompt.txt:', err.message);
+  }
+}
+
+async function readConsultationPromptTemplate() {
+  if (drive && driveConsultationPromptFileId) {
+    try {
+      const res = await drive.files.get(
+        { fileId: driveConsultationPromptFileId, alt: 'media' },
+        { responseType: 'text' }
+      );
+      const text = typeof res.data === 'string' ? res.data : String(res.data || '');
+      return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
+    } catch (err) {
+      console.error('Error reading ai_prompt.txt from Drive:', err.message);
+    }
+  }
+
+  try {
+    if (!fs.existsSync(AI_PROMPT_FILE)) {
+      fs.writeFileSync(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
+    }
+    const text = fs.readFileSync(AI_PROMPT_FILE, 'utf8');
+    return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
+  } catch (err) {
+    console.error('Error reading local ai_prompt.txt:', err.message);
+    return DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
+  }
+}
+
+function buildConsultationPrompt(template, values) {
+  return template
+    .split('{{contextJson}}').join(values.contextJson || '')
+    .split('{{currentBodyCompositionText}}').join(values.currentBodyCompositionText || '（データなし）')
+    .split('{{previousBodyCompositionText}}').join(values.previousBodyCompositionText || '（データなし）')
+    .split('{{bodyCompositionDeltaText}}').join(values.bodyCompositionDeltaText || '（比較対象なし）')
+    .split('{{question}}').join(values.question || '');
+}
+
+function sortBodyCompositionRecords(weightHistory) {
+  const priority = { night: 3, morning: 2, other: 1 };
+  return weightHistory
+    .filter(item => Number.isFinite(Number(item.weight)))
+    .slice()
+    .sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      return dateDiff || (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
+    });
+}
+
+function formatBodyCompositionValue(value, unit = '') {
+  if (value === null || value === undefined || value === '') return null;
+  const num = Number(value);
+  if (!Number.isFinite(num)) return `${value}${unit}`;
+  const text = Number.isInteger(num) ? String(num) : num.toFixed(1);
+  return `${text}${unit}`;
+}
+
+function formatBodyCompositionRecord(record) {
+  if (!record) return '（データなし）';
+  const items = [
+    ['日時', record.date || null],
+    ['区分', record.measurementType || null],
+    ['体重', formatBodyCompositionValue(record.weight, 'kg')],
+    ['BMI', formatBodyCompositionValue(record.bmi)],
+    ['体脂肪率', formatBodyCompositionValue(record.fatRate, '%')],
+    ['筋肉量', formatBodyCompositionValue(record.muscleMass, 'kg')],
+    ['基礎代謝', formatBodyCompositionValue(record.bmr, 'kcal')],
+    ['水分量', formatBodyCompositionValue(record.waterRate, '%')],
+    ['体脂肪量', formatBodyCompositionValue(record.fatMass, 'kg')],
+    ['除脂肪体重', formatBodyCompositionValue(record.leanBodyMass, 'kg')],
+    ['骨量', formatBodyCompositionValue(record.boneMass, 'kg')],
+    ['内臓脂肪', formatBodyCompositionValue(record.visceralFat)],
+    ['タンパク質', formatBodyCompositionValue(record.proteinRate, '%')],
+    ['骨格筋量', formatBodyCompositionValue(record.skeletalMuscleMass, 'kg')],
+    ['皮下脂肪', formatBodyCompositionValue(record.subcutaneousFat, '%')],
+    ['体内年齢', formatBodyCompositionValue(record.bodyAge, '歳')],
+    ['ボディタイプ', record.bodyType || null],
+  ].filter(([, value]) => value !== null);
+  return items.length
+    ? items.map(([label, value]) => `${label}: ${value}`).join(' / ')
+    : '（データなし）';
+}
+
+function formatBodyCompositionDelta(current, previous) {
+  if (!current || !previous) return '（比較対象なし）';
+  const fields = [
+    ['体重', 'weight', 'kg'],
+    ['BMI', 'bmi', ''],
+    ['体脂肪率', 'fatRate', '%'],
+    ['筋肉量', 'muscleMass', 'kg'],
+    ['基礎代謝', 'bmr', 'kcal'],
+    ['水分量', 'waterRate', '%'],
+    ['体脂肪量', 'fatMass', 'kg'],
+    ['除脂肪体重', 'leanBodyMass', 'kg'],
+    ['骨量', 'boneMass', 'kg'],
+    ['内臓脂肪', 'visceralFat', ''],
+    ['タンパク質', 'proteinRate', '%'],
+    ['骨格筋量', 'skeletalMuscleMass', 'kg'],
+    ['皮下脂肪', 'subcutaneousFat', '%'],
+    ['体内年齢', 'bodyAge', '歳'],
+  ];
+  const parts = fields
+    .map(([label, key, unit]) => {
+      const currentValue = Number(current[key]);
+      const previousValue = Number(previous[key]);
+      if (!Number.isFinite(currentValue) || !Number.isFinite(previousValue)) return null;
+      const diff = currentValue - previousValue;
+      const sign = diff > 0 ? '+' : '';
+      const formattedDiff = Number.isInteger(diff) ? String(diff) : diff.toFixed(1);
+      return `${label}: ${sign}${formattedDiff}${unit}`;
+    })
+    .filter(Boolean);
+  return parts.length ? parts.join(' / ') : '（数値比較なし）';
+}
+
 app.post('/api/ai-consultation', async (req, res) => {
   try {
     const question = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
@@ -2204,19 +1976,14 @@ app.post('/api/ai-consultation', async (req, res) => {
       carbohydrates: sum.carbohydrates + Number(item.nutrition?.carbohydrates || 0),
     }), { calories: 0, protein: 0, fat: 0, carbohydrates: 0 });
 
-    const weightPriority = { night: 3, morning: 2, other: 1 };
-    const latestWeight = weights
-      .filter(item => Number.isFinite(Number(item.weight)))
-      .slice()
-      .sort((a, b) => {
-        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-        return dateDiff || (weightPriority[b.measurementType] || 0) - (weightPriority[a.measurementType] || 0);
-      })[0] || null;
+    const bodyCompositionHistory = sortBodyCompositionRecords(weights);
+    const currentBodyComposition = bodyCompositionHistory[0] || null;
+    const previousBodyComposition = bodyCompositionHistory[1] || null;
 
     const context = {
       date: today,
-      currentWeightKg: latestWeight ? Number(latestWeight.weight) : null,
-      weightMeasuredAt: latestWeight?.date || null,
+      currentWeightKg: currentBodyComposition ? Number(currentBodyComposition.weight) : null,
+      weightMeasuredAt: currentBodyComposition?.date || null,
       todayNutrition: {
         calories: Math.round(totals.calories),
         proteinG: Math.round(totals.protein * 10) / 10,
@@ -2229,16 +1996,36 @@ app.post('/api/ai-consultation', async (req, res) => {
       heightCm: profile.height ?? null,
       activityLevel: profile.activityLevel || null,
       activityNotes: profile.activityNotes || null,
+      currentBodyComposition,
+      previousBodyComposition,
+      bodyCompositionDelta: currentBodyComposition && previousBodyComposition
+        ? {
+            weightKg: Number(currentBodyComposition.weight) - Number(previousBodyComposition.weight),
+            bmi: Number(currentBodyComposition.bmi) - Number(previousBodyComposition.bmi),
+            fatRate: Number(currentBodyComposition.fatRate) - Number(previousBodyComposition.fatRate),
+            muscleMassKg: Number(currentBodyComposition.muscleMass) - Number(previousBodyComposition.muscleMass),
+            bmrKcal: Number(currentBodyComposition.bmr) - Number(previousBodyComposition.bmr),
+            waterRate: Number(currentBodyComposition.waterRate) - Number(previousBodyComposition.waterRate),
+            fatMassKg: Number(currentBodyComposition.fatMass) - Number(previousBodyComposition.fatMass),
+            leanBodyMassKg: Number(currentBodyComposition.leanBodyMass) - Number(previousBodyComposition.leanBodyMass),
+            boneMassKg: Number(currentBodyComposition.boneMass) - Number(previousBodyComposition.boneMass),
+            visceralFat: Number(currentBodyComposition.visceralFat) - Number(previousBodyComposition.visceralFat),
+            proteinRate: Number(currentBodyComposition.proteinRate) - Number(previousBodyComposition.proteinRate),
+            skeletalMuscleMassKg: Number(currentBodyComposition.skeletalMuscleMass) - Number(previousBodyComposition.skeletalMuscleMass),
+            subcutaneousFat: Number(currentBodyComposition.subcutaneousFat) - Number(previousBodyComposition.subcutaneousFat),
+            bodyAge: Number(currentBodyComposition.bodyAge) - Number(previousBodyComposition.bodyAge),
+          }
+        : null,
     };
 
-    const prompt = `あなたは食事・体重管理を支援するアドバイザーです。以下の現在状況と目標を必ず考慮し、ユーザーの質問に日本語で簡潔かつ具体的に回答してください。
-断定的な医療診断は避け、食べてよいかを聞かれた場合は、可否だけでなく量・タイミング・その後の調整案を示してください。
-
-現在状況(JSON):
-${JSON.stringify(context, null, 2)}
-
-質問:
-${question}`;
+    const consultationPromptTemplate = await readConsultationPromptTemplate();
+    const prompt = buildConsultationPrompt(consultationPromptTemplate, {
+      contextJson: JSON.stringify(context, null, 2),
+      currentBodyCompositionText: formatBodyCompositionRecord(currentBodyComposition),
+      previousBodyCompositionText: formatBodyCompositionRecord(previousBodyComposition),
+      bodyCompositionDeltaText: formatBodyCompositionDelta(currentBodyComposition, previousBodyComposition),
+      question,
+    });
 
     const aiResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -2271,8 +2058,7 @@ ${question}`;
     await initDriveHistory();
     await initDriveWeight();
     await initDrivePresets();
-    await initDriveSummary();
-    await initDriveSummaryPrompt();
+    await initDriveConsultationPrompt();
     await initDriveAiConsultations();
   }
   app.listen(PORT, () => {

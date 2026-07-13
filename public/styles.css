@@ -395,63 +395,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.summary-history-card {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 6px 14px rgba(150, 180, 160, 0.08);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.summary-history-card:hover {
-  transform: translateY(-1px);
-  border-color: rgba(140, 190, 160, 0.9);
-}
-
-.summary-history-card-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.summary-history-date {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text-main);
-}
-
-.summary-history-meta,
-.summary-history-created {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.summary-history-preview {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-main);
-  white-space: pre-wrap;
-}
-
-.summary-history-created {
-  margin-top: 8px;
-}
-
-.summary-history-empty {
-  padding: 18px 14px;
-  border: 1.5px dashed var(--border-color);
-  border-radius: 14px;
-  color: var(--text-muted);
-  font-size: 12px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.65);
-}
-
 .calorie-summary {
   text-align: center;
   padding-bottom: 16px;
