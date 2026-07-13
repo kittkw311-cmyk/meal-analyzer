@@ -3490,6 +3490,49 @@ body {
 }
 
 @media (max-width: 600px) {
+  body {
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 100dvh;
+  }
+
+  .app-container {
+    height: 100dvh;
+  }
+
+  .app-header {
+    padding: 6px 12px 4px;
+  }
+
+  .app-header .logo {
+    gap: 6px;
+    margin-bottom: 0;
+  }
+
+  .app-header h1 {
+    font-size: 20px;
+    letter-spacing: -0.35px;
+  }
+
+  .app-header .logo-svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .app-header .subtitle {
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  .app-header .app-version {
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+
+  .app-main {
+    padding: 6px 6px calc(64px + env(safe-area-inset-bottom));
+  }
+
   #tab-overview .daily-summary-capsule,
   #tab-overview .overview-energy-card {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3615,7 +3658,7 @@ body {
 .app-header {
   background: var(--design-card);
   border-bottom: 1px solid var(--design-border);
-  padding: 16px 24px 8px;
+  padding: 8px 16px 6px;
 }
 
 .app-header h1 {
