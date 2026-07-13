@@ -20,6 +20,21 @@
     return `${year}/${month}/${day}(${weekday})`;
   };
 
+  const formatDateTimeDisplay = (dateLike) => {
+    const date = new Date(dateLike);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date).replace(/\s+/g, ' ');
+  };
+
   // ==========================================================================
   // DOM Elements
   // ==========================================================================
@@ -103,10 +118,12 @@
   let selectedFile = null;
   let activeMealType = 'snack';
   let loadedPresets = [];
+  let aiConsultationRecords = [];
   
   // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
   let activeDetailMeal = null; // 現在詳細モーダルに表示されている食事レコードを保持
+  let currentAiConsultation = null;
 
   // 体組成 (Weight / Body Comp) Elements
   const weightDropZone = document.getElementById('weight-drop-zone');
@@ -175,6 +192,14 @@
   const dailyTargetCarbs = document.getElementById('daily-target-carbs');
   const summaryWeightGoalDiff = document.getElementById('summary-weight-goal-diff');
   const summaryWeightGoalDays = document.getElementById('summary-weight-goal-days');
+  const aiConsultationHistoryBody = document.getElementById('ai-consultation-history-body');
+  const aiConsultationHistoryEmpty = document.getElementById('ai-consultation-history-empty');
+  const aiConsultationModal = document.getElementById('ai-consultation-modal');
+  const btnCloseAiConsultationModal = document.getElementById('btn-close-ai-consultation-modal');
+  const aiConsultationModalTitle = document.getElementById('ai-consultation-modal-title');
+  const aiConsultationModalMeta = document.getElementById('ai-consultation-modal-meta');
+  const aiConsultationModalQuestion = document.getElementById('ai-consultation-modal-question');
+  const aiConsultationModalAnswer = document.getElementById('ai-consultation-modal-answer');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -220,6 +245,79 @@
     modalEl.style.display = 'none';
     updateModalBodyLock();
   };
+
+  const sortAiConsultations = (records) => {
+    return [...records].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  };
+
+  const openAiConsultationModal = (record) => {
+    if (!record || !aiConsultationModal) return;
+    currentAiConsultation = record;
+    if (aiConsultationModalTitle) aiConsultationModalTitle.textContent = 'AI相談詳細';
+    if (aiConsultationModalMeta) aiConsultationModalMeta.textContent = formatDateTimeDisplay(record.createdAt);
+    if (aiConsultationModalQuestion) aiConsultationModalQuestion.textContent = record.question || '---';
+    if (aiConsultationModalAnswer) aiConsultationModalAnswer.textContent = record.answer || '---';
+    showModal(aiConsultationModal);
+  };
+
+  const renderAiConsultationHistory = (records) => {
+    aiConsultationRecords = sortAiConsultations(Array.isArray(records) ? records : []);
+    if (!aiConsultationHistoryBody || !aiConsultationHistoryEmpty) return;
+
+    aiConsultationHistoryBody.replaceChildren();
+    if (aiConsultationRecords.length === 0) {
+      aiConsultationHistoryEmpty.textContent = 'まだ質問履歴がありません。';
+      aiConsultationHistoryEmpty.hidden = false;
+      return;
+    }
+
+    aiConsultationHistoryEmpty.hidden = true;
+    const fragment = document.createDocumentFragment();
+    aiConsultationRecords.forEach((record) => {
+      const row = document.createElement('tr');
+      row.className = 'ai-consultation-history-row';
+      row.tabIndex = 0;
+      row.setAttribute('role', 'button');
+      row.dataset.id = record.id || '';
+
+      const dateCell = document.createElement('td');
+      dateCell.className = 'ai-consultation-history-date';
+      dateCell.textContent = formatDateTimeDisplay(record.createdAt);
+
+      const questionCell = document.createElement('td');
+      questionCell.className = 'ai-consultation-history-question';
+      questionCell.textContent = record.question || '';
+
+      const openRecord = () => openAiConsultationModal(record);
+      row.addEventListener('click', openRecord);
+      row.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openRecord();
+        }
+      });
+
+      row.append(dateCell, questionCell);
+      fragment.appendChild(row);
+    });
+    aiConsultationHistoryBody.appendChild(fragment);
+  };
+
+  async function loadAiConsultations() {
+    if (!aiConsultationHistoryBody || !aiConsultationHistoryEmpty) return;
+    try {
+      const response = await fetch('/api/ai-consultations');
+      if (!response.ok) throw new Error('相談履歴を取得できませんでした。');
+      const records = await response.json();
+      renderAiConsultationHistory(records);
+    } catch (err) {
+      console.error('Failed to load AI consultations:', err);
+      aiConsultationRecords = [];
+      aiConsultationHistoryBody.replaceChildren();
+      aiConsultationHistoryEmpty.hidden = false;
+      aiConsultationHistoryEmpty.textContent = '質問履歴の読み込みに失敗しました。';
+    }
+  }
 
   // ==========================================================================
   // Selector Initializer
@@ -326,6 +424,20 @@
     weightEntryModal.addEventListener('click', (event) => {
       if (event.target === weightEntryModal) {
         hideModal(weightEntryModal);
+      }
+    });
+  }
+
+  if (btnCloseAiConsultationModal) {
+    btnCloseAiConsultationModal.addEventListener('click', () => {
+      hideModal(aiConsultationModal);
+    });
+  }
+
+  if (aiConsultationModal) {
+    aiConsultationModal.addEventListener('click', (event) => {
+      if (event.target === aiConsultationModal) {
+        hideModal(aiConsultationModal);
       }
     });
   }
@@ -452,6 +564,8 @@
       // Load data based on selected tab
       if (targetTabId === 'tab-history') {
         loadHistory();
+      } else if (targetTabId === 'tab-analyze') {
+        loadAiConsultations();
       } else if (targetTabId === 'tab-stats') {
         loadProfile();
       } else if (targetTabId === 'tab-overview') {
@@ -970,6 +1084,7 @@
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || '回答を取得できませんでした。');
       overviewAiConsultationAnswer.textContent = result.answer;
+      await loadAiConsultations();
     } catch (err) {
       overviewAiConsultationAnswer.textContent = err.message;
     } finally {
@@ -3125,4 +3240,5 @@
   updateDailyWeightSummary();
   loadStats();
   loadPresets();
+  loadAiConsultations();
 });

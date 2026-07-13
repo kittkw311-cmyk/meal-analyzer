@@ -5388,6 +5388,49 @@ body {
   white-space: normal;
 }
 
+#ai-consultation-modal .modal-content {
+  background: var(--app-dark-background);
+  border-color: var(--app-dark-border);
+  color: var(--app-dark-foreground);
+}
+
+#ai-consultation-modal .modal-header-fixed,
+#ai-consultation-modal .modal-body-scrollable {
+  background: var(--app-dark-card);
+  color: var(--app-dark-foreground);
+}
+
+#ai-consultation-modal .modal-meta {
+  color: var(--app-dark-muted);
+}
+
+#ai-consultation-modal .ai-consultation-modal-body {
+  gap: 12px;
+}
+
+#ai-consultation-modal .ai-consultation-modal-section {
+  background: var(--app-dark-background);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+#ai-consultation-modal .ai-consultation-modal-label {
+  color: var(--app-dark-accent);
+  font: 800 11px var(--font-heading);
+  letter-spacing: 0.02em;
+}
+
+#ai-consultation-modal .ai-consultation-modal-text {
+  color: var(--app-dark-foreground);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 #tab-overview .calorie-progress {
   background: var(--overview-border);
   border: 0;
@@ -5505,6 +5548,101 @@ body {
   font-size: 12px;
   margin: 8px 0 0;
   text-align: center;
+}
+
+#tab-analyze .ai-consultation-history-card {
+  background: var(--app-dark-card);
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 16px;
+}
+
+#tab-analyze .ai-consultation-history-header {
+  display: grid;
+  gap: 4px;
+}
+
+#tab-analyze .ai-consultation-history-title {
+  color: var(--app-dark-foreground);
+  font: 800 14px var(--font-heading);
+  margin: 0;
+}
+
+#tab-analyze .ai-consultation-history-caption {
+  color: var(--app-dark-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+#tab-analyze .ai-consultation-history-empty {
+  background: var(--app-dark-background);
+  border: 1px dashed var(--app-dark-border);
+  border-radius: 4px;
+  color: var(--app-dark-muted);
+  font-size: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+#tab-analyze .ai-consultation-history-table-wrapper {
+  border: 1px solid var(--app-dark-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#tab-analyze .ai-consultation-history-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+#tab-analyze .ai-consultation-history-table thead th {
+  background: var(--app-dark-background);
+  color: var(--app-dark-muted);
+  font: 800 11px var(--font-heading);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+#tab-analyze .ai-consultation-history-table th:first-child,
+#tab-analyze .ai-consultation-history-table td:first-child {
+  width: 140px;
+}
+
+#tab-analyze .ai-consultation-history-table td {
+  border-top: 1px solid var(--app-dark-border);
+  color: var(--app-dark-foreground);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+#tab-analyze .ai-consultation-history-row {
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+#tab-analyze .ai-consultation-history-row:hover td,
+#tab-analyze .ai-consultation-history-row:focus-visible td {
+  background: color-mix(in srgb, var(--app-dark-accent) 7%, var(--app-dark-card));
+  outline: none;
+}
+
+#tab-analyze .ai-consultation-history-date {
+  color: var(--app-dark-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#tab-analyze .ai-consultation-history-question {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #tab-history .history-quick-actions {

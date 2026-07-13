@@ -139,6 +139,26 @@
           <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
           <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
         </div>
+        <div class="card ai-consultation-history-card">
+          <div class="ai-consultation-history-header">
+            <h3 class="ai-consultation-history-title">質問履歴</h3>
+            <p class="ai-consultation-history-caption">新しい質問から順に表示します。</p>
+          </div>
+          <div id="ai-consultation-history-empty" class="ai-consultation-history-empty">
+            まだ質問履歴がありません。
+          </div>
+          <div class="ai-consultation-history-table-wrapper">
+            <table class="ai-consultation-history-table">
+              <thead>
+                <tr>
+                  <th scope="col">日時</th>
+                  <th scope="col">質問内容</th>
+                </tr>
+              </thead>
+              <tbody id="ai-consultation-history-body"></tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- 2. 履歴タブ -->
@@ -576,6 +596,26 @@
         <button type="button" class="btn btn-danger modal-delete-btn" id="btn-delete-weight-modal" style="margin: 0; flex: 1; background-color: var(--design-card); border: 1.5px solid var(--design-danger); color: var(--design-danger); padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; outline: none; cursor: pointer; transition: all 0.2s;">
           削除
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="ai-consultation-modal" style="display: none;">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="btn-close-ai-consultation-modal">✕</button>
+      <div class="modal-header-fixed">
+        <h3 class="modal-title" id="ai-consultation-modal-title">AI相談詳細</h3>
+        <div class="modal-meta" id="ai-consultation-modal-meta"></div>
+      </div>
+      <div class="modal-body-scrollable ai-consultation-modal-body">
+        <div class="ai-consultation-modal-section">
+          <div class="ai-consultation-modal-label">質問</div>
+          <p class="ai-consultation-modal-text" id="ai-consultation-modal-question"></p>
+        </div>
+        <div class="ai-consultation-modal-section">
+          <div class="ai-consultation-modal-label">回答</div>
+          <p class="ai-consultation-modal-text" id="ai-consultation-modal-answer"></p>
+        </div>
       </div>
     </div>
   </div>

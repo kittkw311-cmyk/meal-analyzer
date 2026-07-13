@@ -1854,6 +1854,17 @@ async function writeAiConsultations(data) {
   }
 }
 
+app.get('/api/ai-consultations', async (req, res) => {
+  try {
+    const consultations = await readAiConsultations();
+    consultations.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    res.json(consultations);
+  } catch (err) {
+    console.error('AI consultations read error:', err);
+    res.status(500).json({ error: '相談履歴の読み込みに失敗しました。' });
+  }
+});
+
 async function initDriveConsultationPrompt() {
   if (!drive || !folderId) return;
   try {
