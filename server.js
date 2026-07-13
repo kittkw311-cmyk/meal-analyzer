@@ -18,6 +18,14 @@ const PORT = process.env.PORT || 3000;
 
 // JSONパーサーと静的ファイル配信の設定
 app.use(express.json());
+app.use((req, res, next) => {
+  if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html'))) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // データ保存用ディレクトリの初期化 (ローカル用)
