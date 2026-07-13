@@ -15,7 +15,11 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ASSET_VERSION = process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT_SHA || process.env.COMMIT_SHA || 'dev';
+const ASSET_VERSION = process.env.RENDER_GIT_COMMIT
+  || process.env.RENDER_DEPLOY_ID
+  || process.env.GIT_COMMIT_SHA
+  || process.env.COMMIT_SHA
+  || String(Date.now());
 const INDEX_HTML_PATH = path.join(__dirname, 'public', 'index.html');
 const INDEX_HTML_TEMPLATE = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
