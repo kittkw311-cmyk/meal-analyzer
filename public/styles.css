@@ -5470,13 +5470,34 @@ body {
   background: var(--app-dark-card);
   border: 1px solid var(--app-dark-border);
   border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+#tab-analyze .ai-card-fixed-header {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 4px;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--app-dark-border);
+  background: var(--app-dark-card);
+}
+
+#tab-analyze .ai-card-scroll-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
   gap: 8px;
-  margin-top: 0;
   padding: 16px;
 }
 
-#tab-analyze .overview-ai-consultation-title {
+#tab-analyze .overview-ai-consultation-title,
+#tab-analyze .ai-consultation-history-title {
   color: var(--app-dark-foreground);
   font: var(--design-label-font-weight) 16px var(--font-heading);
   margin: 0;
@@ -5543,6 +5564,10 @@ body {
   display: none;
 }
 
+#tab-analyze .overview-ai-consultation-card {
+  max-height: min(52dvh, 430px);
+}
+
 .tab-empty-note {
   color: var(--app-dark-muted);
   font-size: 12px;
@@ -5554,21 +5579,16 @@ body {
   background: var(--app-dark-card);
   border: 1px solid var(--app-dark-border);
   border-radius: 4px;
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
   margin-top: 12px;
-  padding: 16px;
-}
-
-#tab-analyze .ai-consultation-history-header {
-  display: grid;
-  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 #tab-analyze .ai-consultation-history-title {
-  color: var(--app-dark-foreground);
   font: 800 14px var(--font-heading);
-  margin: 0;
 }
 
 #tab-analyze .ai-consultation-history-caption {
@@ -5592,12 +5612,17 @@ body {
   border: 1px solid var(--app-dark-border);
   border-radius: 4px;
   overflow: hidden;
+  min-height: 0;
 }
 
 #tab-analyze .ai-consultation-history-table {
   border-collapse: collapse;
   table-layout: fixed;
   width: 100%;
+}
+
+#tab-analyze .ai-consultation-history-scroll {
+  overflow-y: auto;
 }
 
 #tab-analyze .ai-consultation-history-table thead th {
@@ -5643,6 +5668,10 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#tab-analyze .ai-consultation-history-card {
+  max-height: min(46dvh, 360px);
 }
 
 #tab-history .history-quick-actions {

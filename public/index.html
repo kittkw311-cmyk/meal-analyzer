@@ -133,30 +133,36 @@
       <!-- 2. AIタブ -->
       <section id="tab-analyze" class="tab-content">
         <div class="card overview-ai-consultation-card">
-          <h3 class="overview-ai-consultation-title">AIに相談</h3>
-          <p class="overview-ai-consultation-description">現在の体重・今日のPFC・目標体重・期限を踏まえて回答します。</p>
-          <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
-          <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
-          <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
+          <div class="ai-card-fixed-header">
+            <h3 class="overview-ai-consultation-title">AIに相談</h3>
+            <p class="overview-ai-consultation-description">現在の体重・今日のPFC・目標体重・期限を踏まえて回答します。</p>
+          </div>
+          <div class="ai-card-scroll-body">
+            <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
+            <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
+            <div id="overview-ai-consultation-answer" class="overview-ai-consultation-answer" hidden aria-live="polite"></div>
+          </div>
         </div>
         <div class="card ai-consultation-history-card">
-          <div class="ai-consultation-history-header">
+          <div class="ai-card-fixed-header">
             <h3 class="ai-consultation-history-title">質問履歴</h3>
             <p class="ai-consultation-history-caption">新しい質問から順に表示します。</p>
           </div>
-          <div id="ai-consultation-history-empty" class="ai-consultation-history-empty">
-            まだ質問履歴がありません。
-          </div>
-          <div class="ai-consultation-history-table-wrapper">
-            <table class="ai-consultation-history-table">
-              <thead>
-                <tr>
-                  <th scope="col">日時</th>
-                  <th scope="col">質問内容</th>
-                </tr>
-              </thead>
-              <tbody id="ai-consultation-history-body"></tbody>
-            </table>
+          <div class="ai-card-scroll-body ai-consultation-history-scroll">
+            <div id="ai-consultation-history-empty" class="ai-consultation-history-empty">
+              まだ質問履歴がありません。
+            </div>
+            <div class="ai-consultation-history-table-wrapper">
+              <table class="ai-consultation-history-table">
+                <thead>
+                  <tr>
+                    <th scope="col">日時</th>
+                    <th scope="col">質問内容</th>
+                  </tr>
+                </thead>
+                <tbody id="ai-consultation-history-body"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
