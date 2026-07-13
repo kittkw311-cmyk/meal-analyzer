@@ -3603,6 +3603,26 @@ body.modal-open {
     padding: 6px 6px calc(64px + env(safe-area-inset-bottom));
   }
 
+  #tab-analyze .ai-tab-layout {
+    height: calc(100dvh - 176px) !important;
+    overflow: hidden !important;
+  }
+
+  #tab-analyze .ai-consultation-history-card {
+    flex: 1 1 0 !important;
+    margin-top: 8px;
+  }
+
+  #tab-analyze .ai-consultation-history-scroll {
+    min-height: 0 !important;
+    max-height: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #tab-analyze {
+    padding: 2px;
+  }
+
   #tab-overview .daily-summary-capsule,
   #tab-overview .overview-energy-card {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
