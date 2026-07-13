@@ -4119,14 +4119,6 @@ body {
   width: 100%;
 }
 
-#tab-analyze.active {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: calc(100dvh - 176px);
-  overflow: hidden;
-}
-
 #tab-analyze .card,
 #tab-analyze .body-comp-results-edit-card,
 #tab-history .history-card,
@@ -5475,48 +5467,27 @@ body {
   border-color: var(--overview-accent);
 }
 
-#tab-analyze .overview-ai-consultation-card {
-  background: var(--app-dark-card);
-  border: 1px solid var(--app-dark-border);
-  border-radius: 4px;
+#tab-analyze .ai-tab-layout {
   display: flex;
   flex-direction: column;
-  flex: 1 1 0;
-  margin-top: 0;
+  gap: 12px;
+  height: calc(100dvh - 176px);
   min-height: 0;
   overflow: hidden;
-  padding: 0;
 }
 
-#tab-analyze .ai-card-fixed-header {
-  flex: 0 0 auto;
-  display: grid;
-  gap: 4px;
-  padding: 16px 16px 10px;
-  border-bottom: 1px solid var(--app-dark-border);
-  background: var(--app-dark-card);
-}
-
-#tab-analyze .ai-card-fixed-inline-header {
+#tab-analyze .ai-consultation-panel {
   display: flex;
-  align-items: baseline;
+  flex: 0 0 auto;
+  flex-direction: column;
   gap: 8px;
-}
-
-#tab-analyze .ai-card-fixed-inline-header .overview-ai-consultation-description {
-  flex: 1 1 auto;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#tab-analyze .ai-card-scroll-body {
-  flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
-  display: grid;
-  gap: 8px;
-  padding: 16px;
+}
+
+#tab-analyze .ai-consultation-title-row {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
 }
 
 #tab-analyze .overview-ai-consultation-title,
@@ -5526,11 +5497,11 @@ body {
   margin: 0;
 }
 
-#tab-analyze .overview-ai-consultation-description {
-  color: var(--app-dark-muted);
-  font-size: 12px;
-  line-height: 1.6;
-  margin: 0;
+#tab-analyze .ai-card-scroll-body {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 #tab-analyze .overview-ai-question {
@@ -5561,8 +5532,9 @@ body {
   border: 1px solid var(--app-dark-accent);
   border-radius: 4px;
   color: var(--app-dark-foreground);
-  font: 800 13px var(--font-sans);
-  min-height: 40px;
+  font: 800 12px var(--font-sans);
+  min-height: 28px;
+  padding: 4px 10px;
   width: 100%;
 }
 
@@ -5605,6 +5577,10 @@ body {
   min-height: 0;
   overflow: hidden;
   padding: 0;
+}
+
+#tab-analyze .ai-consultation-history-card .ai-card-fixed-header {
+  padding-bottom: 8px;
 }
 
 #tab-analyze .ai-consultation-history-title {
@@ -5687,6 +5663,7 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  max-height: 260px;
 }
 
 #tab-history .history-quick-actions {
