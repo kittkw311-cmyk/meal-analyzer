@@ -193,60 +193,6 @@
           <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
         </div>
 
-        <!-- 手動で数値を入力して定番登録 -->
-        <div class="card accordion-card" style="margin-bottom: 16px; padding: 12px 14px; text-align: left; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px;">
-          <div class="accordion-header" id="presets-manual-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-            <h3 class="card-title-v2" style="font-size: 13.5px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center;">
-              <svg class="icon-svg" style="margin-right: 6px; color: var(--text-muted); width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>手動で数値を入力して定番登録
-            </h3>
-            <span class="accordion-arrow" id="presets-manual-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
-          </div>
-          <div class="accordion-content" id="presets-manual-content" style="display: none; margin-top: 12px; border-top: 1.5px solid var(--border-color); padding-top: 12px;">
-            <form id="form-presets-manual">
-              <div class="form-group-compact" style="margin-bottom: 10px;">
-                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">メニュー名 / 商品名</label>
-                <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground);">
-              </div>
-              <div class="preset-manual-serving-row">
-                <div class="form-group-compact">
-                  <label for="preset-manual-serving-amount">基準量</label>
-                  <input type="number" id="preset-manual-serving-amount" placeholder="1.0" value="1.0" required step="0.1" min="0.1">
-                </div>
-                <div class="form-group-compact">
-                  <label for="preset-manual-serving-unit">単位</label>
-                  <select id="preset-manual-serving-unit">
-                    <option value="個">個</option>
-                    <option value="g">g</option>
-                  </select>
-                </div>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
-                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
-                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
-                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
-                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-              </div>
-              <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
-                手動入力で定番に保存
-              </button>
-            </form>
-          </div>
-        </div>
-
-
-        
         <!-- 体組成データの記録セクション (食事解析の下に追加) -->
         <div class="body-composition-section">
           <div class="card upload-card body-comp-card">
@@ -381,10 +327,62 @@
 
       <!-- 4. 定番タブ -->
       <section id="tab-presets" class="tab-content">
+        <!-- 手動で数値を入力して定番登録 -->
+        <div class="card accordion-card" style="margin-bottom: 16px; padding: 12px 14px; text-align: left; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px;">
+          <div class="accordion-header" id="presets-manual-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+            <h3 class="card-title-v2" style="font-size: 13.5px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center;">
+              <svg class="icon-svg" style="margin-right: 6px; color: var(--text-muted); width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>手動で数値を入力して定番登録
+            </h3>
+            <span class="accordion-arrow" id="presets-manual-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+          </div>
+          <div class="accordion-content" id="presets-manual-content" style="display: none; margin-top: 12px; border-top: 1.5px solid var(--border-color); padding-top: 12px;">
+            <form id="form-presets-manual">
+              <div class="preset-manual-top-row">
+                <div class="form-group-compact preset-manual-name-field">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">メニュー名 / 商品名</label>
+                  <input type="text" id="preset-manual-name" placeholder="例：プロテインパウダー" required style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground);">
+                </div>
+                <div class="form-group-compact preset-manual-amount-field">
+                  <label for="preset-manual-serving-amount">基準量</label>
+                  <input type="number" id="preset-manual-serving-amount" placeholder="1.0" value="1.0" required step="0.1" min="0.1">
+                </div>
+                <div class="form-group-compact preset-manual-unit-field">
+                  <label for="preset-manual-serving-unit">単位</label>
+                  <select id="preset-manual-serving-unit">
+                    <option value="個">個</option>
+                    <option value="g">g</option>
+                  </select>
+                </div>
+              </div>
+              <div class="preset-manual-macro-grid">
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
+                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
+                </div>
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
+                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
+                </div>
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
+                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
+                </div>
+                <div class="form-group-compact">
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
+                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
+                手動入力で定番に保存
+              </button>
+            </form>
+          </div>
+        </div>
+
         <!-- 登録済み定番メニュー一覧 -->
         <div id="presets-list" class="presets-list">
           <div class="presets-empty-state">
-            登録されている定番メニューはありません。<br>AIタブの手動入力で登録してください。
+            登録されている定番メニューはありません。<br>上の手動入力から登録してください。
           </div>
         </div>
       </section>

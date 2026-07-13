@@ -3209,7 +3209,7 @@ body {
 }
 
 .preset-serving-field label,
-.preset-manual-serving-row label {
+.preset-manual-top-row label {
   color: var(--design-muted);
   font-size: 10px;
   font-weight: 800;
@@ -3217,8 +3217,8 @@ body {
 }
 
 .preset-serving-field input,
-.preset-manual-serving-row input,
-.preset-manual-serving-row select {
+.preset-manual-top-row input,
+.preset-manual-top-row select {
   background: var(--design-card);
   border: 1px solid var(--design-border);
   border-radius: 4px;
@@ -3232,7 +3232,7 @@ body {
   width: 100%;
 }
 
-.preset-manual-serving-row select {
+.preset-manual-top-row select {
   font-family: var(--font-sans);
   text-align: center;
 }
@@ -3254,11 +3254,52 @@ body {
   white-space: nowrap;
 }
 
-.preset-manual-serving-row {
+.preset-manual-top-row {
   display: grid;
   gap: 8px;
-  grid-template-columns: 1fr 80px;
+  grid-template-columns: minmax(0, 1fr) minmax(88px, 96px) minmax(52px, 60px);
   margin-bottom: 12px;
+}
+
+.preset-manual-name-field {
+  min-width: 0;
+}
+
+.preset-manual-amount-field {
+  min-width: 0;
+}
+
+.preset-manual-unit-field {
+  min-width: 0;
+}
+
+.preset-manual-amount-field input {
+  text-align: right;
+}
+
+.preset-manual-unit-field select {
+  text-align: center;
+}
+
+.preset-manual-macro-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.preset-manual-macro-grid .form-group-compact {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .preset-manual-top-row {
+    grid-template-columns: minmax(0, 1fr) minmax(84px, 92px) minmax(48px, 56px);
+  }
+
+  .preset-manual-macro-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* 履歴モーダル定番ボタンホバー */
@@ -4268,12 +4309,12 @@ body {
 
 #tab-history .history-summary-table th:first-child,
 #tab-history .history-summary-table td:first-child {
-  justify-content: flex-start;
-  text-align: left;
+  justify-content: center;
+  text-align: center;
 }
 
 #tab-history .history-summary-table td:first-child {
-  padding-inline: 4px 2px;
+  padding-inline: 2px;
 }
 
 #tab-history .history-summary-table th:nth-child(2),
@@ -4313,13 +4354,15 @@ body {
   display: flex;
   flex-direction: row;
   gap: 0;
-  justify-content: flex-start;
+  justify-content: center;
   min-width: 0;
-  width: max-content;
+  width: 100%;
 }
 
 #tab-history .history-summary-date {
   font-size: 13px !important;
+  justify-content: center;
+  text-align: center;
 }
 
 #tab-history .history-summary-date-inner > span:first-child {
@@ -4327,6 +4370,7 @@ body {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
   white-space: nowrap;
 }
 

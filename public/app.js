@@ -947,7 +947,7 @@
         if (loadedPresets.length === 0) {
           presetsList.innerHTML = `
             <div class="presets-empty-state">
-              登録されている定番メニューはありません。<br>AIタブの手動入力で登録してください。
+              登録されている定番メニューはありません。<br>上の手動入力から登録してください。
             </div>
           `;
           return;
