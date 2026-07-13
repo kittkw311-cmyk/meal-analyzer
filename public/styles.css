@@ -4112,10 +4112,19 @@ body {
 #tab-stats {
   background: var(--app-dark-background);
   color: var(--app-dark-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-inline: auto;
+  min-height: 0;
   max-width: 800px;
   padding: 8px;
   width: 100%;
+}
+
+#tab-analyze {
+  height: calc(100dvh - 176px);
+  overflow: hidden;
 }
 
 #tab-analyze .card,
@@ -5472,6 +5481,7 @@ body {
   border-radius: 4px;
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
   margin-top: 0;
   min-height: 0;
   overflow: hidden;
@@ -5485,6 +5495,19 @@ body {
   padding: 16px 16px 10px;
   border-bottom: 1px solid var(--app-dark-border);
   background: var(--app-dark-card);
+}
+
+#tab-analyze .ai-card-fixed-inline-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+#tab-analyze .ai-card-fixed-inline-header .overview-ai-consultation-description {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #tab-analyze .ai-card-scroll-body {
@@ -5564,10 +5587,6 @@ body {
   display: none;
 }
 
-#tab-analyze .overview-ai-consultation-card {
-  max-height: min(52dvh, 430px);
-}
-
 .tab-empty-note {
   color: var(--app-dark-muted);
   font-size: 12px;
@@ -5581,6 +5600,7 @@ body {
   border-radius: 4px;
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
   margin-top: 12px;
   min-height: 0;
   overflow: hidden;
@@ -5589,13 +5609,6 @@ body {
 
 #tab-analyze .ai-consultation-history-title {
   font: 800 14px var(--font-heading);
-}
-
-#tab-analyze .ai-consultation-history-caption {
-  color: var(--app-dark-muted);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 0;
 }
 
 #tab-analyze .ai-consultation-history-empty {
@@ -5670,8 +5683,10 @@ body {
   white-space: nowrap;
 }
 
-#tab-analyze .ai-consultation-history-card {
-  max-height: min(46dvh, 360px);
+#tab-analyze .ai-consultation-history-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 #tab-history .history-quick-actions {
