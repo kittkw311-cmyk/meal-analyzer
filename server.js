@@ -21,6 +21,12 @@ const INDEX_HTML_TEMPLATE = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
 // JSONパーサーと静的ファイル配信の設定
 app.use(express.json());
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 app.use((req, res, next) => {
   if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html'))) {
     res.setHeader('Cache-Control', 'no-store');
@@ -1406,6 +1412,9 @@ app.get('/api/image', async (req, res) => {
     try {
       const meta = await drive.files.get({ fileId: id, fields: 'mimeType' });
       res.setHeader('Content-Type', meta.data.mimeType || 'image/jpeg');
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
 
       const driveResponse = await drive.files.get(
         { fileId: id, alt: 'media' },
@@ -1427,6 +1436,9 @@ app.get('/api/image', async (req, res) => {
       if (ext === '.webp') contentType = 'image/webp';
       
       res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(filePath);
     } else {
       res.status(404).send('Image not found locally');
