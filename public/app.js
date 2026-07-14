@@ -3223,7 +3223,7 @@
   const navLabelMap = {
     'tab-overview': '総合',
     'tab-analyze': 'AI',
-    'tab-history': '履歴',
+    'tab-history': '記録',
     'tab-stats': '情報',
     'tab-presets': '定番',
   };

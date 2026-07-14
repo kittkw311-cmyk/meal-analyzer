@@ -4308,6 +4308,22 @@ body {
   color: var(--design-foreground) !important;
 }
 
+#weight-entry-modal .weight-type-chips .weight-chip.active[data-type="morning"] {
+  background: rgba(251, 185, 127, 0.28) !important;
+  border-color: #fbb97f !important;
+  color: #102030 !important;
+  box-shadow: 0 0 0 1px rgba(251, 185, 127, 0.4);
+  font-weight: 800;
+}
+
+#weight-entry-modal .weight-type-chips .weight-chip.active[data-type="night"] {
+  background: rgba(154, 194, 244, 0.34) !important;
+  border-color: var(--accent-blue) !important;
+  color: #102030 !important;
+  box-shadow: 0 0 0 1px rgba(154, 194, 244, 0.38);
+  font-weight: 800;
+}
+
 #meal-analysis-modal .meal-textarea::placeholder,
 #weight-entry-modal .meal-textarea::placeholder {
   color: var(--design-muted);
@@ -4316,6 +4332,74 @@ body {
 #meal-analysis-modal .preset-serving-preview,
 #meal-analysis-modal .preset-serving-unit {
   color: var(--design-foreground);
+}
+
+#meal-analysis-modal .meal-type-chips .chip {
+  background: var(--design-card) !important;
+  border-color: var(--design-border) !important;
+  color: var(--design-muted) !important;
+}
+
+#meal-analysis-modal .meal-type-chips .chip.active[data-type="morning"] {
+  background: rgba(251, 185, 127, 0.28) !important;
+  border-color: #fbb97f !important;
+  color: #102030 !important;
+  box-shadow: 0 0 0 1px rgba(251, 185, 127, 0.4);
+  font-weight: 800;
+}
+
+#meal-analysis-modal .meal-type-chips .chip.active[data-type="noon"] {
+  background: rgba(251, 216, 127, 0.32) !important;
+  border-color: var(--secondary) !important;
+  color: #102030 !important;
+  box-shadow: 0 0 0 1px rgba(251, 216, 127, 0.35);
+  font-weight: 800;
+}
+
+#meal-analysis-modal .meal-type-chips .chip.active[data-type="night"] {
+  background: rgba(154, 194, 244, 0.34) !important;
+  border-color: var(--accent-blue) !important;
+  color: #102030 !important;
+  box-shadow: 0 0 0 1px rgba(154, 194, 244, 0.38);
+  font-weight: 800;
+}
+
+#meal-analysis-modal .meal-type-chips .chip.active[data-type="snack"] {
+  background: rgba(247, 168, 184, 0.32) !important;
+  border-color: var(--accent) !important;
+  color: #102030 !important;
+  box-shadow: 0 0 0 1px rgba(247, 168, 184, 0.38);
+  font-weight: 800;
+}
+
+#meal-analysis-modal #btn-analyze,
+#weight-entry-modal #btn-analyze-weight {
+  background: var(--design-primary) !important;
+  border: 1px solid var(--design-accent) !important;
+  color: var(--design-foreground) !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 229, 255, 0.12);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+#meal-analysis-modal #btn-analyze:hover:not(:disabled),
+#meal-analysis-modal #btn-analyze:focus-visible,
+#weight-entry-modal #btn-analyze-weight:hover:not(:disabled),
+#weight-entry-modal #btn-analyze-weight:focus-visible {
+  border-color: var(--design-accent) !important;
+  color: var(--design-foreground) !important;
+  outline: none;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+}
+
+#meal-analysis-modal #btn-analyze:disabled,
+#weight-entry-modal #btn-analyze-weight:disabled {
+  background: var(--design-border) !important;
+  border-color: var(--design-border) !important;
+  color: var(--design-muted) !important;
+  opacity: 0.75;
 }
 
 #tab-analyze .chip,
