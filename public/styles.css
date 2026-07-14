@@ -5544,6 +5544,15 @@ body {
   white-space: pre-wrap;
 }
 
+#ai-consultation-modal .ai-consultation-modal-footer {
+  gap: 0;
+}
+
+#ai-consultation-modal .modal-footer-fixed {
+  background: var(--app-dark-card) !important;
+  border-top: 1px solid var(--app-dark-border) !important;
+}
+
 #tab-overview .calorie-progress {
   background: var(--overview-border);
   border: 0;

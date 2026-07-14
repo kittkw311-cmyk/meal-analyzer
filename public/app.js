@@ -199,6 +199,7 @@
   const aiConsultationModalMeta = document.getElementById('ai-consultation-modal-meta');
   const aiConsultationModalQuestion = document.getElementById('ai-consultation-modal-question');
   const aiConsultationModalAnswer = document.getElementById('ai-consultation-modal-answer');
+  const btnDeleteAiConsultationModal = document.getElementById('btn-delete-ai-consultation-modal');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -256,6 +257,7 @@
     if (aiConsultationModalMeta) aiConsultationModalMeta.textContent = formatDateTimeDisplay(record.createdAt);
     if (aiConsultationModalQuestion) aiConsultationModalQuestion.textContent = record.question || '---';
     if (aiConsultationModalAnswer) aiConsultationModalAnswer.textContent = record.answer || '---';
+    if (btnDeleteAiConsultationModal) btnDeleteAiConsultationModal.disabled = false;
     showModal(aiConsultationModal);
   };
 
@@ -437,6 +439,29 @@
     aiConsultationModal.addEventListener('click', (event) => {
       if (event.target === aiConsultationModal) {
         hideModal(aiConsultationModal);
+      }
+    });
+  }
+
+  if (btnDeleteAiConsultationModal) {
+    btnDeleteAiConsultationModal.addEventListener('click', async () => {
+      if (!currentAiConsultation?.id) return;
+      if (!confirm('この質問履歴を削除しますか？')) return;
+      btnDeleteAiConsultationModal.disabled = true;
+      try {
+        const response = await fetch(`/api/ai-consultations/${currentAiConsultation.id}`, {
+          method: 'DELETE',
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const payload = contentType.includes('application/json') ? await response.json() : {};
+        if (!response.ok) throw new Error(payload.error || '質問履歴の削除に失敗しました。');
+        currentAiConsultation = null;
+        hideModal(aiConsultationModal);
+        await loadAiConsultations();
+      } catch (err) {
+        alert(err.message || '質問履歴の削除に失敗しました。');
+      } finally {
+        btnDeleteAiConsultationModal.disabled = false;
       }
     });
   }
