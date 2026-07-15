@@ -423,6 +423,20 @@ async function initDriveHistory() {
 
 // 螻･豁ｴ繝・・繧ｿ繧帝撼蜷梧悄縺ｧ繝ｭ繝ｼ繝峨☆繧矩未謨ｰ
 async function readHistory() {
+  const normalizeHistoryNutrition = (record) => {
+    if (!record || !record.nutrition) return record;
+    const nutrition = record.nutrition;
+    const toNumber = (value, fallback = 0) => {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : fallback;
+    };
+    nutrition.calories = Math.round(toNumber(nutrition.calories));
+    nutrition.protein = Math.round(toNumber(nutrition.protein) * 10) / 10;
+    nutrition.fat = Math.round(toNumber(nutrition.fat) * 10) / 10;
+    nutrition.carbohydrates = Math.round(toNumber(nutrition.carbohydrates) * 10) / 10;
+    return record;
+  };
+
   if (drive && driveHistoryFileId) {
     try {
       const res = await drive.files.get(
@@ -430,7 +444,8 @@ async function readHistory() {
         { responseType: 'text' }
       );
       const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
-      return JSON.parse(dataText);
+      const parsed = JSON.parse(dataText);
+      return Array.isArray(parsed) ? parsed.map(normalizeHistoryNutrition) : parsed;
     } catch (err) {
       console.error('Error reading history from Google Drive, trying to re-initialize:', err.message);
       await initDriveHistory(); // 蜀肴､懃ｴ｢繧定ｩｦ縺ｿ繧・
@@ -440,7 +455,8 @@ async function readHistory() {
     // 繝ｭ繝ｼ繧ｫ繝ｫ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繝｢繝ｼ繝・
     try {
       const data = fs.readFileSync(HISTORY_FILE, 'utf8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed.map(normalizeHistoryNutrition) : parsed;
     } catch (err) {
       console.error('Error reading local history file:', err);
       return [];

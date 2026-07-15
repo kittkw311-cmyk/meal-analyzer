@@ -135,6 +135,11 @@
     return decimals === 0 ? String(Math.round(numericValue)) : numericValue.toFixed(decimals);
   };
 
+  const toNutritionNumber = (value, fallback = 0) => {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : fallback;
+  };
+
   const parseDetailNutritionValue = (value, decimals) => {
     const numericValue = Number(value);
     if (!Number.isFinite(numericValue) || numericValue < 0) return null;
@@ -788,7 +793,7 @@
       presetServingPreview.textContent = '今回量を入力';
       return;
     }
-    presetServingPreview.textContent = `${nutrition.calories} kcal / P ${nutrition.protein.toFixed(1)} F ${nutrition.fat.toFixed(1)} C ${nutrition.carbohydrates.toFixed(1)}`;
+    presetServingPreview.textContent = `${formatDetailNutritionValue(nutrition.calories, 0)} kcal / P ${formatDetailNutritionValue(nutrition.protein, 1)} F ${formatDetailNutritionValue(nutrition.fat, 1)} C ${formatDetailNutritionValue(nutrition.carbohydrates, 1)}`;
   };
 
   function validateWeightInputs() {
@@ -1091,15 +1096,15 @@
         const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
         
         if (itemDateStr === todayStr) {
-          totalCal += item.nutrition.calories;
-          totalP += item.nutrition.protein;
-          totalF += item.nutrition.fat;
-          totalC += item.nutrition.carbohydrates;
+          totalCal += toNutritionNumber(item.nutrition?.calories);
+          totalP += toNutritionNumber(item.nutrition?.protein);
+          totalF += toNutritionNumber(item.nutrition?.fat);
+          totalC += toNutritionNumber(item.nutrition?.carbohydrates);
         }
       });
 
       // DOM要素の更新
-      document.getElementById('daily-total-calories').textContent = totalCal;
+      document.getElementById('daily-total-calories').textContent = Math.round(totalCal);
       document.getElementById('daily-total-protein').textContent = Number(totalP).toFixed(1);
       document.getElementById('daily-total-fat').textContent = Number(totalF).toFixed(1);
       document.getElementById('daily-total-carbs').textContent = Number(totalC).toFixed(1);
@@ -1645,10 +1650,10 @@
         }
         
         groups[dateKey].meals.push(item);
-        groups[dateKey].totalCalories += item.nutrition.calories;
-        groups[dateKey].totalProtein += item.nutrition.protein;
-        groups[dateKey].totalFat += item.nutrition.fat;
-        groups[dateKey].totalCarbs += item.nutrition.carbohydrates;
+        groups[dateKey].totalCalories += toNutritionNumber(item.nutrition?.calories);
+        groups[dateKey].totalProtein += toNutritionNumber(item.nutrition?.protein);
+        groups[dateKey].totalFat += toNutritionNumber(item.nutrition?.fat);
+        groups[dateKey].totalCarbs += toNutritionNumber(item.nutrition?.carbohydrates);
       });
 
       const previousWeightByPeriod = { morning: null, night: null };
@@ -1843,10 +1848,10 @@
             displayMealName = `⚠️ ${displayMealName} (解析未完了)`;
           }
 
-          const proteinValue = item.status === 'failed' ? '--' : Number(item.nutrition.protein).toFixed(1);
-          const fatValue = item.status === 'failed' ? '--' : Number(item.nutrition.fat).toFixed(1);
-          const carbValue = item.status === 'failed' ? '--' : Number(item.nutrition.carbohydrates).toFixed(1);
-          const calorieValue = item.status === 'failed' ? '--' : item.nutrition.calories;
+          const proteinValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.protein, 1);
+          const fatValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.fat, 1);
+          const carbValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.carbohydrates, 1);
+          const calorieValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.calories, 0);
 
           card.innerHTML = `
             <td class="history-detail-row-number">${index + 1}</td>
