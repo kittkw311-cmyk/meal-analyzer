@@ -240,6 +240,21 @@
           </div>
         </div>
 
+        <div class="presets-toolbar card">
+          <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
+          <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
+            <option value="recent">最近使った順</option>
+            <option value="favorite">お気に入り順</option>
+            <option value="name">名前順</option>
+          </select>
+        </div>
+
+        <div class="preset-view-switch" role="tablist" aria-label="定番の表示切り替え">
+          <button type="button" class="preset-view-chip is-active" data-view="recent">最近使った</button>
+          <button type="button" class="preset-view-chip" data-view="categories">カテゴリ別</button>
+          <button type="button" class="preset-view-chip" data-view="favorites">お気に入り</button>
+        </div>
+
         <!-- 登録済み定番メニュー一覧 -->
         <div id="presets-list" class="presets-list">
           <div class="presets-empty-state">

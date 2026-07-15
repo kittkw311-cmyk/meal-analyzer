@@ -93,6 +93,9 @@
   const presetServingAmountInput = document.getElementById('preset-serving-amount');
   const presetServingUnitOutput = document.getElementById('preset-serving-unit');
   const presetServingPreview = document.getElementById('preset-serving-preview');
+  const presetSearchInput = document.getElementById('preset-search-input');
+  const presetSortSelect = document.getElementById('preset-sort-select');
+  const presetViewChips = document.querySelectorAll('.preset-view-chip');
   const presetsList = document.getElementById('presets-list');
   const formPresetsManual = document.getElementById('form-presets-manual');
   const presetsManualToggle = document.getElementById('presets-manual-toggle');
@@ -121,6 +124,10 @@
   let activeMealType = 'snack';
   let loadedPresets = [];
   let aiConsultationRecords = [];
+  let presetViewMode = localStorage.getItem('preset_view_mode') || 'recent';
+  const PRESET_FAVORITE_KEY = 'physilog_preset_favorites';
+  const PRESET_USAGE_KEY = 'physilog_preset_usage';
+  const PRESET_LAST_USED_KEY = 'physilog_preset_last_used';
   
   // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
@@ -796,6 +803,111 @@
     }
   }
 
+  const storageJson = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const writeStorageJson = (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      console.error('Failed to write local preset state:', err);
+    }
+  };
+
+  const getFavoriteSet = () => new Set(storageJson(PRESET_FAVORITE_KEY, []));
+  const getUsageMap = () => storageJson(PRESET_USAGE_KEY, {});
+  const getLastUsedMap = () => storageJson(PRESET_LAST_USED_KEY, {});
+
+  const togglePresetFavorite = (id) => {
+    const favoriteSet = getFavoriteSet();
+    if (favoriteSet.has(id)) {
+      favoriteSet.delete(id);
+    } else {
+      favoriteSet.add(id);
+    }
+    writeStorageJson(PRESET_FAVORITE_KEY, Array.from(favoriteSet));
+  };
+
+  const markPresetUsed = (id) => {
+    if (!id) return;
+    const usageMap = getUsageMap();
+    const lastUsedMap = getLastUsedMap();
+    usageMap[id] = Number(usageMap[id] || 0) + 1;
+    lastUsedMap[id] = Date.now();
+    writeStorageJson(PRESET_USAGE_KEY, usageMap);
+    writeStorageJson(PRESET_LAST_USED_KEY, lastUsedMap);
+  };
+
+  const inferPresetCategory = (preset) => {
+    const name = `${preset?.name || ''}`.toLowerCase();
+    const rules = [
+      ['飲料', ['コーヒー', 'お茶', '茶', '水', 'ジュース', '牛乳', 'ヨーグルトドリンク', 'プロテインドリンク', '豆乳', 'スムージー']],
+      ['間食', ['プロテイン', 'ヨーグルト', 'ナッツ', 'バナナ', 'チーズ', 'おやつ', 'ゼリー', 'バー', '間食', 'あんぱん']],
+      ['汁物', ['味噌汁', 'みそ汁', 'スープ', '豚汁', 'お吸い物']],
+      ['副菜', ['サラダ', '野菜', 'おひたし', 'きんぴら', '和え', '漬物', 'ブロッコリー', 'ほうれん草', 'キャベツ', '小鉢']],
+      ['主菜', ['鶏', '豚', '牛', '魚', '鮭', 'サバ', '卵', '豆腐', '納豆', 'ハンバーグ', 'サラダチキン', 'ツナ', 'ささみ', '刺身']],
+      ['主食', ['ご飯', 'ライス', 'パン', '麺', 'うどん', 'そば', 'パスタ', 'カレー', 'オートミール', 'シリアル', 'おにぎり']],
+    ];
+
+    for (const [category, keywords] of rules) {
+      if (keywords.some(keyword => name.includes(keyword.toLowerCase()))) {
+        return category;
+      }
+    }
+    return 'その他';
+  };
+
+  const categoryOrder = ['主食', '主菜', '副菜', '汁物', '間食', '飲料', 'その他'];
+
+  const formatPresetMeta = (preset) => {
+    const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
+    const servingUnit = preset.servingUnit || '個';
+    return `${baseAmount.toFixed(1)}${servingUnit} / ${Math.round(Number(preset.calories) || 0)} kcal / P ${roundTo1(preset.protein || 0)} F ${roundTo1(preset.fat || 0)} C ${roundTo1(preset.carbohydrates || 0)}`;
+  };
+
+  const getPresetUsageCount = (id) => Number(getUsageMap()[id] || 0);
+  const getPresetLastUsedAt = (id) => Number(getLastUsedMap()[id] || 0);
+  const isPresetFavorite = (id) => getFavoriteSet().has(id);
+
+  const setPresetViewMode = (mode) => {
+    presetViewMode = mode || 'recent';
+    try {
+      localStorage.setItem('preset_view_mode', presetViewMode);
+    } catch (err) {
+      console.error('Failed to persist preset view mode:', err);
+    }
+    presetViewChips.forEach((chip) => {
+      chip.classList.toggle('is-active', chip.getAttribute('data-view') === presetViewMode);
+    });
+  };
+
+  setPresetViewMode(presetViewMode);
+
+  if (presetSearchInput) {
+    presetSearchInput.addEventListener('input', () => {
+      loadPresets();
+    });
+  }
+
+  if (presetSortSelect) {
+    presetSortSelect.addEventListener('change', () => {
+      loadPresets();
+    });
+  }
+
+  presetViewChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      setPresetViewMode(chip.getAttribute('data-view') || 'recent');
+      loadPresets();
+    });
+  });
+
   if (presetSelector) {
     presetSelector.addEventListener('change', () => {
       const selectedId = presetSelector.value;
@@ -932,6 +1044,7 @@
         throw new Error(payload.error || '定番メニューの記録に失敗しました。');
       }
 
+      markPresetUsed(opt.value);
       updateDailySummary();
       await loadHistory();
       hideModal(mealAnalysisModal);
@@ -1098,11 +1211,64 @@
       const response = await fetch('/api/presets');
       const presets = await response.json();
       loadedPresets = Array.isArray(presets) ? presets : [];
+      const favorites = getFavoriteSet();
+      const searchTerm = (presetSearchInput?.value || '').trim().toLowerCase();
+      const sortMode = presetSortSelect?.value || 'recent';
+      const viewMode = presetViewMode || 'recent';
+
+      const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
+
+      const enrichedPresets = loadedPresets.map((preset) => {
+        const id = String(preset.id ?? '');
+        return {
+          ...preset,
+          id,
+          _category: inferPresetCategory(preset),
+          _usage: getPresetUsageCount(id),
+          _lastUsed: getPresetLastUsedAt(id),
+          _favorite: favorites.has(id),
+        };
+      });
+
+      const matchesSearch = (preset) => {
+        if (!searchTerm) return true;
+        const haystack = [
+          preset.name,
+          preset._category,
+          preset.servingUnit,
+          preset.baseAmount,
+          preset.calories,
+          preset.protein,
+          preset.fat,
+          preset.carbohydrates,
+        ].join(' ').toLowerCase();
+        return haystack.includes(searchTerm);
+      };
+
+      const sortByName = (a, b) => a.name.localeCompare(b.name, 'ja');
+      const sortByRecent = (a, b) => (
+        (b._lastUsed - a._lastUsed)
+        || (Number(b._favorite) - Number(a._favorite))
+        || sortByName(a, b)
+      );
+      const sortByFavorite = (a, b) => (
+        (Number(b._favorite) - Number(a._favorite))
+        || (b._lastUsed - a._lastUsed)
+        || sortByName(a, b)
+      );
+      const sortByMode = sortMode === 'favorite' ? sortByFavorite : sortMode === 'name' ? sortByName : sortByRecent;
+      const filteredPresets = enrichedPresets.filter(matchesSearch);
 
       // A. 解析画面のドロップダウンを更新
       if (presetSelector) {
         presetSelector.innerHTML = '<option value="">定番メニューから選択</option>';
-        loadedPresets.forEach(p => {
+        loadedPresets.forEach((p) => {
           const opt = document.createElement('option');
           const baseAmount = Number.isFinite(Number(p.baseAmount)) && Number(p.baseAmount) > 0 ? roundTo1(p.baseAmount) : 1;
           const servingUnit = p.servingUnit || '個';
@@ -1120,131 +1286,150 @@
         updatePresetServingControls();
       }
 
-      // B. 定番タブの一覧リストを更新
-      if (presetsList) {
-        if (loadedPresets.length === 0) {
-          presetsList.innerHTML = `
-            <div class="presets-empty-state">
-              登録されている定番メニューはありません。<br>上の手動入力から登録してください。
-            </div>
-          `;
-          return;
-        }
+      if (!presetsList) return;
 
-        presetsList.innerHTML = `
-          <div class="presets-table-wrapper">
-            <table class="presets-table">
-              <thead><tr><th>名称</th><th>基準量</th><th>P (g)</th><th>F (g)</th><th>C (g)</th><th>カロリー</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        `;
-        const presetsTableBody = presetsList.querySelector('tbody');
-        const formatPresetDecimal = (value) => {
-          const [integerPart, decimalPart] = Number(value).toFixed(1).split('.');
-          return `<span class="preset-number-integer">${integerPart}</span><span class="preset-number-decimal">.${decimalPart}</span>`;
-        };
-        loadedPresets.forEach(p => {
-          const baseAmount = Number.isFinite(Number(p.baseAmount)) && Number(p.baseAmount) > 0 ? roundTo1(p.baseAmount) : 1;
-          const servingUnit = p.servingUnit || '個';
-          const card = document.createElement('tr');
-          card.className = 'preset-table-row';
-          card.dataset.id = p.id;
-          card.title = '長押しで削除';
-          card.innerHTML = `
-            <td class="preset-table-name-cell">
-              <div class="preset-card-name-wrapper" data-id="${p.id}">
-                <span class="preset-card-name">${p.name}</span>
-                <span class="preset-edit-icon" title="名前を編集">
+      const deletePreset = async (id) => {
+        if (!id) return;
+        if (!confirm('この定番メニューを削除してもよろしいですか？')) return;
+        try {
+          const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            loadPresets();
+          } else {
+            alert('削除に失敗しました。');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('通信エラーが発生しました。');
+        }
+      };
+
+      const renderFavoriteButton = (preset) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `preset-favorite-btn${preset._favorite ? ' is-active' : ''}`;
+        button.setAttribute('aria-pressed', preset._favorite ? 'true' : 'false');
+        button.setAttribute('aria-label', `${preset.name} をお気に入りに切り替え`);
+        button.innerHTML = '<span aria-hidden="true">★</span>';
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          togglePresetFavorite(preset.id);
+          loadPresets();
+        });
+        return button;
+      };
+
+      const renderPresetCard = (preset) => {
+        const card = document.createElement('article');
+        card.className = 'preset-card-v2';
+        card.dataset.id = preset.id;
+        card.title = '長押しで削除';
+        card.tabIndex = 0;
+        card.innerHTML = `
+          <div class="preset-card-top">
+            <div class="preset-card-name-block">
+              <div class="preset-card-name-wrapper" data-id="${escapeHtml(preset.id)}">
+                <span class="preset-card-name">${escapeHtml(preset.name || '')}</span>
+                <span class="preset-edit-icon" title="名前を編集" aria-hidden="true">
                   <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 </span>
               </div>
-            </td>
-            <td class="preset-serving-cell">
-              <button type="button" class="macro-badge macro-editable serving" data-id="${p.id}" data-field="baseAmount" data-value="${baseAmount}" title="基準量を編集">${formatPresetDecimal(baseAmount)}</button>
-              <select class="preset-unit-select" data-id="${p.id}" title="単位を編集">
-                <option value="個"${servingUnit === '個' ? ' selected' : ''}>個</option>
-                <option value="g"${servingUnit === 'g' ? ' selected' : ''}>g</option>
+              <div class="preset-card-subline">
+                <span class="preset-category-pill">${escapeHtml(preset._category)}</span>
+                <span class="preset-card-usage">使用回数: ${preset._usage}</span>
+                <span class="preset-card-last-used">${preset._lastUsed ? `${escapeHtml(formatDateTimeDisplay(preset._lastUsed))} に使用` : 'まだ未使用'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="preset-card-serving-row">
+            <button type="button" class="macro-badge macro-editable serving" data-id="${escapeHtml(preset.id)}" data-field="baseAmount" data-value="${Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1}" title="基準量を編集"></button>
+            <div class="preset-serving-unit-stack">
+              <span class="preset-serving-label">基準量</span>
+              <select class="preset-unit-select" data-id="${escapeHtml(preset.id)}" title="単位を編集">
+                <option value="個"${(preset.servingUnit || '個') === '個' ? ' selected' : ''}>個</option>
+                <option value="g"${(preset.servingUnit || '個') === 'g' ? ' selected' : ''}>g</option>
               </select>
-            </td>
-            <td><button type="button" class="macro-badge macro-editable p" data-id="${p.id}" data-field="protein" data-value="${p.protein}" title="タンパク質を編集">${formatPresetDecimal(p.protein)}</button></td>
-            <td><button type="button" class="macro-badge macro-editable f" data-id="${p.id}" data-field="fat" data-value="${p.fat}" title="脂質を編集">${formatPresetDecimal(p.fat)}</button></td>
-            <td><button type="button" class="macro-badge macro-editable c" data-id="${p.id}" data-field="carbohydrates" data-value="${p.carbohydrates}" title="炭水化物を編集">${formatPresetDecimal(p.carbohydrates)}</button></td>
-            <td><button type="button" class="macro-badge macro-editable calories" data-id="${p.id}" data-field="calories" data-value="${p.calories}" title="カロリーを編集">${p.calories}</button></td>
-          `;
-          presetsTableBody.appendChild(card);
-        });
+            </div>
+            <div class="preset-serving-preview">${escapeHtml(formatPresetMeta(preset))}</div>
+          </div>
+          <div class="preset-card-macro-row">
+            <button type="button" class="macro-badge macro-editable calories" data-id="${escapeHtml(preset.id)}" data-field="calories" data-value="${Number(preset.calories) || 0}" title="カロリーを編集"></button>
+            <button type="button" class="macro-badge macro-editable p" data-id="${escapeHtml(preset.id)}" data-field="protein" data-value="${Number(preset.protein) || 0}" title="タンパク質を編集"></button>
+            <button type="button" class="macro-badge macro-editable f" data-id="${escapeHtml(preset.id)}" data-field="fat" data-value="${Number(preset.fat) || 0}" title="脂質を編集"></button>
+            <button type="button" class="macro-badge macro-editable c" data-id="${escapeHtml(preset.id)}" data-field="carbohydrates" data-value="${Number(preset.carbohydrates) || 0}" title="炭水化物を編集"></button>
+          </div>
+        `;
 
-        const deletePreset = async (id) => {
-            if (confirm('この定番メニューを削除してもよろしいですか？')) {
-              try {
-                const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                  loadPresets();
-                } else {
-                  alert('削除に失敗しました。');
-                }
-              } catch (err) {
-                console.error(err);
-                alert('通信エラーが発生しました。');
-              }
-            }
+        card.querySelector('.macro-editable.serving').textContent = Number(preset.baseAmount) > 0
+          ? roundTo1(preset.baseAmount).toFixed(1)
+          : '1.0';
+        card.querySelector('.macro-editable.calories').textContent = `${Math.round(Number(preset.calories) || 0)}kcal`;
+        card.querySelector('.macro-editable.p').textContent = `P ${roundTo1(preset.protein || 0)}`;
+        card.querySelector('.macro-editable.f').textContent = `F ${roundTo1(preset.fat || 0)}`;
+        card.querySelector('.macro-editable.c').textContent = `C ${roundTo1(preset.carbohydrates || 0)}`;
+
+        let pressTimer = null;
+        let startX = 0;
+        let startY = 0;
+        let longPressTriggered = false;
+        const cancelLongPress = () => {
+          if (pressTimer) clearTimeout(pressTimer);
+          pressTimer = null;
         };
 
-        document.querySelectorAll('.preset-table-row').forEach(row => {
-          let pressTimer = null;
-          let startX = 0;
-          let startY = 0;
-          let longPressTriggered = false;
-          const cancelLongPress = () => {
-            if (pressTimer) clearTimeout(pressTimer);
-            pressTimer = null;
-          };
-
-          row.addEventListener('pointerdown', (event) => {
-            if (event.target.closest('button, input')) return;
-            startX = event.clientX;
-            startY = event.clientY;
-            longPressTriggered = false;
-            row.classList.add('is-pressing');
-            pressTimer = setTimeout(() => {
-              longPressTriggered = true;
-              row.classList.remove('is-pressing');
-              navigator.vibrate?.(30);
-              deletePreset(row.dataset.id);
-            }, 650);
-          });
-
-          row.addEventListener('pointermove', (event) => {
-            if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) {
-              cancelLongPress();
-              row.classList.remove('is-pressing');
-            }
-          });
-          ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => {
-            row.addEventListener(type, () => {
-              cancelLongPress();
-              row.classList.remove('is-pressing');
-            });
-          });
-          row.addEventListener('click', (event) => {
-            if (!longPressTriggered) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            longPressTriggered = false;
-          }, true);
+        card.addEventListener('pointerdown', (event) => {
+          if (event.target.closest('button, input, select, textarea, a')) return;
+          startX = event.clientX;
+          startY = event.clientY;
+          longPressTriggered = false;
+          card.classList.add('is-pressing');
+          pressTimer = setTimeout(() => {
+            longPressTriggered = true;
+            card.classList.remove('is-pressing');
+            navigator.vibrate?.(30);
+            deletePreset(preset.id);
+          }, 650);
         });
 
-        // カロリー・PFC編集のリスナー追加
-        document.querySelectorAll('.macro-editable').forEach(badge => {
-          badge.addEventListener('click', (e) => {
-            e.stopPropagation();
+        card.addEventListener('pointermove', (event) => {
+          if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) {
+            cancelLongPress();
+            card.classList.remove('is-pressing');
+          }
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
+          card.addEventListener(type, () => {
+            cancelLongPress();
+            card.classList.remove('is-pressing');
+          });
+        });
+        card.addEventListener('click', (event) => {
+          if (!longPressTriggered) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          longPressTriggered = false;
+        }, true);
+
+        const favoriteButton = renderFavoriteButton(preset);
+        card.querySelector('.preset-card-top').appendChild(favoriteButton);
+
+        card.querySelectorAll('.macro-editable').forEach((badge) => {
+          badge.addEventListener('click', (event) => {
+            event.stopPropagation();
             if (badge.querySelector('.preset-macro-edit-input')) return;
 
             const id = badge.getAttribute('data-id');
             const field = badge.getAttribute('data-field');
             const currentValue = badge.getAttribute('data-value');
             const originalHtml = badge.innerHTML;
+            const isCalories = field === 'calories';
+            const isBaseAmount = field === 'baseAmount';
+            const displayValue = () => {
+              if (isCalories) return `${Math.round(Number(currentValue) || 0)}kcal`;
+              if (isBaseAmount) return Number(currentValue || 0).toFixed(1);
+              const prefix = field === 'protein' ? 'P ' : field === 'fat' ? 'F ' : 'C ';
+              return `${prefix}${roundTo1(currentValue || 0).toFixed(1)}`;
+            };
 
             const input = document.createElement('input');
             input.type = 'number';
@@ -1264,6 +1449,7 @@
               badge.classList.remove('is-saving');
               badge.disabled = false;
               badge.innerHTML = originalHtml;
+              badge.textContent = displayValue();
             };
 
             const saveMacroEdit = async () => {
@@ -1322,8 +1508,8 @@
           });
         });
 
-        document.querySelectorAll('.preset-unit-select').forEach(select => {
-          select.addEventListener('click', event => event.stopPropagation());
+        card.querySelectorAll('.preset-unit-select').forEach((select) => {
+          select.addEventListener('click', (event) => event.stopPropagation());
           select.addEventListener('change', async () => {
             const id = select.getAttribute('data-id');
             const servingUnit = select.value === 'g' ? 'g' : '個';
@@ -1348,24 +1534,18 @@
           });
         });
 
-        // 名前編集のリスナー追加
-        document.querySelectorAll('.preset-card-name-wrapper').forEach(wrapper => {
-          wrapper.addEventListener('click', (e) => {
-            e.stopPropagation();
+        card.querySelectorAll('.preset-card-name-wrapper').forEach((wrapper) => {
+          wrapper.addEventListener('click', (event) => {
+            event.stopPropagation();
             const id = wrapper.getAttribute('data-id');
             const nameSpan = wrapper.querySelector('.preset-card-name');
             const currentName = nameSpan.textContent;
-
-            // すでに入力欄に切り替わっている場合は多重処理防止
             if (wrapper.querySelector('.preset-edit-input')) return;
 
-            // 入力フィールドを生成して置き換える
             const input = document.createElement('input');
             input.type = 'text';
             input.className = 'preset-edit-input';
             input.value = currentName;
-
-            // 表示を切り替え
             nameSpan.style.display = 'none';
             const editIcon = wrapper.querySelector('.preset-edit-icon');
             if (editIcon) editIcon.style.display = 'none';
@@ -1373,12 +1553,10 @@
             input.focus();
             input.select();
 
-            // 保存処理
             const saveNameEdit = async () => {
               if (wrapper.classList.contains('is-saving')) return;
               const newName = input.value.trim();
               if (newName === '' || newName === currentName) {
-                // 空、または変更なしなら元に戻す
                 nameSpan.style.display = '';
                 if (editIcon) editIcon.style.display = '';
                 input.remove();
@@ -1393,7 +1571,7 @@
               const restoreNameEdit = () => {
                 wrapper.classList.remove('is-saving');
                 wrapper.innerHTML = `
-                  <span class="preset-card-name">${currentName}</span>
+                  <span class="preset-card-name">${escapeHtml(currentName)}</span>
                   <span class="preset-edit-icon" title="名前を編集">
                     <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </span>
@@ -1402,7 +1580,6 @@
 
               try {
                 showNameSaving();
-
                 const res = await fetch(`/api/presets/${id}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
@@ -1410,7 +1587,6 @@
                 });
 
                 if (res.ok) {
-                  // リロードしてドロップダウンも更新
                   loadPresets();
                 } else {
                   alert('名前の更新に失敗しました。');
@@ -1423,7 +1599,6 @@
               }
             };
 
-            // Enterキーで確定
             input.addEventListener('keydown', (event) => {
               if (event.key === 'Enter') {
                 event.preventDefault();
@@ -1436,11 +1611,65 @@
               }
             });
 
-            // フォーカスアウトで確定・保存
             input.addEventListener('blur', saveNameEdit);
           });
         });
+
+        return card;
+      };
+
+      const renderSection = (title, items) => {
+        const section = document.createElement('section');
+        section.className = 'preset-section';
+        const header = document.createElement('div');
+        header.className = 'preset-section-header';
+        header.innerHTML = `
+          <h3>${escapeHtml(title)}</h3>
+          <span class="preset-section-count">${items.length}</span>
+        `;
+        const grid = document.createElement('div');
+        grid.className = 'preset-grid';
+        items.forEach((preset) => grid.appendChild(renderPresetCard(preset)));
+        section.append(header, grid);
+        return section;
+      };
+
+      const renderEmptyState = (message) => {
+        presetsList.innerHTML = `<div class="presets-empty-state">${message}</div>`;
+      };
+
+      presetsList.replaceChildren();
+      if (filteredPresets.length === 0) {
+        if (searchTerm) {
+          renderEmptyState('検索条件に合う定番メニューがありません。');
+        } else if (viewMode === 'favorites') {
+          renderEmptyState('お気に入りに登録された定番メニューはありません。');
+        } else {
+          renderEmptyState('登録されている定番メニューはありません。<br>上の手動入力から登録してください。');
+        }
+        return;
       }
+
+      const sections = [];
+      if (viewMode === 'categories') {
+        categoryOrder.forEach((category) => {
+          const items = filteredPresets.filter((preset) => preset._category === category).sort(sortByMode);
+          if (items.length > 0) sections.push(renderSection(category, items));
+        });
+        const uncategorized = filteredPresets.filter((preset) => !categoryOrder.includes(preset._category)).sort(sortByMode);
+        if (uncategorized.length > 0) sections.push(renderSection('その他', uncategorized));
+      } else {
+        const title = viewMode === 'favorites' ? 'お気に入り' : '最近使った';
+        sections.push(renderSection(title, [...filteredPresets].sort(sortByMode)));
+      }
+
+      if (sections.length === 0) {
+        renderEmptyState('登録されている定番メニューはありません。<br>上の手動入力から登録してください。');
+        return;
+      }
+
+      presetsList.append(...sections);
+
     } catch (err) {
       console.error('Failed to load predefined menu presets:', err);
     }

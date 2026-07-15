@@ -5962,3 +5962,322 @@ body {
   font-size: 13px;
 }
 
+/* 定番タブのカードUI上書き */
+#tab-presets .presets-toolbar {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 138px;
+  padding: 12px;
+}
+
+#tab-presets .preset-search-input,
+#tab-presets .preset-sort-select {
+  background: var(--design-background);
+  border: 1px solid var(--design-border);
+  border-radius: 14px;
+  color: var(--design-foreground);
+  font: 700 13px var(--font-sans);
+  min-height: 42px;
+  outline: none;
+  padding: 0 14px;
+  width: 100%;
+}
+
+#tab-presets .preset-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+#tab-presets .preset-search-input:focus,
+#tab-presets .preset-sort-select:focus {
+  border-color: var(--design-accent);
+  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.12);
+}
+
+#tab-presets .preset-view-switch {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+#tab-presets .preset-view-chip {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--design-border);
+  border-radius: 999px;
+  color: var(--design-muted);
+  flex: 0 0 auto;
+  font: 800 12px var(--font-sans);
+  min-height: 34px;
+  padding: 0 14px;
+}
+
+#tab-presets .preset-view-chip.is-active {
+  background: rgba(0, 229, 255, 0.14);
+  border-color: var(--design-accent);
+  color: var(--design-accent);
+}
+
+#tab-presets .presets-list {
+  display: grid;
+  gap: 12px;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+#tab-presets .preset-section {
+  display: grid;
+  gap: 10px;
+}
+
+#tab-presets .preset-section-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+#tab-presets .preset-section-header h3 {
+  color: var(--design-foreground);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+#tab-presets .preset-section-count {
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 999px;
+  color: var(--design-accent);
+  font: 800 11px var(--font-heading);
+  min-width: 34px;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+#tab-presets .preset-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#tab-presets .preset-card-v2 {
+  background: linear-gradient(180deg, rgba(22, 42, 55, 0.98), rgba(18, 30, 40, 0.98));
+  border: 1px solid var(--design-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+#tab-presets .preset-card-v2:hover,
+#tab-presets .preset-card-v2:focus-within {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 12px 30px rgba(0, 229, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+#tab-presets .preset-card-v2.is-pressing {
+  transform: scale(0.99);
+}
+
+#tab-presets .preset-card-top {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+#tab-presets .preset-card-name-block {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+#tab-presets .preset-card-name-wrapper {
+  align-items: center;
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+#tab-presets .preset-card-name {
+  color: var(--design-foreground);
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#tab-presets .preset-edit-icon {
+  color: var(--design-accent);
+  flex: 0 0 auto;
+}
+
+#tab-presets .preset-card-subline {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#tab-presets .preset-category-pill {
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 999px;
+  color: var(--design-accent);
+  font: 800 11px var(--font-sans);
+  padding: 3px 9px;
+}
+
+#tab-presets .preset-card-usage,
+#tab-presets .preset-card-last-used {
+  color: rgba(255, 255, 255, 0.68);
+  font: 700 11px var(--font-sans);
+}
+
+#tab-presets .preset-favorite-btn {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid var(--design-border);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+#tab-presets .preset-favorite-btn.is-active {
+  background: rgba(251, 216, 127, 0.14);
+  border-color: rgba(251, 216, 127, 0.32);
+  color: #fbd87f;
+}
+
+#tab-presets .preset-card-serving-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+#tab-presets .preset-serving-unit-stack {
+  display: grid;
+  gap: 4px;
+}
+
+#tab-presets .preset-serving-label {
+  color: rgba(255, 255, 255, 0.58);
+  font: 800 10px var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+#tab-presets .preset-serving-preview {
+  color: var(--design-accent);
+  font: 800 11px var(--font-heading);
+  text-align: right;
+  white-space: nowrap;
+}
+
+#tab-presets .preset-card-macro-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#tab-presets .macro-badge {
+  align-items: center;
+  background: rgba(8, 18, 24, 0.92);
+  border: 1px solid var(--design-border);
+  border-radius: 12px;
+  color: var(--design-foreground);
+  display: inline-flex;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 8px;
+}
+
+#tab-presets .macro-badge.calories {
+  border-color: rgba(0, 229, 255, 0.38);
+  color: var(--design-accent);
+}
+
+#tab-presets .macro-badge.p {
+  border-color: rgba(95, 185, 168, 0.42);
+  color: var(--design-positive);
+}
+
+#tab-presets .macro-badge.f {
+  border-color: rgba(255, 153, 0, 0.42);
+  color: var(--design-chart-fat);
+}
+
+#tab-presets .macro-badge.c {
+  border-color: rgba(0, 229, 255, 0.42);
+  color: var(--design-accent);
+}
+
+#tab-presets .preset-macro-edit-input,
+#tab-presets .preset-edit-input {
+  background: #0f1820;
+  border: 1px solid var(--design-accent);
+  border-radius: 10px;
+  color: var(--design-foreground);
+  font: 800 12px var(--font-sans);
+  outline: none;
+}
+
+#tab-presets .preset-unit-select {
+  background: var(--design-background);
+  border: 1px solid var(--design-border);
+  border-radius: 10px;
+  color: var(--design-foreground);
+  font: 800 12px var(--font-sans);
+  height: 34px;
+  outline: none;
+  padding: 0 8px;
+}
+
+#tab-presets .preset-macro-spinner {
+  border-color: currentColor;
+  border-right-color: transparent;
+}
+
+#tab-presets .presets-empty-state {
+  background: linear-gradient(180deg, rgba(22, 42, 55, 0.96), rgba(18, 30, 40, 0.96));
+  border: 1px dashed var(--design-border);
+  border-radius: 18px;
+  color: rgba(255, 255, 255, 0.72);
+  grid-column: 1 / -1;
+  padding: 24px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  #tab-presets .presets-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  #tab-presets .preset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #tab-presets .preset-card-serving-row {
+    grid-template-columns: 1fr;
+  }
+
+  #tab-presets .preset-serving-preview {
+    text-align: left;
+  }
+}
+
