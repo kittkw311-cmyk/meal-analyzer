@@ -52,9 +52,7 @@
   const imagePreview = document.getElementById('image-preview');
   const btnRemoveImage = document.getElementById('btn-remove-image');
   const btnAnalyze = document.getElementById('btn-analyze');
-
-  // Text Input Element
-  const mealTextInput = document.getElementById('meal-text-input');
+  
 
   // Selectors (Date & Meal Type)
   const mealDateInput = document.getElementById('meal-date-input');
@@ -587,16 +585,11 @@
     previewContainer.style.display = 'none';
     imagePreview.src = '';
     
-    // 食事テキスト入力欄をクリア
-    mealTextInput.value = '';
-    
     // 定番メニューセレクタをリセット
     if (presetSelector) {
       presetSelector.value = '';
       if (presetServingAmountInput) presetServingAmountInput.value = '1.0';
       updatePresetServingControls();
-      btnAnalyze.textContent = "食事を解析する";
-      btnAnalyze.style.backgroundColor = "";
     }
 
     // 日付・食事区分セレクタを現在時刻で初期化
@@ -720,7 +713,6 @@
 
   function clearUpload() {
     clearImage();
-    mealTextInput.value = '';
     validateInputs();
     initializeSelectors();
   }
@@ -733,8 +725,8 @@
     const presetAmount = presetServingAmountInput ? Number(presetServingAmountInput.value) : 1;
     const hasValidPresetAmount = !hasPreset || (Number.isFinite(presetAmount) && presetAmount > 0);
     const hasImage = !!selectedFile;
-    const hasText = mealTextInput.value.trim().length > 0;
-    btnAnalyze.disabled = !((hasPreset && hasValidPresetAmount) || hasImage || hasText);
+    const enabled = (hasPreset && hasValidPresetAmount) || hasImage;
+    if (btnAnalyze) btnAnalyze.disabled = !enabled;
   }
 
   const roundTo1 = (value) => Math.round(Number(value) * 10) / 10;
@@ -813,13 +805,6 @@
         if (presetServingAmountInput) {
           presetServingAmountInput.value = (Number.isFinite(baseAmount) && baseAmount > 0 ? baseAmount : 1).toFixed(1);
         }
-        // 定番メニューが選ばれたらボタン表記を切替 (写真はクリアせず併用可能にする)
-        btnAnalyze.textContent = "定番メニューで記録する";
-        btnAnalyze.style.backgroundColor = "var(--primary-dark)";
-        mealTextInput.value = "";
-      } else {
-        btnAnalyze.textContent = "食事を解析する";
-        btnAnalyze.style.backgroundColor = "";
       }
       updatePresetServingControls();
       validateInputs();
@@ -833,7 +818,6 @@
     });
   }
 
-  mealTextInput.addEventListener('input', validateInputs);
   if (weightTextInput) {
     weightTextInput.addEventListener('input', validateWeightInputs);
   }
@@ -842,30 +826,16 @@
   // Analyze Meal Execution
   // ==========================================================================
   btnAnalyze.addEventListener('click', async () => {
-    const selectedPresetId = presetSelector ? presetSelector.value : "";
-    
-    // A. 定番メニューが選ばれている場合の直接記録処理
-    if (selectedPresetId !== "") {
-      const opt = presetSelector.options[presetSelector.selectedIndex];
-      const presetName = opt.dataset.name;
-      const calculatedNutrition = calculatePresetNutrition(opt);
-      const servingValues = getPresetServingValues(opt);
-      if (!calculatedNutrition || servingValues.servingAmount == null) {
-        alert('今回量を正しく入力してください。');
-        validateInputs();
-        return;
-      }
-      const cVal = calculatedNutrition.calories;
-      const pVal = calculatedNutrition.protein;
-      const fVal = calculatedNutrition.fat;
-      const carbVal = calculatedNutrition.carbohydrates;
+    const opt = getSelectedPresetOption();
+    const hasImage = !!selectedFile;
+    if (!opt && !hasImage) return;
 
+    if (!opt && hasImage) {
       btnAnalyze.disabled = true;
-
       const loadingTextEl = loadingOverlay.querySelector('p');
       const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-      loadingTextEl.textContent = '定番メニューを記録しています...';
-      loadingSubTextEl.textContent = '計算済みのデータを食事履歴へ追加中';
+      loadingTextEl.textContent = 'AIが栄養素を解析しています...';
+      loadingSubTextEl.textContent = '写真からカロリーやPFCバランスを計算中';
       loadingOverlay.style.display = 'flex';
 
       const selectedDate = mealDateInput.value;
@@ -877,75 +847,56 @@
       const mealDateToSend = new Date(fullDateTimeStr).toISOString();
 
       const formData = new FormData();
-      formData.append('name', presetName);
-      formData.append('calories', cVal);
-      formData.append('protein', pVal);
-      formData.append('fat', fVal);
-      formData.append('carbohydrates', carbVal);
+      formData.append('image', selectedFile);
       formData.append('mealDate', mealDateToSend);
       formData.append('mealType', activeMealType);
-      formData.append('presetId', selectedPresetId);
-      formData.append('servingAmount', servingValues.servingAmount.toFixed(1));
-      formData.append('baseServingAmount', servingValues.baseAmount.toFixed(1));
-      formData.append('servingUnit', servingValues.servingUnit);
-      if (selectedFile) {
-        formData.append('image', selectedFile);
-      }
 
       try {
-        const response = await fetch('/api/history/preset', {
+        const response = await fetch('/api/analyze', {
           method: 'POST',
           body: formData
         });
 
-        if (!response.ok) throw new Error('定番メニューの記録に失敗しました。');
-
-        const record = await response.json();
-
-      // 成功後の各種同期 ＆ 自動遷移 ＆ モーダル起動
-      updateDailySummary();
-      await loadHistory();
-      hideModal(mealAnalysisModal);
-
-      const historyNavItem = document.querySelector('[data-tab="tab-history"]');
-      if (historyNavItem) {
-          historyNavItem.click();
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || '食事の解析に失敗しました。');
         }
 
-        openDetailModal(record);
+        updateDailySummary();
+        await loadHistory();
+        hideModal(mealAnalysisModal);
+        const historyNavItem = document.querySelector('[data-tab="tab-history"]');
+        if (historyNavItem) {
+          historyNavItem.click();
+        }
+        openDetailModal(payload);
         resetAnalyzeForm();
-
       } catch (err) {
         console.error(err);
-        alert(err.message);
+        alert(err.message || '食事の解析に失敗しました。');
       } finally {
         loadingOverlay.style.display = 'none';
         btnAnalyze.disabled = false;
       }
-      return; // 定番記録処理はここで終了
+      return;
     }
 
-    // B. 通常の AI 解析処理
-    const hasImage = !!selectedFile;
-    const hasText = mealTextInput.value.trim().length > 0;
-    if (!hasImage && !hasText) return;
+    const calculatedNutrition = calculatePresetNutrition(opt);
+    const servingValues = getPresetServingValues(opt);
+    if (!calculatedNutrition || servingValues.servingAmount == null) {
+      alert('今回量を正しく入力してください。');
+      validateInputs();
+      return;
+    }
 
     btnAnalyze.disabled = true;
-    
-    // ローディング文言の設定
     const loadingTextEl = loadingOverlay.querySelector('p');
     const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-    loadingTextEl.textContent = 'AIが栄養素を解析しています...';
-    loadingSubTextEl.textContent = 'カロリーやPFCバランスを計算中';
+    loadingTextEl.textContent = '定番メニューを記録しています...';
+    loadingSubTextEl.textContent = '計算済みのデータを食事履歴へ追加中';
     loadingOverlay.style.display = 'flex';
 
-    const formData = new FormData();
-    if (hasImage) {
-      formData.append('image', selectedFile);
-    }
-    formData.append('textInput', mealTextInput.value.trim());
-    
-    // 日付 (YYYY-MM-DD) にアップロードした瞬間の現在時刻 (HH:MM:SS) をマージして送信
+    const presetName = opt.dataset.name || opt.textContent.trim();
     const selectedDate = mealDateInput.value;
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, '0');
@@ -954,58 +905,45 @@
     const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
     const mealDateToSend = new Date(fullDateTimeStr).toISOString();
 
+    const formData = new FormData();
+    formData.append('name', presetName);
+    formData.append('calories', calculatedNutrition.calories);
+    formData.append('protein', calculatedNutrition.protein);
+    formData.append('fat', calculatedNutrition.fat);
+    formData.append('carbohydrates', calculatedNutrition.carbohydrates);
     formData.append('mealDate', mealDateToSend);
     formData.append('mealType', activeMealType);
+    formData.append('presetId', opt.value);
+    formData.append('servingAmount', servingValues.servingAmount.toFixed(1));
+    formData.append('baseServingAmount', servingValues.baseAmount.toFixed(1));
+    formData.append('servingUnit', servingValues.servingUnit);
+    if (selectedFile) {
+      formData.append('image', selectedFile);
+    }
 
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch('/api/history/preset', {
         method: 'POST',
         body: formData
       });
 
+      const payload = await response.json();
       if (!response.ok) {
-        const errData = await response.json();
-        const error = new Error(errData.error || 'サーバーエラーが発生しました。');
-        error.status = response.status;
-        throw error;
+        throw new Error(payload.error || '定番メニューの記録に失敗しました。');
       }
 
-      const record = await response.json();
-      
-      // 今日の合計表示をリアルタイム更新
       updateDailySummary();
-
-      // 履歴一覧も同期してリロード
       await loadHistory();
       hideModal(mealAnalysisModal);
-
-      // 自動で食事（履歴）タブ（tab-history）へ遷移
       const historyNavItem = document.querySelector('[data-tab="tab-history"]');
       if (historyNavItem) {
         historyNavItem.click();
       }
-
-      // 作成された履歴の詳細モーダルを表示
-      openDetailModal(record);
-
-      // 解析画面の入力値を初期化
+      openDetailModal(payload);
       resetAnalyzeForm();
-
-      // AI解析に失敗して一時保存された場合のアラート
-      if (record.status === 'failed') {
-        alert('【AI解析失敗 - 履歴保存】\n一時的なエラーによりAI解析に失敗しましたが、入力データ（画像・テキスト）は履歴に保存されました。\n\n詳細画面から「再計算」ボタンを押すことで、再度解析を実行できます。');
-      }
-
     } catch (err) {
       console.error(err);
-      const msg = err.message || '';
-      if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
-        alert('【AIアクセス制限】\nただいまAIへのアクセスが一時的に集中しています（無料枠の上限に達しました）。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。');
-      } else if (err.status === 503 || msg.includes('503') || msg.includes('UNAVAILABLE') || msg.includes('temporary') || msg.includes('high demand')) {
-        alert('【AIサーバー一時混雑】\n現在、GoogleのAIサーバーが非常に混み合っています。\n\n一時的な制限ですので、10秒〜15秒ほど待ってから、もう一度「食事を解析する」ボタンを押してください。');
-      } else {
-        alert('解析に失敗しました。\n\n少し時間をおいてからもう一度お試しください。\n詳細: ' + msg);
-      }
+      alert(err.message || '定番メニューの記録に失敗しました。');
     } finally {
       loadingOverlay.style.display = 'none';
       btnAnalyze.disabled = false;
@@ -1624,7 +1562,7 @@
         historyList.innerHTML = `
           <div class="empty-state">
             <p>まだ解析履歴がありません。</p>
-            <span>食事を解析するとここに保存されます。</span>
+            <span>メニュー登録するとここに保存されます。</span>
           </div>
         `;
         return;
@@ -1838,10 +1776,10 @@
             }
           });
 
-          // 表示用の料理名・テキスト（Geminiが解析した具体的な料理名 mealName を優先表示）
+          // 表示用の料理名・テキスト（記録時に保存された mealName を優先表示）
           const displayText = item.textInput && item.textInput.trim() 
             ? item.textInput.trim() 
-            : (item.imageId ? '📸 画像から解析' : '🍽️ 食事データ');
+            : (item.imageId ? '📸 画像付き記録' : '🍽️ 食事データ');
           let displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
 
           if (item.status === 'failed') {

@@ -166,7 +166,7 @@
         </div>
       </section>
 
-      <!-- 2. 履歴タブ -->
+      <!-- 3. 履歴タブ -->
       <section id="tab-history" class="tab-content">
         <div class="history-quick-actions">
           <button type="button" class="history-quick-action-btn" id="btn-open-meal-analysis">メニュー登録</button>
@@ -176,7 +176,7 @@
           <!-- 履歴カードが動的に挿入されます -->
           <div class="empty-state">
             <p>まだ解析履歴がありません。</p>
-            <span>食事を解析するとここに保存されます。</span>
+            <span>メニュー登録するとここに保存されます。</span>
           </div>
         </div>
         <div id="history-day-detail" class="history-day-detail" hidden>
@@ -285,9 +285,6 @@
               <img id="image-preview" src="#" alt="食事プレビュー">
               <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を消去</button>
             </div>
-            <div class="text-input-area">
-              <textarea id="meal-text-input" class="meal-textarea" placeholder="または料理名、レシピのURL、商品のURLを入力..." rows="2"></textarea>
-            </div>
             <div class="selectors-inline-row">
               <input type="date" id="meal-date-input" class="date-input">
               <div class="meal-type-chips">
@@ -297,7 +294,7 @@
                 <button type="button" class="chip" data-type="snack">間</button>
               </div>
             </div>
-            <button class="btn btn-primary btn-block" id="btn-analyze" disabled>食事を解析する</button>
+            <button class="btn btn-primary btn-block" id="btn-analyze" disabled>履歴に保存</button>
           </div>
         </div>
       </div>

@@ -591,194 +591,6 @@ async function writePresets(presets) {
 // API 繧ｨ繝ｳ繝峨・繧､繝ｳ繝・
 // ==========================================================================
 
-// 1. 鬟滉ｺ狗判蜒上・繝・く繧ｹ繝郁ｧ｣譫撰ｼ・ｿ晏ｭ・API
-app.post('/api/analyze', upload.single('image'), async (req, res) => {
-  try {
-    const textInput = req.body.textInput || '';
-    
-    // 逕ｻ蜒上ｂ繝・く繧ｹ繝医ｂ縺ｪ縺・ｴ蜷医・繧ｨ繝ｩ繝ｼ
-    if (!req.file && !textInput.trim()) {
-      return res.status(400).json({ error: '画像もテキストも入力されていません。' });
-    }
-
-    if (!ai) {
-      return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
-    }
-
-    // 繧ｯ繝ｩ繧､繧｢繝ｳ繝医°繧蛾∽ｿ｡縺輔ｌ縺滄｣滉ｺ区律譎ゅ→蛹ｺ蛻・ｒ蜿門ｾ・
-    const mealDate = req.body.mealDate ? new Date(req.body.mealDate).toISOString() : new Date().toISOString();
-    const mealType = req.body.mealType || 'snack';
-
-    console.log(`Analyzing meal input with Gemini 2.5 Flash (${mealDate} - ${mealType})...`);
-    
-    // 繝励Ο繝ｳ繝励ヨ縺ｮ險ｭ險・(鬟滓攝繝ｻ隱ｿ蜻ｳ譁吶・蜴ｳ蟇・↑謗ｨ貂ｬ縺ｨ險育ｮ玲ｹ諡縺ｮ譏手ｨ倥ｒ蠑ｷ蛻ｶ)
-    let promptInstruction = `
-蜈･蜉帙＆繧後◆鬟滉ｺ句・螳ｹ・域ｷｻ莉倥＆繧後◆蜀咏悄縲√∪縺溘・譁咏炊蜷阪・繝ｬ繧ｷ繝廼RL繝ｻ蝠・刀URL縺ｮ繝・く繧ｹ繝・ "${textInput}"・峨°繧峨∽ｽｿ繧上ｌ縺ｦ縺・ｋ縺吶∋縺ｦ縺ｮ鬟滓攝縺ｨ隱ｿ蜻ｳ譁吶ｒ謗ｨ貂ｬ縺励◆荳翫〒縲√き繝ｭ繝ｪ繝ｼ縲√◆繧薙・縺剰ｳｪ・・・峨∬р雉ｪ・・・峨∫く豌ｴ蛹也黄・・・峨・繧ｰ繝ｩ繝謨ｰ繧堤ｮ怜・縺励※縺上□縺輔＞縲・
-
-縲仙宍譬ｼ縺ｪ險育ｮ励・謗ｨ貂ｬ繧ｬ繧､繝峨Λ繧､繝ｳ縲・
-1. 鬟滓攝縺ｮ驥埼㍼縺御ｸ肴・縺ｪ蝣ｴ蜷医・縲∽ｸ闊ｬ逧・↑1鬟溷・縺ｮ逶ｮ螳蛾㍼・井ｾ具ｼ壹＃鬟ｯ1閹ｳ150g縲√が繝ｼ繝医Α繝ｼ繝ｫ1鬟・0g縲∝嵯1蛟・0g縺ｪ縺ｩ・峨ｒ諠ｳ螳壹＠縲∬ｨ育ｮ励・譬ｹ諡縺ｨ縺励◆諠ｳ螳壹げ繝ｩ繝謨ｰ繧貞ｿ・★譏手ｨ倥＠縺ｦ縺上□縺輔＞縲・
-2. 莉･荳九・鬟滓攝縺ｯ謖・ｮ壹′縺ｪ縺・ｴ蜷医ｂ荳闊ｬ逧・↑繧ゅ・繧剃ｻｮ螳壹＠縺ｦ譏手ｨ倥＠縲∝宍蟇・↓蛹ｺ蛻･縺励※險育ｮ励＠縺ｦ縺上□縺輔＞縲・
-   - 閧蛾｡橸ｼ夐ｶ上・縺ｭ閧峨・縲檎坩縺ゅｊ繝ｻ逧ｮ縺ｪ縺励阪・Κ菴搾ｼ医ｂ繧りｉ縲√＆縺輔∩縺ｪ縺ｩ・峨ｒ蛻､譁ｭ繝ｻ莉ｮ螳壹＠譏手ｨ倥・
-   - 螟ｧ雎・｣ｽ蜩・ｼ夊ｱ・・縺ｮ縲梧惠邯ｿ繝ｻ邨ｹ縺斐＠縲阪↑縺ｩ縺ｮ遞ｮ鬘槭ｒ蛻､譁ｭ繝ｻ莉ｮ螳壹＠譏手ｨ倥・
-3. 隱ｿ蜻ｳ譁吶→隱ｿ逅・ｳ輔↓繧医ｋ縲碁國繧後き繝ｭ繝ｪ繝ｼ・育音縺ｫ閼りｳｪ・峨阪ｒ貍上ｌ縺ｪ縺乗耳貂ｬ繝ｻ險育ｮ励↓蜷ｫ繧√※縺上□縺輔＞縲・
-   - 繝槭Κ繝阪・繧ｺ縲√＃縺ｾ繝峨Ξ繝・す繝ｳ繧ｰ縲∫┥閧峨・縺溘ｌ縲∬ｪｿ逅・ｲｹ縺ｪ縺ｩ縺ｮ鬮倩р雉ｪ繝ｻ鬮倥き繝ｭ繝ｪ繝ｼ縺ｪ隱ｿ蜻ｳ譁吶・菴ｿ逕ｨ驥上ｒ謗ｨ貂ｬ・亥､ｧ縺輔§繝ｻ蟆上＆縺倡ｭ会ｼ峨＠縺ｦ蜉邂励＠縺ｦ縺上□縺輔＞縲・
-   - 騾・↓縲√・繝ｳ驟｢繧・Ξ繝｢繝ｳ豎√∝｡ｩ縺ｪ縺ｩ縺ｮ菴弱き繝ｭ繝ｪ繝ｼ隱ｿ蜻ｳ譁吶ｂ豁｣遒ｺ縺ｫ蜿肴丐縺輔○縺ｦ縺上□縺輔＞縲・
-   - 隱ｿ逅・ｳ包ｼ域恕縺偵ｋ縲∫ｒ繧√ｋ縲∬頂縺吶√ｆ縺ｧ繧九↑縺ｩ・峨↓繧医ｋ豐ｹ縺ｮ蜷ｸ蜿朱㍼・亥精豐ｹ邇・ｼ峨ｂ閠・・縺励※蜉邂励＠縺ｦ縺上□縺輔＞縲・
-
-縲仙・蜉帛ｽ｢蠑上・謖・ｮ壹・
-縲景nference縲阪↓縺ｯ縲∬ｪｭ縺ｿ蜿悶▲縺・謗ｨ貂ｬ縺励◆鬟滓攝繝ｪ繧ｹ繝医ｄ險育ｮ玲ｹ諡繧偵√さ繝ｭ繝ｳ・・・峨・菴咲ｽｮ縺檎ｸｦ縺ｫ邯ｺ鮗励↓謠・≧繧医≧縲√せ繝壹・繧ｹ縺ｧ譯∝粋繧上○縺励◆繝・く繧ｹ繝茨ｼ域隼陦悟・繧奇ｼ峨〒蜃ｺ蜉帙＠縺ｦ縺上□縺輔＞縲よ律譛ｬ隱槭・蜈ｨ隗呈枚蟄励・蜊願ｧ偵せ繝壹・繧ｹ2譁・ｭ怜・縺ｨ縺励※險育ｮ励＠縲√さ繝ｭ繝ｳ縺ｮ菴咲ｽｮ繧貞ｮ悟・縺ｫ謠・∴縺ｦ縺上□縺輔＞縲・
-
-・郁ｨ倩ｿｰ萓具ｼ・
-繝ｻ[鬟滓攝繝ｻ譁咏炊蜷江
-  - 繧ｫ繝ｭ繝ｪ繝ｼ  : 000 kcal (諠ｳ螳壹げ繝ｩ繝謨ｰ縺ｪ縺ｩ縺ｮ譬ｹ諡)
-  - 繧ｿ繝ｳ繝代け雉ｪ: 00.0 g
-  - 閼りｳｪ      : 00.0 g
-  - 轤ｭ豌ｴ蛹也黄  : 00.0 g
-
-縲径dvice縲阪↓縺ｯ縲∫ｮ｡逅・・､雁｣ｫ縺ｨ縺励※縺ｮ蜆ｪ縺励￥荳∝ｯｧ縺ｪ譌･譛ｬ隱槭い繝峨ヰ繧､繧ｹ・育ｮ・擅譖ｸ縺阪・菴ｿ繧上★縲∬・辟ｶ縺ｪ譁・ｫ縺ｧ驕ｩ蠎ｦ縺ｫ謾ｹ陦後ｒ蜈･繧後◆繧ゅ・・峨ｒ蛻・屬縺励※蜃ｺ蜉帙＠縺ｦ縺上□縺輔＞縲・
-`;
-
-    // contents 驟榊・縺ｮ邨・∩遶九※
-    const contents = [];
-    if (req.file) {
-      contents.push({
-        inlineData: {
-          mimeType: req.file.mimetype,
-          data: req.file.buffer.toString('base64'),
-        },
-      });
-    }
-    contents.push(promptInstruction);
-
-    // Gemini 2.5 Flash 縺ｧ隗｣譫撰ｼ域ｧ矩蛹褒SON蜃ｺ蜉幢ｼ・
-    let nutritionData = null;
-    let isFailed = false;
-    let analysisErrorMsg = '';
-
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: contents,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              mealName: { type: Type.STRING, description: '食事のメニュー名。25文字以内で要約してください。' },
-              calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
-              protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
-              fat: { type: Type.NUMBER, description: '脂質 (g)' },
-              carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
-              inference: { type: Type.STRING, description: '食事画像・テキストの解析結果と栄養計算の根拠。短く具体的に。' },
-              advice: { type: Type.STRING, description: '食事内容に基づく、簡潔で実行しやすいアドバイス。' }
-            },
-            required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
-          }
-        }
-      });
-
-      const resultText = response.text;
-      console.log('Gemini raw response:', resultText);
-      nutritionData = JSON.parse(resultText);
-    } catch (err) {
-      console.error('Gemini analysis error during analyze:', err);
-      analysisErrorMsg = err.message || 'AI解析中にエラーが発生しました。';
-      isFailed = true;
-    }
-
-    if (isFailed) {
-      nutritionData = {
-        mealName: textInput.trim() ? textInput.trim().substring(0, 25) : '鬟滉ｺ九ョ繝ｼ繧ｿ (譛ｪ隗｣譫・',
-        calories: 0,
-        protein: 0,
-        fat: 0,
-        carbohydrates: 0,
-        inference: `AI解析に失敗しました。\n\n詳細: ${analysisErrorMsg}\n\n入力内容を見直してください。`,
-        advice: 'AI解析に失敗したため、食事内容の見直しをお願いします。'
-      };
-    }
-
-    // 逕ｻ蜒上・菫晏ｭ伜・逅・(逕ｻ蜒上′謠蝉ｾ帙＆繧後※縺・ｋ蝣ｴ蜷医・縺ｿ)
-    let imageSource = '';
-    let imageId = '';
-
-    if (req.file) {
-      imageSource = 'local';
-      // 繝輔ぃ繧､繝ｫ蜷阪・險ｭ險・ meal_YYYY-MM-DD_mealType_timestamp.jpg
-      const dateStr = mealDate.substring(0, 10);
-      const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
-
-      if (drive && folderId) {
-        try {
-          console.log('Uploading image to Google Drive...');
-          const fileMetadata = {
-            name: filename,
-            parents: [folderId],
-          };
-          const media = {
-            mimeType: req.file.mimetype,
-            body: bufferToStream(req.file.buffer),
-          };
-          const driveResponse = await drive.files.create({
-            requestBody: fileMetadata,
-            media: media,
-            fields: 'id',
-          });
-          imageSource = 'drive';
-          imageId = driveResponse.data.id;
-          console.log('Successfully uploaded image to Google Drive. File ID:', imageId);
-        } catch (err) {
-          console.error('Failed to upload image to Google Drive, saving locally instead:', err.message);
-          // 繝峨Λ繧､繝紋ｿ晏ｭ伜､ｱ謨玲凾縺ｯ繝ｭ繝ｼ繧ｫ繝ｫ菫晏ｭ倥∈繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
-          imageSource = 'local';
-          const localPath = path.join(UPLOADS_DIR, filename);
-          fs.writeFileSync(localPath, req.file.buffer);
-          imageId = filename;
-        }
-      } else {
-        // 繝ｭ繝ｼ繧ｫ繝ｫ縺ｮ縺ｿ菫晏ｭ・
-        const localPath = path.join(UPLOADS_DIR, filename);
-        fs.writeFileSync(localPath, req.file.buffer);
-        imageId = filename;
-        console.log('Saved image locally:', filename);
-      }
-    }
-
-    // 螻･豁ｴ繝・・繧ｿ縺ｸ縺ｮ逋ｻ骭ｲ
-    const newRecord = {
-      id: `rec_${Date.now()}`,
-      date: new Date().toISOString(), // 繧ｷ繧ｹ繝・Β逋ｻ骭ｲ譌･譎・
-      mealDate,                        // 繝ｦ繝ｼ繧ｶ繝ｼ謖・ｮ壹・鬟滉ｺ区律
-      mealType,                        // 繝ｦ繝ｼ繧ｶ繝ｼ謖・ｮ壹・鬟滉ｺ句玄蛻・
-      textInput,                       // 繝ｦ繝ｼ繧ｶ繝ｼ蜈･蜉・of 譁咏炊蜷阪ｄURL繝・く繧ｹ繝・
-      mealName: nutritionData.mealName, // AI縺瑚ｪｭ縺ｿ蜿悶▲縺滄｣滉ｺ九Γ繝九Η繝ｼ蜷・
-      imageSource,
-      imageId,
-      status: isFailed ? 'failed' : 'success', // 繧ｹ繝・・繧ｿ繧ｹ繧定ｿｽ蜉・・
-      nutrition: {
-        calories: Number(nutritionData.calories),
-        protein: Number(nutritionData.protein),
-        fat: Number(nutritionData.fat),
-        carbohydrates: Number(nutritionData.carbohydrates),
-        comment: nutritionData.advice, // 譌｢蟄倥ョ繝ｼ繧ｿ縺ｨ縺ｮ莠呈鋤諤ｧ縺ｮ縺溘ａ縺ｫ谿九☆
-        inference: nutritionData.inference,
-        advice: nutritionData.advice
-      }
-    };
-
-    const history = await readHistory();
-    history.unshift(newRecord); // 蜈磯ｭ縺ｫ霑ｽ蜉・域怙譁ｰ縺御ｸ奇ｼ・
-    await writeHistory(history);
-
-    res.json(newRecord);
-
-  } catch (error) {
-    console.error('Analysis error:', error);
-    const statusCode = error.status || error.statusCode || 500;
-    res.status(statusCode).json({ error: '隗｣譫蝉ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆縲・ ' + error.message, status: statusCode });
-  }
-});
-
 // 螻･豁ｴ邱ｨ髮・API (譌･莉倥・鬟滉ｺ句玄蛻・・譖ｴ譁ｰ)
 app.put('/api/history/:id', async (req, res) => {
   const { id } = req.params;
@@ -1006,6 +818,145 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
   }
 });
 
+// 1. 食事画像AI解析 API
+app.post('/api/analyze', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: '画像が入力されていません。' });
+    }
+
+    if (!ai) {
+      return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
+    }
+
+    const mealDate = req.body.mealDate ? new Date(req.body.mealDate).toISOString() : new Date().toISOString();
+    const mealType = req.body.mealType || 'snack';
+    const contents = [
+      {
+        inlineData: {
+          mimeType: req.file.mimetype,
+          data: req.file.buffer.toString('base64'),
+        },
+      },
+      `料理写真を解析し、食事名と栄養推定を日本語でJSONのみで返してください。
+画像から読み取れる範囲で、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。
+推定は見た目の量や一般的なレシピを基にして構いません。`,
+    ];
+
+    let nutritionData = null;
+    let isFailed = false;
+    let analysisErrorMsg = '';
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mealName: { type: Type.STRING, description: '食事のメニュー名。25文字以内で要約してください。' },
+              calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
+              protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
+              fat: { type: Type.NUMBER, description: '脂質 (g)' },
+              carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
+              inference: { type: Type.STRING, description: '食事画像の解析結果と栄養計算の根拠。短く具体的に。' },
+              advice: { type: Type.STRING, description: '食事内容に基づく、簡潔で実行しやすいアドバイス。' }
+            },
+            required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
+          }
+        }
+      });
+
+      nutritionData = JSON.parse(response.text);
+    } catch (err) {
+      console.error('Gemini analysis error during meal analyze:', err);
+      analysisErrorMsg = err.message || 'AI解析中にエラーが発生しました。';
+      isFailed = true;
+    }
+
+    let imageSource = '';
+    let imageId = '';
+    const dateStr = mealDate.substring(0, 10);
+    const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
+
+    if (drive && folderId) {
+      try {
+        const fileMetadata = {
+          name: filename,
+          parents: [folderId],
+        };
+        const media = {
+          mimeType: req.file.mimetype,
+          body: bufferToStream(req.file.buffer),
+        };
+        const driveResponse = await drive.files.create({
+          requestBody: fileMetadata,
+          media,
+          fields: 'id',
+        });
+        imageSource = 'drive';
+        imageId = driveResponse.data.id;
+      } catch (err) {
+        console.error('Failed to upload meal image to Google Drive, saving locally instead:', err.message);
+        imageSource = 'local';
+        const localPath = path.join(UPLOADS_DIR, filename);
+        fs.writeFileSync(localPath, req.file.buffer);
+        imageId = filename;
+      }
+    } else {
+      imageSource = 'local';
+      const localPath = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(localPath, req.file.buffer);
+      imageId = filename;
+    }
+
+    const safeMealName = nutritionData?.mealName || '食事画像';
+    const safeNumber = (value, fallback = 0) => {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : fallback;
+    };
+    const calories = isFailed ? 0 : Math.round(safeNumber(nutritionData?.calories, 0));
+    const protein = isFailed ? 0 : Math.round(safeNumber(nutritionData?.protein, 0) * 10) / 10;
+    const fat = isFailed ? 0 : Math.round(safeNumber(nutritionData?.fat, 0) * 10) / 10;
+    const carbohydrates = isFailed ? 0 : Math.round(safeNumber(nutritionData?.carbohydrates, 0) * 10) / 10;
+
+    const newRecord = {
+      id: `rec_${Date.now()}`,
+      date: new Date().toISOString(),
+      mealDate,
+      mealType,
+      mealName: safeMealName,
+      textInput: '',
+      imageSource,
+      imageId,
+      status: isFailed ? 'failed' : 'success',
+      nutrition: {
+        calories,
+        protein,
+        fat,
+        carbohydrates,
+        comment: isFailed ? 'AI解析に失敗しました。' : nutritionData.advice,
+        inference: isFailed
+          ? `AI解析に失敗しました。\n\n詳細: ${analysisErrorMsg}\n\n画像を見直してもう一度お試しください。`
+          : nutritionData.inference,
+        advice: isFailed ? 'AI解析に失敗したため、画像を見直して再度お試しください。' : nutritionData.advice,
+      }
+    };
+
+    const history = await readHistory();
+    history.unshift(newRecord);
+    await writeHistory(history);
+
+    res.json(newRecord);
+  } catch (error) {
+    console.error('Meal analyze error:', error);
+    const statusCode = error.status || error.statusCode || 500;
+    res.status(statusCode).json({ error: '食事画像の解析中にエラーが発生しました。' + error.message, status: statusCode });
+  }
+});
+
 // ==========================================================================
 // 螳夂分繝｡繝九Η繝ｼ (Presets) API 繧ｨ繝ｳ繝峨・繧､繝ｳ繝・
 // ==========================================================================
@@ -1101,135 +1052,7 @@ app.post('/api/presets', async (req, res) => {
   }
 });
 
-// 3. 螳夂分繝｡繝九Η繝ｼ AI 隗｣譫・・・逋ｻ骭ｲ API
-app.post('/api/presets/analyze', upload.single('image'), async (req, res) => {
-  try {
-    const textInput = req.body.textInput || '';
-    
-    if (!req.file && !textInput.trim()) {
-      return res.status(400).json({ error: '画像もテキストも入力されていません。' });
-    }
-
-    if (!ai) {
-      return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
-    }
-
-    console.log('AI analyzing for predefined menu preset...');
-    
-    let promptInstruction = `
-蜈･蜉帙＆繧後◆鬟滉ｺ句・螳ｹ・域ｷｻ莉倥＆繧後◆蜀咏悄縲√∪縺溘・譁咏炊蜷阪・繝ｬ繧ｷ繝皮ｭ峨・繝・く繧ｹ繝・ "${textInput}"・峨°繧峨∽ｽｿ繧上ｌ縺ｦ縺・ｋ縺吶∋縺ｦ縺ｮ鬟滓攝縺ｨ隱ｿ蜻ｳ譁吶ｒ謗ｨ貂ｬ縺励◆荳翫〒縲√き繝ｭ繝ｪ繝ｼ縲√◆繧薙・縺剰ｳｪ・・・峨∬р雉ｪ・・・峨∫く豌ｴ蛹也黄・・・峨・繧ｰ繝ｩ繝謨ｰ繧堤ｮ怜・縺励※縺上□縺輔＞縲・
-隗｣譫千ｵ先棡縺九ｉ縲∽ｻ｣陦ｨ逧・↑繝｡繝九Η繝ｼ蜷阪∵侭逅・錐・井ｾ具ｼ壹ず繝･繝ｼ繧ｷ繝ｼ闍･鮓上げ繝ｪ繝ｫ縲√Ξ繝｢繝ｳ鬚ｨ蜻ｳ繝励Ο繝・う繝ｳ縲√ヱ繝ｳ繧ｱ繝ｼ繧ｭ縺ｨ繝輔Ν繝ｼ繝・↑縺ｩ・峨ｒ邁｡貎斐↓謚ｽ蜃ｺ縺励※縺上□縺輔＞縲・
-`;
-
-    const contents = [];
-    if (req.file) {
-      contents.push({
-        inlineData: {
-          mimeType: req.file.mimetype,
-          data: req.file.buffer.toString('base64'),
-        },
-      });
-    }
-    contents.push(promptInstruction);
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: contents,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            mealName: { type: Type.STRING, description: '定番メニュー名。20文字以内で要約してください。' },
-            calories: { type: Type.INTEGER, description: '繧ｫ繝ｭ繝ｪ繝ｼ (kcal)' },
-            protein: { type: Type.NUMBER, description: '繧ｿ繝ｳ繝代け雉ｪ (g)' },
-            fat: { type: Type.NUMBER, description: '閼りｳｪ (g)' },
-            carbohydrates: { type: Type.NUMBER, description: '轤ｭ豌ｴ蛹也黄 (g)' }
-          },
-          required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates']
-        }
-      }
-    });
-
-    const resultText = response.text;
-    console.log('Gemini preset raw response:', resultText);
-    const nutritionData = JSON.parse(resultText);
-
-    // 逕ｻ蜒上・菫晏ｭ伜・逅・(逕ｻ蜒上′謠蝉ｾ帙＆繧後※縺・ｋ蝣ｴ蜷医・縺ｿ)
-    let imageSource = '';
-    let imageId = '';
-
-    if (req.file) {
-      imageSource = 'local';
-      const dateStr = new Date().toISOString().substring(0, 10);
-      const filename = `preset_${dateStr}_${Date.now()}.jpg`;
-
-      if (drive && folderId) {
-        try {
-          console.log('Uploading preset image to Google Drive...');
-          const fileMetadata = {
-            name: filename,
-            parents: [folderId],
-          };
-          const media = {
-            mimeType: req.file.mimetype,
-            body: bufferToStream(req.file.buffer),
-          };
-          const driveResponse = await drive.files.create({
-            requestBody: fileMetadata,
-            media: media,
-            fields: 'id',
-          });
-          imageSource = 'drive';
-          imageId = driveResponse.data.id;
-          console.log('Successfully uploaded preset image to Google Drive. File ID:', imageId);
-        } catch (err) {
-          console.error('Failed to upload preset image to Google Drive, saving locally instead:', err.message);
-          imageSource = 'local';
-          const localPath = path.join(UPLOADS_DIR, filename);
-          fs.writeFileSync(localPath, req.file.buffer);
-          imageId = filename;
-        }
-      } else {
-        const localPath = path.join(UPLOADS_DIR, filename);
-        fs.writeFileSync(localPath, req.file.buffer);
-        imageId = filename;
-        console.log('Saved preset image locally:', filename);
-      }
-    }
-
-    // 螳夂分繝｡繝九Η繝ｼ縺ｨ縺励※菫晏ｭ・
-    const presets = await readPresets();
-    
-    // 繝ｦ繝ｼ繧ｶ繝ｼ謖・ｮ壹・蜷榊燕縺後≠繧後・蜆ｪ蜈医∫┌縺代ｌ縺ｰ AI 縺梧耳貂ｬ縺励◆蜷榊燕繧剃ｽｿ逕ｨ
-    const presetName = textInput.trim() ? textInput.trim().substring(0, 25) : nutritionData.mealName;
-
-    const newPreset = {
-      id: `preset_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      name: presetName || '螳夂分繝｡繝九Η繝ｼ',
-      calories: Math.round(Number(nutritionData.calories)),
-      protein: Math.round(Number(nutritionData.protein) * 10) / 10,
-      fat: Math.round(Number(nutritionData.fat) * 10) / 10,
-      carbohydrates: Math.round(Number(nutritionData.carbohydrates) * 10) / 10,
-      baseAmount: 1,
-      servingUnit: '個',
-      imageSource,
-      imageId
-    };
-
-    presets.push(newPreset);
-    await writePresets(presets);
-
-    res.status(201).json(newPreset);
-
-  } catch (error) {
-    console.error('AI presets analyze error:', error);
-    const statusCode = error.status || error.statusCode || 500;
-    res.status(statusCode).json({ error: 'AI縺ｫ繧医ｋ螳夂分逋ｻ骭ｲ荳ｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆縲・ ' + error.message, status: statusCode });
-  }
-});
-
-// 4. 螳夂分繝｡繝九Η繝ｼ蜑企勁 API
+// 3. 螳夂分繝｡繝九Η繝ｼ蜑企勁 API
 app.delete('/api/presets/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1389,6 +1212,13 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
       date: new Date().toISOString(),
       mealDate: mealDateParsed,
       mealType: actualMealType,
+      mealName: name,
+      calories: calculatedCalories,
+      protein: calculatedProtein,
+      fat: calculatedFat,
+      carbohydrates: calculatedCarbohydrates,
+      baseAmount: normalizedBaseAmount,
+      servingUnit: normalizedServingUnit,
       imageSource,
       imageId,
       textInput: name,
@@ -1396,6 +1226,7 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
         calories: calculatedCalories,
         protein: calculatedProtein,
         fat: calculatedFat,
+        carbohydrates: calculatedCarbohydrates,
         inference: `定番メニュー: ${name}\n\n・登録済みの情報から推定した栄養値です。\n  - カロリー  : ${calories} kcal\n  - タンパク質: ${protein} g\n  - 脂質      : ${fat} g\n  - 炭水化物  : ${carbohydrates} g`, 
         comment: '登録済みの定番メニューから推定した内容です。'
       }
