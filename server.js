@@ -766,7 +766,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 // 螻･豁ｴ邱ｨ髮・API (譌･莉倥・鬟滉ｺ句玄蛻・・譖ｴ譁ｰ)
 app.put('/api/history/:id', async (req, res) => {
   const { id } = req.params;
-  const { mealDate, mealType, textInput } = req.body;
+  const { mealDate, mealType, textInput, calories, protein, fat, carbohydrates } = req.body;
   try {
     const history = await readHistory();
     const recordIndex = history.findIndex(r => r.id === id);
@@ -779,6 +779,57 @@ app.put('/api/history/:id', async (req, res) => {
     if (mealDate) history[recordIndex].mealDate = mealDate;
     if (mealType) history[recordIndex].mealType = mealType;
     if (textInput !== undefined) history[recordIndex].textInput = textInput;
+
+    if (history[recordIndex].nutrition) {
+      const nutrition = history[recordIndex].nutrition;
+      let nutritionChanged = false;
+
+      if (calories !== undefined && calories !== '') {
+        const numericCalories = Number(calories);
+        if (!Number.isFinite(numericCalories) || numericCalories < 0) {
+          return res.status(400).json({ error: 'カロリーの値が不正です。' });
+        }
+        nutrition.calories = Math.round(numericCalories);
+        nutritionChanged = true;
+      }
+
+      if (protein !== undefined && protein !== '') {
+        const numericProtein = Number(protein);
+        if (!Number.isFinite(numericProtein) || numericProtein < 0) {
+          return res.status(400).json({ error: 'タンパク質の値が不正です。' });
+        }
+        nutrition.protein = Math.round(numericProtein * 10) / 10;
+        nutritionChanged = true;
+      }
+
+      if (fat !== undefined && fat !== '') {
+        const numericFat = Number(fat);
+        if (!Number.isFinite(numericFat) || numericFat < 0) {
+          return res.status(400).json({ error: '脂質の値が不正です。' });
+        }
+        nutrition.fat = Math.round(numericFat * 10) / 10;
+        nutritionChanged = true;
+      }
+
+      if (carbohydrates !== undefined && carbohydrates !== '') {
+        const numericCarbohydrates = Number(carbohydrates);
+        if (!Number.isFinite(numericCarbohydrates) || numericCarbohydrates < 0) {
+          return res.status(400).json({ error: '炭水化物の値が不正です。' });
+        }
+        nutrition.carbohydrates = Math.round(numericCarbohydrates * 10) / 10;
+        nutritionChanged = true;
+      }
+
+      if (nutritionChanged) {
+        const manualNote = '※ PFCとカロリーは手動修正されています。';
+        const currentInference = typeof nutrition.inference === 'string' ? nutrition.inference.trim() : '';
+        nutrition.inference = currentInference.includes(manualNote)
+          ? currentInference
+          : currentInference
+            ? `${currentInference}\n\n${manualNote}`
+            : manualNote;
+      }
+    }
 
     await writeHistory(history);
     res.json(history[recordIndex]);
@@ -1336,7 +1387,7 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
 
     
     // 騾壼ｸｸ縺ｮ隗｣譫仙ｱ･豁ｴ逋ｻ骭ｲ縺ｨ蜷梧ｧ倥↓ unshift 縺ｧ蜈磯ｭ・域怙譁ｰ・峨↓驟咲ｽｮ
-    newRecord.nutrition.inference = `螳夂分繝｡繝九Η繝ｼ: ${name}\n\n繝ｻ逋ｻ骭ｲ貂医∩縺ｮ諠・ｱ縺九ｉ驥上↓蠢懊§縺ｦ霑ｽ蜉縺励∪縺励◆縲・n  - 蝓ｺ貅夜㍼: ${normalizedBaseAmount.toFixed(1)} ${normalizedServingUnit}\n  - 莉雁屓驥・ ${normalizedServingAmount.toFixed(1)} ${normalizedServingUnit}\n  - 繧ｫ繝ｭ繝ｪ繝ｼ  : ${calculatedCalories} kcal\n  - 繧ｿ繝ｳ繝代け雉ｪ: ${calculatedProtein} g\n  - 閼りｳｪ      : ${calculatedFat} g\n  - 轤ｭ豌ｴ蛹也黄  : ${calculatedCarbohydrates} g`;
+    newRecord.nutrition.inference = `定番メニュー: ${name}\n\n・登録済みの情報から基準量に合わせて計算した栄養値です。\n  - 基準量: ${normalizedBaseAmount.toFixed(1)} ${normalizedServingUnit}\n  - 今回量: ${normalizedServingAmount.toFixed(1)} ${normalizedServingUnit}\n  - カロリー  : ${calculatedCalories} kcal\n  - タンパク質: ${calculatedProtein} g\n  - 脂質      : ${calculatedFat} g\n  - 炭水化物  : ${calculatedCarbohydrates} g`;
     history.unshift(newRecord);
     await writeHistory(history);
     res.status(201).json(newRecord);

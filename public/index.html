@@ -443,6 +443,29 @@
           <textarea id="modal-text-input" class="modal-textarea" rows="2" placeholder="食事内容を入力または修正..." style="width: 100%; box-sizing: border-box;"></textarea>
         </div>
 
+        <!-- 栄養値の修正 -->
+        <div class="modal-nutrition-edit-block">
+          <div class="modal-section-label">栄養値の修正</div>
+          <div class="modal-nutrition-edit-grid">
+            <div class="modal-nutrition-edit-field">
+              <span class="label">カロリー</span>
+              <input type="number" id="modal-calories-input" class="modal-nutrition-input" min="0" step="1" inputmode="numeric" placeholder="0">
+            </div>
+            <div class="modal-nutrition-edit-field">
+              <span class="label">P (g)</span>
+              <input type="number" id="modal-protein-input" class="modal-nutrition-input" min="0" step="0.1" inputmode="decimal" placeholder="0.0">
+            </div>
+            <div class="modal-nutrition-edit-field">
+              <span class="label">F (g)</span>
+              <input type="number" id="modal-fat-input" class="modal-nutrition-input" min="0" step="0.1" inputmode="decimal" placeholder="0.0">
+            </div>
+            <div class="modal-nutrition-edit-field">
+              <span class="label">C (g)</span>
+              <input type="number" id="modal-carbs-input" class="modal-nutrition-input" min="0" step="0.1" inputmode="decimal" placeholder="0.0">
+            </div>
+          </div>
+        </div>
+
         <!-- 編集用の日付・時刻・区分インラインフォーム -->
         <div class="modal-meta-edit" style="margin: 0; width: 100%; box-sizing: border-box;">
           <div class="edit-field">

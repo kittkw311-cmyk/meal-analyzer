@@ -1894,6 +1894,69 @@ body.modal-open {
   background-color: #fff;
 }
 
+.modal-nutrition-edit-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.modal-section-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.modal-nutrition-edit-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.modal-nutrition-edit-field {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+
+.modal-nutrition-edit-field .label {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.modal-nutrition-input {
+  background: transparent;
+  border: none;
+  box-sizing: border-box;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  outline: none;
+  padding: 0;
+  text-align: right;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-nutrition-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.modal-nutrition-input:focus {
+  color: var(--text-main);
+}
+
 .modal-action-row {
   display: flex;
   gap: 8px;

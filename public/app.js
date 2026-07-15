@@ -106,6 +106,10 @@
   const modalTimeInput = document.getElementById('modal-time-input');
   const modalTypeSelect = document.getElementById('modal-type-select');
   const modalTextInput = document.getElementById('modal-text-input');
+  const modalCaloriesInput = document.getElementById('modal-calories-input');
+  const modalProteinInput = document.getElementById('modal-protein-input');
+  const modalFatInput = document.getElementById('modal-fat-input');
+  const modalCarbsInput = document.getElementById('modal-carbs-input');
 
   // Chart instances
   let caloriesChart = null;
@@ -124,6 +128,18 @@
   let currentEditingHistoryId = null;
   let activeDetailMeal = null; // 現在詳細モーダルに表示されている食事レコードを保持
   let currentAiConsultation = null;
+
+  const formatDetailNutritionValue = (value, decimals) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return '';
+    return decimals === 0 ? String(Math.round(numericValue)) : numericValue.toFixed(decimals);
+  };
+
+  const parseDetailNutritionValue = (value, decimals) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue) || numericValue < 0) return null;
+    return decimals === 0 ? Math.round(numericValue) : Math.round(numericValue * 10) / 10;
+  };
 
   // 体組成 (Weight / Body Comp) Elements
   const weightDropZone = document.getElementById('weight-drop-zone');
@@ -509,21 +525,36 @@
     const proteinEl = document.getElementById('modal-protein');
     const fatEl = document.getElementById('modal-fat');
     const carbsEl = document.getElementById('modal-carbs');
+    const nutrition = item.nutrition || {};
+    const hasNutritionValues = Number.isFinite(Number(nutrition.calories))
+      || Number.isFinite(Number(nutrition.protein))
+      || Number.isFinite(Number(nutrition.fat))
+      || Number.isFinite(Number(nutrition.carbohydrates));
 
-    if (item.status === 'failed') {
+    if (hasNutritionValues) {
+      caloriesEl.textContent = formatDetailNutritionValue(nutrition.calories, 0);
+      proteinEl.textContent = formatDetailNutritionValue(nutrition.protein, 1);
+      fatEl.textContent = formatDetailNutritionValue(nutrition.fat, 1);
+      carbsEl.textContent = formatDetailNutritionValue(nutrition.carbohydrates, 1);
+      if (modalCaloriesInput) modalCaloriesInput.value = formatDetailNutritionValue(nutrition.calories, 0);
+      if (modalProteinInput) modalProteinInput.value = formatDetailNutritionValue(nutrition.protein, 1);
+      if (modalFatInput) modalFatInput.value = formatDetailNutritionValue(nutrition.fat, 1);
+      if (modalCarbsInput) modalCarbsInput.value = formatDetailNutritionValue(nutrition.carbohydrates, 1);
+    } else {
       caloriesEl.textContent = '--';
       proteinEl.textContent = '--';
       fatEl.textContent = '--';
       carbsEl.textContent = '--';
-      
+      if (modalCaloriesInput) modalCaloriesInput.value = '';
+      if (modalProteinInput) modalProteinInput.value = '';
+      if (modalFatInput) modalFatInput.value = '';
+      if (modalCarbsInput) modalCarbsInput.value = '';
+    }
+
+    if (item.status === 'failed') {
       btnReanalyzeModal.classList.add('pulse-highlight');
       btnReanalyzeModal.innerHTML = '✨ AI解析を再実行（再計算）';
     } else {
-      caloriesEl.textContent = item.nutrition.calories;
-      proteinEl.textContent = Number(item.nutrition.protein).toFixed(1);
-      fatEl.textContent = Number(item.nutrition.fat).toFixed(1);
-      carbsEl.textContent = Number(item.nutrition.carbohydrates).toFixed(1);
-      
       btnReanalyzeModal.classList.remove('pulse-highlight');
       btnReanalyzeModal.innerHTML = '🔄 再計算する';
     }
@@ -1900,6 +1931,29 @@
     const newMealDate = new Date(newDateTimeStr).toISOString();
     const newMealType = modalTypeSelect.value;
     const newTextInput = modalTextInput.value.trim();
+    const rawNutritionValues = [
+      modalCaloriesInput?.value.trim() || '',
+      modalProteinInput?.value.trim() || '',
+      modalFatInput?.value.trim() || '',
+      modalCarbsInput?.value.trim() || ''
+    ];
+    const hasNutritionUpdate = rawNutritionValues.some(value => value !== '');
+    const isNutritionUpdateComplete = rawNutritionValues.every(value => value !== '');
+
+    if (hasNutritionUpdate && !isNutritionUpdateComplete) {
+      alert('カロリー、P、F、C はまとめて入力してください。');
+      return;
+    }
+
+    const newCalories = hasNutritionUpdate ? parseDetailNutritionValue(modalCaloriesInput?.value, 0) : undefined;
+    const newProtein = hasNutritionUpdate ? parseDetailNutritionValue(modalProteinInput?.value, 1) : undefined;
+    const newFat = hasNutritionUpdate ? parseDetailNutritionValue(modalFatInput?.value, 1) : undefined;
+    const newCarbs = hasNutritionUpdate ? parseDetailNutritionValue(modalCarbsInput?.value, 1) : undefined;
+
+    if (hasNutritionUpdate && [newCalories, newProtein, newFat, newCarbs].some(value => value === null)) {
+      alert('カロリー、P、F、C の数値を正しく入力してください。');
+      return;
+    }
 
     btnSaveModal.disabled = true;
 
@@ -1919,7 +1973,13 @@
         body: JSON.stringify({
           mealDate: newMealDate,
           mealType: newMealType,
-          textInput: newTextInput
+          textInput: newTextInput,
+          ...(hasNutritionUpdate ? {
+            calories: newCalories,
+            protein: newProtein,
+            fat: newFat,
+            carbohydrates: newCarbs
+          } : {})
         })
       });
 
@@ -1997,10 +2057,14 @@
       btnReanalyzeModal.innerHTML = '🔄 再計算する';
 
       document.getElementById('modal-meal-title').textContent = updatedRecord.mealName || updatedRecord.textInput || '食事詳細';
-      document.getElementById('modal-calories').textContent = updatedRecord.nutrition.calories;
-      document.getElementById('modal-protein').textContent = Number(updatedRecord.nutrition.protein).toFixed(1);
-      document.getElementById('modal-fat').textContent = Number(updatedRecord.nutrition.fat).toFixed(1);
-      document.getElementById('modal-carbs').textContent = Number(updatedRecord.nutrition.carbohydrates).toFixed(1);
+      document.getElementById('modal-calories').textContent = formatDetailNutritionValue(updatedRecord.nutrition.calories, 0);
+      document.getElementById('modal-protein').textContent = formatDetailNutritionValue(updatedRecord.nutrition.protein, 1);
+      document.getElementById('modal-fat').textContent = formatDetailNutritionValue(updatedRecord.nutrition.fat, 1);
+      document.getElementById('modal-carbs').textContent = formatDetailNutritionValue(updatedRecord.nutrition.carbohydrates, 1);
+      if (modalCaloriesInput) modalCaloriesInput.value = formatDetailNutritionValue(updatedRecord.nutrition.calories, 0);
+      if (modalProteinInput) modalProteinInput.value = formatDetailNutritionValue(updatedRecord.nutrition.protein, 1);
+      if (modalFatInput) modalFatInput.value = formatDetailNutritionValue(updatedRecord.nutrition.fat, 1);
+      if (modalCarbsInput) modalCarbsInput.value = formatDetailNutritionValue(updatedRecord.nutrition.carbohydrates, 1);
       
       const modalInference = document.getElementById('modal-inference');
       const modalInferenceCard = document.getElementById('modal-inference-card');
