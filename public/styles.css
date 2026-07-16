@@ -5061,19 +5061,33 @@ body {
 
 @media (max-width: 600px) {
   #tab-register .register-page {
+    display: block;
+  }
+
+  #tab-register .register-layout {
     display: grid;
     gap: 12px;
-    grid-template-areas:
-      "hero main"
-      "rail main";
-    grid-template-columns: minmax(96px, 108px) minmax(0, 1fr);
+    grid-template-columns: minmax(104px, 112px) minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  #tab-register .register-left-rail {
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    left: 12px;
+    max-height: calc(100dvh - 110px);
+    position: fixed;
+    top: auto;
+    justify-content: flex-start;
+    width: 112px;
+    z-index: 30;
   }
 
   #tab-register .register-hero {
-    grid-area: hero;
     padding: 10px 8px;
-    position: sticky;
-    top: 12px;
+    position: relative;
   }
 
   #tab-register .register-hero-copy {
@@ -5132,18 +5146,14 @@ body {
     display: none;
   }
 
-  #tab-register .register-layout {
-    display: contents;
-  }
-
   #tab-register .register-action-rail {
-    grid-area: rail;
-    position: sticky;
-    top: 12px;
+    position: static;
+    width: 100%;
   }
 
   #tab-register .register-main-column {
-    grid-area: main;
+    margin-left: 124px;
+    min-width: 0;
   }
 
   #tab-register .register-rail-card {
@@ -5161,7 +5171,7 @@ body {
   }
 
   #tab-register .register-save-btn {
-    min-height: 86px;
+    min-height: 82px;
     order: 1;
   }
 
