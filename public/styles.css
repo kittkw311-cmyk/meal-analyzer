@@ -4305,8 +4305,11 @@ body {
 }
 
 #tab-presets .presets-list {
-  display: block;
-  padding-bottom: 0;
+  align-content: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-bottom: 16px;
 }
 
 #tab-presets .presets-table-wrapper {
@@ -4637,15 +4640,15 @@ body {
   background: linear-gradient(180deg, #18313f, #142733);
   border: 1px solid #2a475b;
   box-shadow: 0 10px 24px rgba(8, 15, 22, 0.16);
-  display: flex;
-  gap: 16px;
+  display: grid;
+  gap: 12px 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 560px);
   justify-content: space-between;
   padding: 12px 16px;
 }
 
 #tab-register .register-hero-copy {
-  align-items: center;
-  flex: 1;
+  align-items: flex-start;
   display: flex;
   min-width: 0;
 }
@@ -4659,11 +4662,10 @@ body {
 #tab-register .register-hero-meta {
   align-items: flex-end;
   display: flex;
-  flex: 0 1 560px;
   flex-wrap: wrap;
   gap: 10px 12px;
   justify-content: flex-end;
-  min-width: min(100%, 340px);
+  min-width: 0;
 }
 
 #tab-register .register-meta-label {
@@ -5041,11 +5043,20 @@ body {
   #tab-register .register-action-rail {
     position: static;
   }
+
+  #tab-register .register-hero {
+    grid-template-columns: 1fr;
+  }
+
+  #tab-register .register-hero-meta {
+    justify-content: flex-start;
+    width: 100%;
+  }
 }
 
 @media (max-width: 600px) {
   #tab-register .register-hero {
-    flex-direction: column;
+    padding: 12px;
   }
 
   #tab-register .register-hero-copy {
@@ -5066,6 +5077,12 @@ body {
   #tab-register .register-meal-type-box .meal-type-chips {
     min-width: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #tab-register .register-rail-card {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
