@@ -6393,11 +6393,13 @@ body {
 #tab-presets .preset-card-name-wrapper {
   align-items: center;
   border-radius: 4px;
-  display: inline-flex;
+  display: flex;
   gap: 4px;
+  flex: 1 1 auto;
   margin: 0;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
   padding: 0;
 }
 
@@ -6405,9 +6407,11 @@ body {
   color: var(--presets-foreground);
   display: block;
   font-family: var(--font-heading);
-  font-size: 13px;
+  flex: 1 1 auto;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.15;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
