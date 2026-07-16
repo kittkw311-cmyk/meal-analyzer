@@ -97,6 +97,10 @@
   const presetSortSelect = document.getElementById('preset-sort-select');
   const presetViewChips = document.querySelectorAll('.preset-view-chip');
   const presetsList = document.getElementById('presets-list');
+  const registerSearchInput = document.getElementById('register-search-input');
+  const registerSortSelect = document.getElementById('register-sort-select');
+  const registerCategoryChips = document.querySelectorAll('.register-category-chip');
+  const registerPresetsList = document.getElementById('register-presets-list');
   const formPresetsManual = document.getElementById('form-presets-manual');
   const presetsManualToggle = document.getElementById('presets-manual-toggle');
   const presetsManualContent = document.getElementById('presets-manual-content');
@@ -125,9 +129,11 @@
   let loadedPresets = [];
   let aiConsultationRecords = [];
   let presetViewMode = localStorage.getItem('preset_view_mode') || 'recent';
+  let registerCategoryFilter = 'all';
   const PRESET_FAVORITE_KEY = 'physilog_preset_favorites';
   const PRESET_USAGE_KEY = 'physilog_preset_usage';
   const PRESET_LAST_USED_KEY = 'physilog_preset_last_used';
+  const PRESET_EXPANDED_KEY = 'physilog_preset_expanded_cards';
   
   // Current editing history ID (for Modal save & reanalyze)
   let currentEditingHistoryId = null;
@@ -417,7 +423,8 @@
 
   if (btnOpenMealAnalysis) {
     btnOpenMealAnalysis.addEventListener('click', () => {
-      showModal(mealAnalysisModal);
+      const registerTabNav = document.querySelector('[data-tab="tab-register"]');
+      registerTabNav?.click();
     });
   }
 
@@ -630,6 +637,8 @@
         loadProfile();
       } else if (targetTabId === 'tab-overview') {
         loadStats();
+      } else if (targetTabId === 'tab-register') {
+        renderRegisterPresets();
       } else if (targetTabId === 'tab-presets') {
         loadPresets();
       }
@@ -689,7 +698,9 @@
     const reader = new FileReader();
     reader.onload = (e) => {
       imagePreview.src = e.target.result;
-      previewContainer.style.display = 'none'; // 画像はそのまま表示しない
+      previewContainer.style.display = 'flex';
+      const emptyPreview = document.getElementById('register-empty-preview');
+      if (emptyPreview) emptyPreview.style.display = 'none';
       mealUploadBadge.style.display = 'inline-flex'; // 件数バッジを表示
       validateInputs();
     };
@@ -714,6 +725,8 @@
     galleryInput.value = '';
     imagePreview.src = '#';
     previewContainer.style.display = 'none';
+    const emptyPreview = document.getElementById('register-empty-preview');
+    if (emptyPreview) emptyPreview.style.display = '';
     mealUploadBadge.style.display = 'none'; // バッジを非表示
     validateInputs();
   }
@@ -823,6 +836,7 @@
   const getFavoriteSet = () => new Set(storageJson(PRESET_FAVORITE_KEY, []));
   const getUsageMap = () => storageJson(PRESET_USAGE_KEY, {});
   const getLastUsedMap = () => storageJson(PRESET_LAST_USED_KEY, {});
+  const getExpandedSet = () => new Set(storageJson(PRESET_EXPANDED_KEY, []));
 
   const togglePresetFavorite = (id) => {
     const favoriteSet = getFavoriteSet();
@@ -842,6 +856,17 @@
     lastUsedMap[id] = Date.now();
     writeStorageJson(PRESET_USAGE_KEY, usageMap);
     writeStorageJson(PRESET_LAST_USED_KEY, lastUsedMap);
+  };
+
+  const togglePresetExpanded = (id) => {
+    if (!id) return;
+    const expandedSet = getExpandedSet();
+    if (expandedSet.has(id)) {
+      expandedSet.delete(id);
+    } else {
+      expandedSet.add(id);
+    }
+    writeStorageJson(PRESET_EXPANDED_KEY, Array.from(expandedSet));
   };
 
   const inferPresetCategory = (preset) => {
@@ -864,6 +889,7 @@
   };
 
   const categoryOrder = ['主食', '主菜', '副菜', '汁物', '間食', '飲料', 'その他'];
+  const categoryLabelMap = Object.fromEntries(categoryOrder.map(label => [label, label]));
 
   const formatPresetMeta = (preset) => {
     const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
@@ -875,38 +901,134 @@
   const getPresetLastUsedAt = (id) => Number(getLastUsedMap()[id] || 0);
   const isPresetFavorite = (id) => getFavoriteSet().has(id);
 
-  const setPresetViewMode = (mode) => {
-    presetViewMode = mode || 'recent';
-    try {
-      localStorage.setItem('preset_view_mode', presetViewMode);
-    } catch (err) {
-      console.error('Failed to persist preset view mode:', err);
-    }
-    presetViewChips.forEach((chip) => {
-      chip.classList.toggle('is-active', chip.getAttribute('data-view') === presetViewMode);
-    });
+  const selectPresetById = (id) => {
+    if (!presetSelector) return;
+    presetSelector.value = id || '';
+    presetSelector.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
-  setPresetViewMode(presetViewMode);
+  const renderRegisterPresets = () => {
+    if (!registerPresetsList) return;
 
-  if (presetSearchInput) {
-    presetSearchInput.addEventListener('input', () => {
-      loadPresets();
-    });
-  }
+    const searchTerm = (registerSearchInput?.value || '').trim().toLowerCase();
+    const sortMode = registerSortSelect?.value || 'recent';
+    const favoriteSet = getFavoriteSet();
+    const usageMap = getUsageMap();
+    const lastUsedMap = getLastUsedMap();
 
-  if (presetSortSelect) {
-    presetSortSelect.addEventListener('change', () => {
-      loadPresets();
+    const items = loadedPresets.map(preset => {
+      const category = inferPresetCategory(preset);
+      return {
+        ...preset,
+        category,
+        isFavorite: favoriteSet.has(preset.id),
+        usageCount: Number(usageMap[preset.id] || 0),
+        lastUsedAt: Number(lastUsedMap[preset.id] || 0),
+      };
+    }).filter(preset => {
+      if (registerCategoryFilter !== 'all' && preset.category !== registerCategoryFilter) return false;
+      if (!searchTerm) return true;
+      const haystack = [
+        preset.name,
+        preset.category,
+        preset.calories,
+        preset.protein,
+        preset.fat,
+        preset.carbohydrates,
+        preset.baseAmount,
+        preset.servingUnit,
+      ].join(' ').toLowerCase();
+      return haystack.includes(searchTerm);
     });
-  }
 
-  presetViewChips.forEach((chip) => {
-    chip.addEventListener('click', () => {
-      setPresetViewMode(chip.getAttribute('data-view') || 'recent');
-      loadPresets();
+    const sortItems = (list) => {
+      const next = list.slice();
+      if (sortMode === 'name') {
+        next.sort((a, b) => `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja'));
+      } else if (sortMode === 'favorite') {
+        next.sort((a, b) => {
+          if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+          if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+          return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
+        });
+      } else {
+        next.sort((a, b) => {
+          if (b.lastUsedAt !== a.lastUsedAt) return b.lastUsedAt - a.lastUsedAt;
+          if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+          return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
+        });
+      }
+      return next;
+    };
+
+    const formatMeta = (preset) => {
+      const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
+      const servingUnit = preset.servingUnit || '個';
+      return `${baseAmount.toFixed(1)}${servingUnit} / ${Math.round(Number(preset.calories) || 0)}kcal`;
+    };
+
+    const renderCard = (preset) => {
+      const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
+      const servingUnit = preset.servingUnit || '個';
+      const usageText = preset.lastUsedAt ? `最近使用: ${formatDateTimeDisplay(preset.lastUsedAt) || '記録済み'}` : `使用回数: ${preset.usageCount}`;
+      return `
+        <div class="register-preset-card" data-id="${preset.id}" role="button" tabindex="0" aria-pressed="${presetSelector?.value === preset.id ? 'true' : 'false'}">
+          <div class="register-preset-card-main">
+            <div class="register-preset-card-top">
+              <span class="preset-category-pill">${preset.category}</span>
+              <span class="preset-card-usage">${usageText}</span>
+            </div>
+            <div class="register-preset-card-title-row">
+              <span class="register-preset-card-title">${preset.name}</span>
+              <button type="button" class="register-preset-card-star ${preset.isFavorite ? 'is-favorite' : ''}" aria-pressed="${preset.isFavorite ? 'true' : 'false'}" aria-label="お気に入り切り替え">★</button>
+            </div>
+            <div class="register-preset-card-meta">${formatMeta(preset)}</div>
+            <div class="register-preset-card-macros">
+              <span class="macro-badge calories">${Math.round(Number(preset.calories) || 0)}kcal</span>
+              <span class="macro-badge p">P ${formatDetailNutritionValue(preset.protein, 1)}</span>
+              <span class="macro-badge f">F ${formatDetailNutritionValue(preset.fat, 1)}</span>
+              <span class="macro-badge c">C ${formatDetailNutritionValue(preset.carbohydrates, 1)}</span>
+            </div>
+            <div class="register-preset-card-footer">
+              <span class="register-preset-card-serving">${baseAmount.toFixed(1)}${servingUnit}</span>
+              <span class="register-preset-card-use-label">タップで選択</span>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    const sortedItems = sortItems(items);
+    if (!sortedItems.length) {
+      registerPresetsList.innerHTML = searchTerm || registerCategoryFilter !== 'all'
+        ? `<div class="presets-empty-state">条件に合う定番がありません。</div>`
+        : `<div class="presets-empty-state">登録されている定番メニューはありません。</div>`;
+      return;
+    }
+
+    registerPresetsList.innerHTML = sortedItems.map(renderCard).join('');
+
+    registerPresetsList.querySelectorAll('.register-preset-card').forEach(card => {
+      card.addEventListener('click', (event) => {
+        if (event.target.closest('.register-preset-card-star')) return;
+        selectPresetById(card.getAttribute('data-id'));
+      });
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectPresetById(card.getAttribute('data-id'));
+        }
+      });
+      const star = card.querySelector('.register-preset-card-star');
+      if (star) {
+        star.addEventListener('click', (event) => {
+          event.stopPropagation();
+          togglePresetFavorite(card.getAttribute('data-id'));
+          loadPresets();
+        });
+      }
     });
-  });
+  };
 
   if (presetSelector) {
     presetSelector.addEventListener('change', () => {
@@ -927,6 +1049,58 @@
     presetServingAmountInput.addEventListener('input', () => {
       updatePresetServingControls();
       validateInputs();
+    });
+  }
+
+  if (presetSearchInput) {
+    presetSearchInput.addEventListener('input', () => {
+      loadPresets();
+    });
+  }
+
+  if (presetSortSelect) {
+    presetSortSelect.addEventListener('change', () => {
+      loadPresets();
+    });
+  }
+
+  if (presetViewChips.length) {
+    presetViewChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const nextView = chip.getAttribute('data-view') || 'recent';
+        if (presetViewMode === nextView) return;
+        presetViewMode = nextView;
+        try {
+          localStorage.setItem('preset_view_mode', presetViewMode);
+        } catch (err) {
+          console.error('Failed to persist preset view mode:', err);
+        }
+        loadPresets();
+      });
+    });
+  }
+
+  if (registerSearchInput) {
+    registerSearchInput.addEventListener('input', () => {
+      renderRegisterPresets();
+    });
+  }
+
+  if (registerSortSelect) {
+    registerSortSelect.addEventListener('change', () => {
+      renderRegisterPresets();
+    });
+  }
+
+  if (registerCategoryChips.length) {
+    registerCategoryChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const nextCategory = chip.getAttribute('data-category') || 'all';
+        if (registerCategoryFilter === nextCategory) return;
+        registerCategoryFilter = nextCategory;
+        registerCategoryChips.forEach(btn => btn.classList.toggle('is-active', btn === chip));
+        renderRegisterPresets();
+      });
     });
   }
 
@@ -1044,9 +1218,9 @@
         throw new Error(payload.error || '定番メニューの記録に失敗しました。');
       }
 
-      markPresetUsed(opt.value);
       updateDailySummary();
       await loadHistory();
+      markPresetUsed(opt.value);
       hideModal(mealAnalysisModal);
       const historyNavItem = document.querySelector('[data-tab="tab-history"]');
       if (historyNavItem) {
@@ -1211,64 +1385,11 @@
       const response = await fetch('/api/presets');
       const presets = await response.json();
       loadedPresets = Array.isArray(presets) ? presets : [];
-      const favorites = getFavoriteSet();
-      const searchTerm = (presetSearchInput?.value || '').trim().toLowerCase();
-      const sortMode = presetSortSelect?.value || 'recent';
-      const viewMode = presetViewMode || 'recent';
-
-      const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-      }[char]));
-
-      const enrichedPresets = loadedPresets.map((preset) => {
-        const id = String(preset.id ?? '');
-        return {
-          ...preset,
-          id,
-          _category: inferPresetCategory(preset),
-          _usage: getPresetUsageCount(id),
-          _lastUsed: getPresetLastUsedAt(id),
-          _favorite: favorites.has(id),
-        };
-      });
-
-      const matchesSearch = (preset) => {
-        if (!searchTerm) return true;
-        const haystack = [
-          preset.name,
-          preset._category,
-          preset.servingUnit,
-          preset.baseAmount,
-          preset.calories,
-          preset.protein,
-          preset.fat,
-          preset.carbohydrates,
-        ].join(' ').toLowerCase();
-        return haystack.includes(searchTerm);
-      };
-
-      const sortByName = (a, b) => a.name.localeCompare(b.name, 'ja');
-      const sortByRecent = (a, b) => (
-        (b._lastUsed - a._lastUsed)
-        || (Number(b._favorite) - Number(a._favorite))
-        || sortByName(a, b)
-      );
-      const sortByFavorite = (a, b) => (
-        (Number(b._favorite) - Number(a._favorite))
-        || (b._lastUsed - a._lastUsed)
-        || sortByName(a, b)
-      );
-      const sortByMode = sortMode === 'favorite' ? sortByFavorite : sortMode === 'name' ? sortByName : sortByRecent;
-      const filteredPresets = enrichedPresets.filter(matchesSearch);
 
       // A. 解析画面のドロップダウンを更新
       if (presetSelector) {
         presetSelector.innerHTML = '<option value="">定番メニューから選択</option>';
-        loadedPresets.forEach((p) => {
+        loadedPresets.forEach(p => {
           const opt = document.createElement('option');
           const baseAmount = Number.isFinite(Number(p.baseAmount)) && Number(p.baseAmount) > 0 ? roundTo1(p.baseAmount) : 1;
           const servingUnit = p.servingUnit || '個';
@@ -1286,150 +1407,268 @@
         updatePresetServingControls();
       }
 
-      if (!presetsList) return;
+      // B. 定番タブの一覧リストを更新
+      if (presetsList) {
+        const searchTerm = (presetSearchInput?.value || '').trim().toLowerCase();
+        const sortMode = presetSortSelect?.value || 'recent';
+        const favoriteSet = getFavoriteSet();
+        const usageMap = getUsageMap();
+        const lastUsedMap = getLastUsedMap();
 
-      const deletePreset = async (id) => {
-        if (!id) return;
-        if (!confirm('この定番メニューを削除してもよろしいですか？')) return;
-        try {
-          const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
-          if (res.ok) {
-            loadPresets();
-          } else {
-            alert('削除に失敗しました。');
-          }
-        } catch (err) {
-          console.error(err);
-          alert('通信エラーが発生しました。');
-        }
-      };
-
-      const renderFavoriteButton = (preset) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `preset-favorite-btn${preset._favorite ? ' is-active' : ''}`;
-        button.setAttribute('aria-pressed', preset._favorite ? 'true' : 'false');
-        button.setAttribute('aria-label', `${preset.name} をお気に入りに切り替え`);
-        button.innerHTML = '<span aria-hidden="true">★</span>';
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          togglePresetFavorite(preset.id);
-          loadPresets();
+        const enrichedPresets = loadedPresets.map(p => ({
+          ...p,
+          category: inferPresetCategory(p),
+          isFavorite: favoriteSet.has(p.id),
+          usageCount: Number(usageMap[p.id] || 0),
+          lastUsedAt: Number(lastUsedMap[p.id] || 0),
+        })).filter(p => {
+          if (!searchTerm) return true;
+          const haystack = [
+            p.name,
+            p.category,
+            p.calories,
+            p.protein,
+            p.fat,
+            p.carbohydrates,
+            p.baseAmount,
+            p.servingUnit,
+          ].join(' ').toLowerCase();
+          return haystack.includes(searchTerm);
         });
-        return button;
-      };
 
-      const renderPresetCard = (preset) => {
-        const card = document.createElement('article');
-        card.className = 'preset-card-v2';
-        card.dataset.id = preset.id;
-        card.title = '長押しで削除';
-        card.tabIndex = 0;
-        card.innerHTML = `
-          <div class="preset-card-top">
-            <div class="preset-card-name-block">
-              <div class="preset-card-name-wrapper" data-id="${escapeHtml(preset.id)}">
-                <span class="preset-card-name">${escapeHtml(preset.name || '')}</span>
-                <span class="preset-edit-icon" title="名前を編集" aria-hidden="true">
-                  <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                </span>
-              </div>
-              <div class="preset-card-subline">
-                <span class="preset-category-pill">${escapeHtml(preset._category)}</span>
-                <span class="preset-card-usage">使用回数: ${preset._usage}</span>
-                <span class="preset-card-last-used">${preset._lastUsed ? `${escapeHtml(formatDateTimeDisplay(preset._lastUsed))} に使用` : 'まだ未使用'}</span>
-              </div>
-            </div>
-          </div>
-          <div class="preset-card-serving-row">
-            <button type="button" class="macro-badge macro-editable serving" data-id="${escapeHtml(preset.id)}" data-field="baseAmount" data-value="${Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1}" title="基準量を編集"></button>
-            <div class="preset-serving-unit-stack">
-              <span class="preset-serving-label">基準量</span>
-              <select class="preset-unit-select" data-id="${escapeHtml(preset.id)}" title="単位を編集">
-                <option value="個"${(preset.servingUnit || '個') === '個' ? ' selected' : ''}>個</option>
-                <option value="g"${(preset.servingUnit || '個') === 'g' ? ' selected' : ''}>g</option>
-              </select>
-            </div>
-            <div class="preset-serving-preview">${escapeHtml(formatPresetMeta(preset))}</div>
-          </div>
-          <div class="preset-card-macro-row">
-            <button type="button" class="macro-badge macro-editable calories" data-id="${escapeHtml(preset.id)}" data-field="calories" data-value="${Number(preset.calories) || 0}" title="カロリーを編集"></button>
-            <button type="button" class="macro-badge macro-editable p" data-id="${escapeHtml(preset.id)}" data-field="protein" data-value="${Number(preset.protein) || 0}" title="タンパク質を編集"></button>
-            <button type="button" class="macro-badge macro-editable f" data-id="${escapeHtml(preset.id)}" data-field="fat" data-value="${Number(preset.fat) || 0}" title="脂質を編集"></button>
-            <button type="button" class="macro-badge macro-editable c" data-id="${escapeHtml(preset.id)}" data-field="carbohydrates" data-value="${Number(preset.carbohydrates) || 0}" title="炭水化物を編集"></button>
-          </div>
-        `;
-
-        card.querySelector('.macro-editable.serving').textContent = Number(preset.baseAmount) > 0
-          ? roundTo1(preset.baseAmount).toFixed(1)
-          : '1.0';
-        card.querySelector('.macro-editable.calories').textContent = `${Math.round(Number(preset.calories) || 0)}kcal`;
-        card.querySelector('.macro-editable.p').textContent = `P ${roundTo1(preset.protein || 0)}`;
-        card.querySelector('.macro-editable.f').textContent = `F ${roundTo1(preset.fat || 0)}`;
-        card.querySelector('.macro-editable.c').textContent = `C ${roundTo1(preset.carbohydrates || 0)}`;
-
-        let pressTimer = null;
-        let startX = 0;
-        let startY = 0;
-        let longPressTriggered = false;
-        const cancelLongPress = () => {
-          if (pressTimer) clearTimeout(pressTimer);
-          pressTimer = null;
+        const compareBySortMode = (a, b) => {
+          if (sortMode === 'name') {
+            return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
+          }
+          if (sortMode === 'favorite') {
+            if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+            if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+            return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
+          }
+          if (b.lastUsedAt !== a.lastUsedAt) return b.lastUsedAt - a.lastUsedAt;
+          if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+          return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
         };
 
-        card.addEventListener('pointerdown', (event) => {
-          if (event.target.closest('button, input, select, textarea, a')) return;
-          startX = event.clientX;
-          startY = event.clientY;
-          longPressTriggered = false;
-          card.classList.add('is-pressing');
-          pressTimer = setTimeout(() => {
-            longPressTriggered = true;
-            card.classList.remove('is-pressing');
-            navigator.vibrate?.(30);
-            deletePreset(preset.id);
-          }, 650);
-        });
+        const sortItems = (items) => items.slice().sort(compareBySortMode);
+        const expandedSet = getExpandedSet();
 
-        card.addEventListener('pointermove', (event) => {
-          if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) {
-            cancelLongPress();
-            card.classList.remove('is-pressing');
+        const renderPresetCard = (preset) => {
+          const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
+          const servingUnit = preset.servingUnit || '個';
+          const usageText = preset.lastUsedAt
+            ? formatDateTimeDisplay(preset.lastUsedAt) || '記録済み'
+            : '未使用';
+          const favoritePressed = preset.isFavorite ? 'true' : 'false';
+          const caloriesText = `${formatDetailNutritionValue(preset.calories, 1) || '0.0'}`;
+          const proteinText = `${formatDetailNutritionValue(preset.protein, 1) || '0.0'}`;
+          const fatText = `${formatDetailNutritionValue(preset.fat, 1) || '0.0'}`;
+          const carbohydratesText = `${formatDetailNutritionValue(preset.carbohydrates, 1) || '0.0'}`;
+          const isExpanded = expandedSet.has(preset.id);
+          return `
+            <div class="preset-card-matrix" data-id="${preset.id}">
+              <div class="preset-card-matrix-shell ${isExpanded ? 'is-expanded' : ''}" data-id="${preset.id}" aria-expanded="${isExpanded ? 'true' : 'false'}">
+                <div class="preset-card-matrix-top">
+                  <div class="preset-card-matrix-title-block">
+                    <div class="preset-card-matrix-title-row">
+                      <span class="preset-category-pill">${preset.category}</span>
+                      <div class="preset-card-name-wrapper" data-id="${preset.id}">
+                        <span class="preset-card-name">${preset.name}</span>
+                        <span class="preset-edit-icon" title="名前を編集">
+                          <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="preset-card-matrix-topline">
+                      <span class="preset-card-meta-chip">${preset.lastUsedAt ? `最近使用 ${usageText}` : '最近使用 なし'}</span>
+                      <span class="preset-card-meta-chip">${preset.usageCount}回</span>
+                    </div>
+                  </div>
+                  <div class="preset-card-actions">
+                    <button type="button" class="preset-favorite-btn" data-id="${preset.id}" aria-pressed="${favoritePressed}" aria-label="お気に入り切り替え">★</button>
+                    <button type="button" class="preset-card-toggle-btn" data-id="${preset.id}" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="${isExpanded ? '閉じる' : '開く'}">
+                      <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="preset-card-matrix-body" ${isExpanded ? '' : 'hidden'}>
+                  <div class="preset-card-matrix-column preset-card-matrix-column-left">
+                    <div class="preset-card-matrix-row">
+                      <span class="preset-card-matrix-label">基準量</span>
+                      <button type="button" class="macro-badge macro-editable serving preset-card-number" data-id="${preset.id}" data-field="baseAmount" data-value="${baseAmount}" title="基準量を編集">${baseAmount.toFixed(1)}</button>
+                    </div>
+                    <div class="preset-card-matrix-row">
+                      <span class="preset-card-matrix-label">単位</span>
+                      <select class="preset-unit-select preset-card-unit-select" data-id="${preset.id}" title="単位を編集">
+                        <option value="個"${servingUnit === '個' ? ' selected' : ''}>個</option>
+                        <option value="g"${servingUnit === 'g' ? ' selected' : ''}>g</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="preset-card-matrix-column preset-card-matrix-column-right">
+                    <div class="preset-card-matrix-row">
+                      <span class="preset-card-matrix-label">kcal</span>
+                      <button type="button" class="macro-badge macro-editable calories preset-card-number" data-id="${preset.id}" data-field="calories" data-value="${preset.calories}" title="カロリーを編集">${caloriesText}</button>
+                    </div>
+                    <div class="preset-card-matrix-row">
+                      <span class="preset-card-matrix-label">P</span>
+                      <button type="button" class="macro-badge macro-editable p preset-card-number" data-id="${preset.id}" data-field="protein" data-value="${preset.protein}" title="タンパク質を編集">${proteinText}</button>
+                    </div>
+                    <div class="preset-card-matrix-row">
+                      <span class="preset-card-matrix-label">F</span>
+                      <button type="button" class="macro-badge macro-editable f preset-card-number" data-id="${preset.id}" data-field="fat" data-value="${preset.fat}" title="脂質を編集">${fatText}</button>
+                    </div>
+                    <div class="preset-card-matrix-row">
+                      <span class="preset-card-matrix-label">C</span>
+                      <button type="button" class="macro-badge macro-editable c preset-card-number" data-id="${preset.id}" data-field="carbohydrates" data-value="${preset.carbohydrates}" title="炭水化物を編集">${carbohydratesText}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        };
+        const categoryRank = new Map(categoryOrder.map((category, index) => [category, index]));
+        const favoritePresets = enrichedPresets.filter(p => p.isFavorite);
+        const recentPresets = enrichedPresets.filter(p => p.lastUsedAt > 0);
+        const getViewItems = () => {
+          if (presetViewMode === 'favorites') {
+            return sortItems(favoritePresets);
           }
-        });
-        ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
-          card.addEventListener(type, () => {
-            cancelLongPress();
-            card.classList.remove('is-pressing');
+          if (presetViewMode === 'categories') {
+            return enrichedPresets.slice().sort((a, b) => {
+              const aRank = categoryRank.has(a.category) ? categoryRank.get(a.category) : categoryOrder.length;
+              const bRank = categoryRank.has(b.category) ? categoryRank.get(b.category) : categoryOrder.length;
+              if (aRank !== bRank) return aRank - bRank;
+              return compareBySortMode(a, b);
+            });
+          }
+          const source = recentPresets.length ? recentPresets : enrichedPresets;
+          return sortItems(source);
+        };
+
+        if (presetViewChips.length) {
+          presetViewChips.forEach(chip => {
+            chip.classList.toggle('is-active', chip.getAttribute('data-view') === presetViewMode);
+          });
+        }
+
+        if (enrichedPresets.length === 0) {
+          presetsList.innerHTML = searchTerm
+            ? `<div class="presets-empty-state">検索条件に一致する定番メニューがありません。</div>`
+            : `<div class="presets-empty-state">登録されている定番メニューはありません。<br>上の手動入力から登録してください。</div>`;
+          return;
+        }
+
+        const viewItems = getViewItems();
+
+        if (!viewItems.length) {
+          presetsList.innerHTML = presetViewMode === 'favorites'
+            ? `<div class="presets-empty-state">お気に入りの定番はまだありません。星を付けるとここに集まります。</div>`
+            : `<div class="presets-empty-state">条件に合う定番メニューがありません。</div>`;
+        } else {
+          presetsList.innerHTML = viewItems.map(renderPresetCard).join('');
+        }
+
+        const deletePreset = async (id) => {
+          if (confirm('この定番メニューを削除してもよろしいですか？')) {
+            try {
+              const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
+              if (res.ok) {
+                loadPresets();
+              } else {
+                alert('削除に失敗しました。');
+              }
+            } catch (err) {
+              console.error(err);
+              alert('通信エラーが発生しました。');
+            }
+          }
+        };
+
+        document.querySelectorAll('.preset-card-matrix').forEach(card => {
+          let pressTimer = null;
+          let startX = 0;
+          let startY = 0;
+          let longPressTriggered = false;
+          const shell = card.querySelector('.preset-card-matrix-shell');
+          const toggleExpansion = () => {
+            const id = card.dataset.id;
+            togglePresetExpanded(id);
+            loadPresets();
+          };
+          const cancelLongPress = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+            pressTimer = null;
+          };
+
+          shell?.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('button, input, select')) return;
+            startX = event.clientX;
+            startY = event.clientY;
+            longPressTriggered = false;
+            shell?.classList.add('is-pressing');
+            pressTimer = setTimeout(() => {
+              longPressTriggered = true;
+              shell?.classList.remove('is-pressing');
+              navigator.vibrate?.(30);
+              deletePreset(card.dataset.id);
+            }, 650);
+          });
+
+          shell?.addEventListener('pointermove', (event) => {
+            if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) {
+              cancelLongPress();
+              shell?.classList.remove('is-pressing');
+            }
+          });
+
+          ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => {
+            shell?.addEventListener(type, () => {
+              cancelLongPress();
+              shell?.classList.remove('is-pressing');
+            });
+          });
+
+          shell?.addEventListener('click', (event) => {
+            if (event.target.closest('button, input, select, textarea')) return;
+            if (longPressTriggered) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              longPressTriggered = false;
+              return;
+            }
+            toggleExpansion();
           });
         });
-        card.addEventListener('click', (event) => {
-          if (!longPressTriggered) return;
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          longPressTriggered = false;
-        }, true);
 
-        const favoriteButton = renderFavoriteButton(preset);
-        card.querySelector('.preset-card-top').appendChild(favoriteButton);
-
-        card.querySelectorAll('.macro-editable').forEach((badge) => {
-          badge.addEventListener('click', (event) => {
+        document.querySelectorAll('.preset-favorite-btn').forEach(button => {
+          button.addEventListener('click', (event) => {
             event.stopPropagation();
+            togglePresetFavorite(button.getAttribute('data-id'));
+            loadPresets();
+          });
+        });
+
+        document.querySelectorAll('.preset-card-toggle-btn').forEach(button => {
+          button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            togglePresetExpanded(button.getAttribute('data-id'));
+            loadPresets();
+          });
+        });
+
+        document.querySelectorAll('.macro-editable').forEach(badge => {
+          badge.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (badge.querySelector('.preset-macro-edit-input')) return;
 
             const id = badge.getAttribute('data-id');
             const field = badge.getAttribute('data-field');
             const currentValue = badge.getAttribute('data-value');
             const originalHtml = badge.innerHTML;
-            const isCalories = field === 'calories';
-            const isBaseAmount = field === 'baseAmount';
-            const displayValue = () => {
-              if (isCalories) return `${Math.round(Number(currentValue) || 0)}kcal`;
-              if (isBaseAmount) return Number(currentValue || 0).toFixed(1);
-              const prefix = field === 'protein' ? 'P ' : field === 'fat' ? 'F ' : 'C ';
-              return `${prefix}${roundTo1(currentValue || 0).toFixed(1)}`;
-            };
 
             const input = document.createElement('input');
             input.type = 'number';
@@ -1449,7 +1688,6 @@
               badge.classList.remove('is-saving');
               badge.disabled = false;
               badge.innerHTML = originalHtml;
-              badge.textContent = displayValue();
             };
 
             const saveMacroEdit = async () => {
@@ -1508,8 +1746,8 @@
           });
         });
 
-        card.querySelectorAll('.preset-unit-select').forEach((select) => {
-          select.addEventListener('click', (event) => event.stopPropagation());
+        document.querySelectorAll('.preset-unit-select').forEach(select => {
+          select.addEventListener('click', event => event.stopPropagation());
           select.addEventListener('change', async () => {
             const id = select.getAttribute('data-id');
             const servingUnit = select.value === 'g' ? 'g' : '個';
@@ -1534,9 +1772,9 @@
           });
         });
 
-        card.querySelectorAll('.preset-card-name-wrapper').forEach((wrapper) => {
-          wrapper.addEventListener('click', (event) => {
-            event.stopPropagation();
+        document.querySelectorAll('.preset-card-name-wrapper').forEach(wrapper => {
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = wrapper.getAttribute('data-id');
             const nameSpan = wrapper.querySelector('.preset-card-name');
             const currentName = nameSpan.textContent;
@@ -1546,6 +1784,7 @@
             input.type = 'text';
             input.className = 'preset-edit-input';
             input.value = currentName;
+
             nameSpan.style.display = 'none';
             const editIcon = wrapper.querySelector('.preset-edit-icon');
             if (editIcon) editIcon.style.display = 'none';
@@ -1571,7 +1810,7 @@
               const restoreNameEdit = () => {
                 wrapper.classList.remove('is-saving');
                 wrapper.innerHTML = `
-                  <span class="preset-card-name">${escapeHtml(currentName)}</span>
+                  <span class="preset-card-name">${currentName}</span>
                   <span class="preset-edit-icon" title="名前を編集">
                     <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </span>
@@ -1580,6 +1819,7 @@
 
               try {
                 showNameSaving();
+
                 const res = await fetch(`/api/presets/${id}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
@@ -1615,61 +1855,8 @@
           });
         });
 
-        return card;
-      };
-
-      const renderSection = (title, items) => {
-        const section = document.createElement('section');
-        section.className = 'preset-section';
-        const header = document.createElement('div');
-        header.className = 'preset-section-header';
-        header.innerHTML = `
-          <h3>${escapeHtml(title)}</h3>
-          <span class="preset-section-count">${items.length}</span>
-        `;
-        const grid = document.createElement('div');
-        grid.className = 'preset-grid';
-        items.forEach((preset) => grid.appendChild(renderPresetCard(preset)));
-        section.append(header, grid);
-        return section;
-      };
-
-      const renderEmptyState = (message) => {
-        presetsList.innerHTML = `<div class="presets-empty-state">${message}</div>`;
-      };
-
-      presetsList.replaceChildren();
-      if (filteredPresets.length === 0) {
-        if (searchTerm) {
-          renderEmptyState('検索条件に合う定番メニューがありません。');
-        } else if (viewMode === 'favorites') {
-          renderEmptyState('お気に入りに登録された定番メニューはありません。');
-        } else {
-          renderEmptyState('登録されている定番メニューはありません。<br>上の手動入力から登録してください。');
-        }
-        return;
+        renderRegisterPresets();
       }
-
-      const sections = [];
-      if (viewMode === 'categories') {
-        categoryOrder.forEach((category) => {
-          const items = filteredPresets.filter((preset) => preset._category === category).sort(sortByMode);
-          if (items.length > 0) sections.push(renderSection(category, items));
-        });
-        const uncategorized = filteredPresets.filter((preset) => !categoryOrder.includes(preset._category)).sort(sortByMode);
-        if (uncategorized.length > 0) sections.push(renderSection('その他', uncategorized));
-      } else {
-        const title = viewMode === 'favorites' ? 'お気に入り' : '最近使った';
-        sections.push(renderSection(title, [...filteredPresets].sort(sortByMode)));
-      }
-
-      if (sections.length === 0) {
-        renderEmptyState('登録されている定番メニューはありません。<br>上の手動入力から登録してください。');
-        return;
-      }
-
-      presetsList.append(...sections);
-
     } catch (err) {
       console.error('Failed to load predefined menu presets:', err);
     }
