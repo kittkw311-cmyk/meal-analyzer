@@ -4638,42 +4638,42 @@ body {
   border: 1px solid #2a475b;
   box-shadow: 0 10px 24px rgba(8, 15, 22, 0.16);
   display: flex;
-  gap: 14px;
+  gap: 16px;
   justify-content: space-between;
+  padding: 12px 16px;
 }
 
 #tab-register .register-hero-copy {
+  align-items: center;
   flex: 1;
+  display: flex;
   min-width: 0;
 }
 
 #tab-register .register-hero-copy h3 {
   color: #f4fbff;
-  font: 800 22px var(--font-heading);
-  margin: 0 0 6px;
-}
-
-#tab-register .register-hero-copy p {
-  color: #c6d5df;
-  font-size: 12.5px;
-  line-height: 1.6;
+  font: 800 20px var(--font-heading);
   margin: 0;
 }
 
 #tab-register .register-hero-meta {
+  align-items: flex-end;
   display: flex;
+  flex: 0 1 560px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 10px 12px;
   justify-content: flex-end;
+  min-width: min(100%, 340px);
 }
 
 #tab-register .register-meta-label {
   color: #aab9c6;
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  margin-bottom: 4px;
+  line-height: 1.2;
+  margin-bottom: 6px;
 }
 
 #tab-register .register-date-box,
@@ -4681,8 +4681,19 @@ body {
   min-width: 0;
 }
 
+#tab-register .register-date-box .date-input {
+  box-sizing: border-box;
+  height: 42px;
+  min-width: 160px;
+  width: 100%;
+}
+
 #tab-register .register-meal-type-box .meal-type-chips {
-  justify-content: flex-end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-width: 320px;
+  width: 100%;
 }
 
 #tab-register .register-layout {
@@ -4694,7 +4705,6 @@ body {
 }
 
 #tab-register .register-action-rail {
-  align-self: end;
   align-self: start;
   position: sticky;
   top: 12px;
@@ -4727,7 +4737,95 @@ body {
 }
 
 #tab-register .register-save-btn {
+  background: linear-gradient(135deg, #244154, #173242);
+  border: 1px solid #35576d;
+  box-shadow: 0 6px 18px rgba(5, 12, 18, 0.18);
   min-height: 58px;
+}
+
+#tab-register .register-save-btn:disabled {
+  background: linear-gradient(135deg, #1b2b36, #13212b);
+  border-color: #2a4758;
+  box-shadow: none;
+  color: #7f95a8;
+  opacity: 0.56;
+}
+
+#tab-register .register-meal-type-box .meal-type-chips .chip {
+  min-height: 42px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#tab-register .register-date-box .date-input,
+#tab-register .register-meal-type-box .meal-type-chips .chip {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+#tab-register .register-date-box .date-input:focus,
+#tab-register .register-meal-type-box .meal-type-chips .chip:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(0, 229, 255, 0.18),
+    0 0 0 4px rgba(0, 229, 255, 0.08);
+}
+
+#tab-register .register-save-btn.is-ready:not(:disabled) {
+  background: linear-gradient(135deg, #1e8f7b, #1aa1a5);
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.18),
+    0 10px 24px rgba(0, 229, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  position: relative;
+}
+
+#tab-register .register-save-btn.is-ready:not(:disabled)::after {
+  background: rgba(0, 229, 255, 0.95);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.12);
+  content: '';
+  height: 8px;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+}
+
+#tab-register .register-save-btn.is-ready:not(:disabled):hover {
+  border-color: rgba(0, 229, 255, 0.7);
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.24),
+    0 14px 28px rgba(0, 229, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+#tab-register .register-save-btn.is-ready:not(:disabled):active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #tab-register .register-save-btn.is-ready:not(:disabled) {
+    animation: register-save-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes register-save-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 229, 255, 0.18),
+      0 10px 24px rgba(0, 229, 255, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(0, 229, 255, 0.26),
+      0 14px 28px rgba(0, 229, 255, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
 }
 
 #tab-register .register-main-column {
@@ -4950,8 +5048,24 @@ body {
     flex-direction: column;
   }
 
+  #tab-register .register-hero-copy {
+    width: 100%;
+  }
+
   #tab-register .register-hero-meta {
     justify-content: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
+
+  #tab-register .register-date-box,
+  #tab-register .register-meal-type-box {
+    width: 100%;
+  }
+
+  #tab-register .register-meal-type-box .meal-type-chips {
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

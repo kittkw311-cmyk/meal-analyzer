@@ -746,7 +746,11 @@
     const hasValidPresetAmount = !hasPreset || (Number.isFinite(presetAmount) && presetAmount > 0);
     const hasImage = !!selectedFile;
     const enabled = (hasPreset && hasValidPresetAmount) || hasImage;
-    if (btnAnalyze) btnAnalyze.disabled = !enabled;
+    if (btnAnalyze) {
+      btnAnalyze.disabled = !enabled;
+      btnAnalyze.classList.toggle('is-ready', enabled);
+      btnAnalyze.textContent = enabled ? '保存する' : '写真か定番を選択';
+    }
   }
 
   const roundTo1 = (value) => Math.round(Number(value) * 10) / 10;
@@ -3684,6 +3688,7 @@
   loadWeightHistory();
   updateDailyWeightSummary();
   loadStats();
+  validateInputs();
   loadPresets();
   loadAiConsultations();
 });
