@@ -4684,6 +4684,10 @@ body {
   min-width: 0;
 }
 
+#tab-register .register-meal-type-auto {
+  display: none;
+}
+
 #tab-register .register-date-box .date-input {
   box-sizing: border-box;
   height: 42px;
@@ -5056,18 +5060,40 @@ body {
 }
 
 @media (max-width: 600px) {
+  #tab-register .register-page {
+    display: grid;
+    gap: 12px;
+    grid-template-areas:
+      "hero main"
+      "rail main";
+    grid-template-columns: minmax(96px, 108px) minmax(0, 1fr);
+  }
+
   #tab-register .register-hero {
-    padding: 12px;
+    grid-area: hero;
+    padding: 10px 8px;
+    position: sticky;
+    top: 12px;
   }
 
   #tab-register .register-hero-copy {
+    justify-content: center;
     width: 100%;
   }
 
+  #tab-register .register-hero-copy h3 {
+    font-size: 15px;
+    line-height: 1.25;
+    text-align: center;
+  }
+
   #tab-register .register-hero-meta {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
     justify-content: flex-start;
     min-width: 0;
-    width: 100%;
   }
 
   #tab-register .register-date-box,
@@ -5075,15 +5101,97 @@ body {
     width: 100%;
   }
 
-  #tab-register .register-meal-type-box .meal-type-chips {
+  #tab-register .register-date-box .date-input {
+    border-radius: 16px;
+    font-size: 18px;
+    height: 68px;
     min-width: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-inline: 10px;
+    text-align: center;
+  }
+
+  #tab-register .register-meal-type-box .register-meta-label {
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  #tab-register .register-meal-type-auto {
+    align-items: center;
+    background: rgba(0, 229, 255, 0.08);
+    border: 1px solid rgba(0, 229, 255, 0.28);
+    border-radius: 999px;
+    color: #8ceef7;
+    display: flex;
+    font: 800 11px var(--font-heading);
+    justify-content: center;
+    min-height: 30px;
+    margin-bottom: 2px;
+  }
+
+  #tab-register .register-meal-type-box .meal-type-chips {
+    display: none;
+  }
+
+  #tab-register .register-layout {
+    display: contents;
+  }
+
+  #tab-register .register-action-rail {
+    grid-area: rail;
+    position: sticky;
+    top: 12px;
+  }
+
+  #tab-register .register-main-column {
+    grid-area: main;
   }
 
   #tab-register .register-rail-card {
-    display: grid;
+    background: linear-gradient(180deg, #18303e, #152432);
+    border: 1px solid #274255;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 10px 8px;
+  }
+
+  #tab-register .register-action-btn {
+    min-height: 52px;
+    padding: 0 10px;
+  }
+
+  #tab-register .register-save-btn {
+    min-height: 86px;
+    order: 1;
+  }
+
+  #tab-register .register-action-camera {
+    order: 2;
+  }
+
+  #tab-register .register-action-gallery {
+    order: 3;
+  }
+
+  #tab-register .register-action-camera,
+  #tab-register .register-action-gallery {
+    min-height: 56px;
+  }
+
+  #tab-register .register-preset-panel-header,
+  #tab-register .register-search-toolbar,
+  #tab-register .register-category-chips,
+  #tab-register .register-preset-panel-copy {
+    display: none;
+  }
+
+  #tab-register .register-preset-panel {
+    gap: 0;
+  }
+
+  #tab-register .register-preset-panel,
+  #tab-register .register-photo-card {
+    border-radius: 18px;
   }
 }
 
@@ -6807,6 +6915,7 @@ body {
   gap: 4px;
   margin: 0;
   min-width: 0;
+  max-width: 100%;
   padding: 0;
 }
 
@@ -6814,12 +6923,13 @@ body {
   color: var(--presets-foreground);
   display: block;
   font-family: var(--font-heading);
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 #tab-presets .preset-category-pill,
