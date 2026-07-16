@@ -41,23 +41,6 @@
   const navItems = document.querySelectorAll('.nav-item');
   const tabContents = document.querySelectorAll('.tab-content');
   
-  // Upload Elements (Camera / Gallery Split)
-  const dropZone = document.getElementById('drop-zone');
-  const cameraInput = document.getElementById('camera-input');
-  const galleryInput = document.getElementById('gallery-input');
-  const btnCameraTrigger = document.getElementById('btn-camera-trigger');
-  const btnGalleryTrigger = document.getElementById('btn-gallery-trigger');
-  
-  const previewContainer = document.getElementById('preview-container');
-  const imagePreview = document.getElementById('image-preview');
-  const btnRemoveImage = document.getElementById('btn-remove-image');
-  const btnAnalyze = document.getElementById('btn-analyze');
-  
-
-  // Selectors (Date & Meal Type)
-  const mealDateInput = document.getElementById('meal-date-input');
-  const mealTypeChips = document.querySelectorAll('.meal-type-chips .chip');
-  
   // Loading Elements
   const loadingOverlay = document.getElementById('loading-overlay');
 
@@ -84,27 +67,16 @@
   const btnReanalyzeModal = document.getElementById('btn-reanalyze-modal');
   const btnPresetModal = document.getElementById('btn-preset-modal');
   const mealAnalysisModal = document.getElementById('meal-analysis-modal');
-  const btnOpenMealAnalysis = document.getElementById('btn-open-meal-analysis');
   const btnCloseMealAnalysisModal = document.getElementById('btn-close-meal-analysis-modal');
   
   // Presets Elements
-  const presetSelector = document.getElementById('preset-selector');
-  const presetServingControls = document.getElementById('preset-serving-controls');
-  const presetServingAmountInput = document.getElementById('preset-serving-amount');
-  const presetServingUnitOutput = document.getElementById('preset-serving-unit');
-  const presetServingPreview = document.getElementById('preset-serving-preview');
   const presetSearchInput = document.getElementById('preset-search-input');
   const presetSortSelect = document.getElementById('preset-sort-select');
   const presetViewChips = document.querySelectorAll('.preset-view-chip');
   const presetsList = document.getElementById('presets-list');
-  const registerSearchInput = document.getElementById('register-search-input');
-  const registerSortSelect = document.getElementById('register-sort-select');
-  const registerCategoryChips = document.querySelectorAll('.register-category-chip');
-  const registerPresetsList = document.getElementById('register-presets-list');
   const formPresetsManual = document.getElementById('form-presets-manual');
   const presetsManualToggle = document.getElementById('presets-manual-toggle');
   const presetsManualContent = document.getElementById('presets-manual-content');
-  const presetsManualArrow = document.getElementById('presets-manual-arrow');
   
   // Modal Edit Inputs
   const modalDateInput = document.getElementById('modal-date-input');
@@ -123,13 +95,9 @@
   let bmiTrendChart = null;
 
 
-  // Selected file reference
-  let selectedFile = null;
-  let activeMealType = 'snack';
   let loadedPresets = [];
   let aiConsultationRecords = [];
   let presetViewMode = localStorage.getItem('preset_view_mode') || 'recent';
-  let registerCategoryFilter = 'all';
   const PRESET_FAVORITE_KEY = 'physilog_preset_favorites';
   const PRESET_USAGE_KEY = 'physilog_preset_usage';
   const PRESET_LAST_USED_KEY = 'physilog_preset_last_used';
@@ -190,6 +158,19 @@
   const inputSubcutaneousVal = document.getElementById('input-subcutaneous-val');
   const inputBodyAgeVal = document.getElementById('input-bodyage-val');
   const inputBodyTypeVal = document.getElementById('input-bodytype-val');
+  const mealDropZone = document.getElementById('meal-drop-zone');
+  const mealCameraInput = document.getElementById('meal-camera-input');
+  const mealGalleryInput = document.getElementById('meal-gallery-input');
+  const btnMealCameraTrigger = document.getElementById('btn-meal-camera-trigger');
+  const btnMealGalleryTrigger = document.getElementById('btn-meal-gallery-trigger');
+  const mealPreviewContainer = document.getElementById('meal-preview-container');
+  const mealImagePreview = document.getElementById('meal-image-preview');
+  const btnRemoveMealImage = document.getElementById('btn-remove-meal-image');
+  const mealTextInput = document.getElementById('meal-text-input');
+  const mealDateInput = document.getElementById('meal-date-input');
+  const mealTypeChips = document.querySelectorAll('#meal-type-chips .chip');
+  const btnAnalyzeMeal = document.getElementById('btn-analyze');
+  const btnOpenMealEntry = document.getElementById('btn-open-meal-entry');
 
   const btnSaveWeight = document.getElementById('btn-save-weight');
   const weightHistoryTbody = document.getElementById('weight-history-tbody');
@@ -258,6 +239,8 @@
   const wModalBodyType = document.getElementById('w-modal-bodytype');
 
   let selectedWeightFile = null;
+  let selectedMealFile = null;
+  let activeMealType = 'snack';
 
   const updateModalBodyLock = () => {
     const anyModalOpen = Array.from(document.querySelectorAll('.modal-overlay')).some((modal) => {
@@ -361,40 +344,16 @@
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
-    mealDateInput.value = `${yyyy}-${mm}-${dd}`;
     weightDateInput.value = `${yyyy}-${mm}-${dd}`;
 
-    // 時間帯による食事区分の初期値自動設定
-    const hour = today.getHours();
-    let defaultType = 'snack';
-    if (hour >= 5 && hour < 11) {
-      defaultType = 'morning';
-    } else if (hour >= 11 && hour < 16) {
-      defaultType = 'noon';
-    } else if (hour >= 16 && hour < 22) {
-      defaultType = 'night';
-    }
-    
-    setMealTypeActive(defaultType);
-
     // 体組成測定区分の初期値自動設定 (朝5時〜夕方5時までは朝、それ以外は夜)
+    const hour = today.getHours();
     if (hour >= 5 && hour < 17) {
       setWeightTypeActive('morning');
     } else {
       setWeightTypeActive('night');
     }
   };
-
-  function setMealTypeActive(type) {
-    activeMealType = type;
-    mealTypeChips.forEach(chip => {
-      if (chip.getAttribute('data-type') === type) {
-        chip.classList.add('active');
-      } else {
-        chip.classList.remove('active');
-      }
-    });
-  }
 
   function setWeightTypeActive(type) {
     activeWeightType = type;
@@ -414,22 +373,15 @@
     });
   });
 
-  // チップクリック時のイベント
-  mealTypeChips.forEach(chip => {
+  mealTypeChips.forEach((chip) => {
     chip.addEventListener('click', () => {
       setMealTypeActive(chip.getAttribute('data-type'));
     });
   });
 
-  if (btnOpenMealAnalysis) {
-    btnOpenMealAnalysis.addEventListener('click', () => {
-      const registerTabNav = document.querySelector('[data-tab="tab-register"]');
-      registerTabNav?.click();
-    });
-  }
-
   if (btnCloseMealAnalysisModal) {
     btnCloseMealAnalysisModal.addEventListener('click', () => {
+      resetMealEntryForm();
       hideModal(mealAnalysisModal);
     });
   }
@@ -437,8 +389,16 @@
   if (mealAnalysisModal) {
     mealAnalysisModal.addEventListener('click', (event) => {
       if (event.target === mealAnalysisModal) {
+        resetMealEntryForm();
         hideModal(mealAnalysisModal);
       }
+    });
+  }
+
+  if (btnOpenMealEntry) {
+    btnOpenMealEntry.addEventListener('click', () => {
+      resetMealEntryForm();
+      showModal(mealAnalysisModal);
     });
   }
 
@@ -589,30 +549,11 @@
     showModal(historyDetailModal);
   }
 
-  // 解析画面のフォームをリセットする関数
-  function resetAnalyzeForm() {
-    selectedFile = null;
-    cameraInput.value = '';
-    galleryInput.value = '';
-    
-    // プレビューコンテナの非表示化
-    previewContainer.style.display = 'none';
-    imagePreview.src = '';
-    
-    // 定番メニューセレクタをリセット
-    if (presetSelector) {
-      presetSelector.value = '';
-      if (presetServingAmountInput) presetServingAmountInput.value = '1.0';
-      updatePresetServingControls();
-    }
-
-    // 日付・食事区分セレクタを現在時刻で初期化
-    initializeSelectors();
-  }
-
   // 初期実行
   initializeSelectors();
+  initializeMealSelectors();
   validateWeightInputs();
+  validateMealInputs();
 
   // ==========================================================================
   // Navigation (Tab Switch)
@@ -637,180 +578,14 @@
         loadProfile();
       } else if (targetTabId === 'tab-overview') {
         loadStats();
-      } else if (targetTabId === 'tab-register') {
-        renderRegisterPresets();
       } else if (targetTabId === 'tab-presets') {
         loadPresets();
       }
     });
   });
 
-  // ==========================================================================
-  // Image Upload / Camera Split Handling
-  // ==========================================================================
-  btnCameraTrigger.addEventListener('click', () => {
-    cameraInput.click();
-  });
-
-  btnGalleryTrigger.addEventListener('click', () => {
-    galleryInput.click();
-  });
-
-  cameraInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
-  });
-
-  galleryInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
-  });
-
-  // Drag and Drop (Keep as fallback for gallery)
-  if (dropZone) {
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = 'var(--primary)';
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = 'var(--border-color)';
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = 'var(--border-color)';
-      if (e.dataTransfer.files.length > 0) {
-        handleFile(e.dataTransfer.files[0]);
-      }
-    });
-  }
-
-  function handleFile(file) {
-    if (!file.type.startsWith('image/')) {
-      alert('画像ファイルを選択してください。');
-      return;
-    }
-
-    selectedFile = file;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagePreview.src = e.target.result;
-      previewContainer.style.display = 'flex';
-      const emptyPreview = document.getElementById('register-empty-preview');
-      if (emptyPreview) emptyPreview.style.display = 'none';
-      mealUploadBadge.style.display = 'inline-flex'; // 件数バッジを表示
-      validateInputs();
-    };
-    reader.readAsDataURL(file);
-  }
-
-  btnRemoveImage.addEventListener('click', (e) => {
-    e.stopPropagation();
-    clearImage();
-  });
-
-  if (btnClearMealBadge) {
-    btnClearMealBadge.addEventListener('click', (e) => {
-      e.stopPropagation(); // Galleryダイアログ起動を防止
-      clearImage();
-    });
-  }
-
-  function clearImage() {
-    selectedFile = null;
-    cameraInput.value = '';
-    galleryInput.value = '';
-    imagePreview.src = '#';
-    previewContainer.style.display = 'none';
-    const emptyPreview = document.getElementById('register-empty-preview');
-    if (emptyPreview) emptyPreview.style.display = '';
-    mealUploadBadge.style.display = 'none'; // バッジを非表示
-    validateInputs();
-  }
-
-  function clearUpload() {
-    clearImage();
-    validateInputs();
-    initializeSelectors();
-  }
-
-  // ==========================================================================
-  // Inputs Validation (Enable/Disable Analyze Button)
-  // ==========================================================================
-  function validateInputs() {
-    const hasPreset = presetSelector && presetSelector.value !== "";
-    const presetAmount = presetServingAmountInput ? Number(presetServingAmountInput.value) : 1;
-    const hasValidPresetAmount = !hasPreset || (Number.isFinite(presetAmount) && presetAmount > 0);
-    const hasImage = !!selectedFile;
-    const enabled = (hasPreset && hasValidPresetAmount) || hasImage;
-    if (btnAnalyze) {
-      btnAnalyze.disabled = !enabled;
-      btnAnalyze.classList.toggle('is-ready', enabled);
-      btnAnalyze.textContent = enabled ? '保存する' : '写真か定番を選択';
-    }
-  }
-
   const roundTo1 = (value) => Math.round(Number(value) * 10) / 10;
   const roundCalories = (value) => Math.round(Number(value));
-
-  const getSelectedPresetOption = () => {
-    if (!presetSelector || presetSelector.value === '') return null;
-    return presetSelector.options[presetSelector.selectedIndex] || null;
-  };
-
-  const getPresetServingValues = (opt = getSelectedPresetOption()) => {
-    const baseAmount = Number(opt?.dataset.baseAmount || 1);
-    const servingAmount = Number(presetServingAmountInput?.value || baseAmount || 1);
-    const ratio = Number.isFinite(servingAmount) && Number.isFinite(baseAmount) && baseAmount > 0
-      ? servingAmount / baseAmount
-      : 1;
-    return {
-      baseAmount: Number.isFinite(baseAmount) && baseAmount > 0 ? roundTo1(baseAmount) : 1,
-      servingAmount: Number.isFinite(servingAmount) && servingAmount > 0 ? roundTo1(servingAmount) : null,
-      servingUnit: opt?.dataset.servingUnit || '個',
-      ratio,
-    };
-  };
-
-  const calculatePresetNutrition = (opt = getSelectedPresetOption()) => {
-    if (!opt) return null;
-    const { ratio } = getPresetServingValues(opt);
-    return {
-      calories: roundCalories(Number(opt.dataset.calories || 0) * ratio),
-      protein: roundTo1(Number(opt.dataset.protein || 0) * ratio),
-      fat: roundTo1(Number(opt.dataset.fat || 0) * ratio),
-      carbohydrates: roundTo1(Number(opt.dataset.carbohydrates || 0) * ratio),
-    };
-  };
-
-  const updatePresetServingControls = () => {
-    const opt = getSelectedPresetOption();
-    if (!presetServingControls || !presetServingAmountInput || !presetServingUnitOutput || !presetServingPreview) return;
-    if (!opt) {
-      presetServingControls.hidden = true;
-      presetServingPreview.textContent = '-- kcal / P --.- F --.- C --.-';
-      return;
-    }
-
-    const baseAmount = Number(opt.dataset.baseAmount || 1);
-    const unit = opt.dataset.servingUnit || '個';
-    presetServingControls.hidden = false;
-    presetServingUnitOutput.textContent = unit;
-    if (!presetServingAmountInput.value || Number(presetServingAmountInput.value) <= 0) {
-      presetServingAmountInput.value = (Number.isFinite(baseAmount) && baseAmount > 0 ? baseAmount : 1).toFixed(1);
-    }
-
-    const nutrition = calculatePresetNutrition(opt);
-    const { servingAmount } = getPresetServingValues(opt);
-    if (!nutrition || servingAmount == null) {
-      presetServingPreview.textContent = '今回量を入力';
-      return;
-    }
-    presetServingPreview.textContent = `${formatDetailNutritionValue(nutrition.calories, 0)} kcal / P ${formatDetailNutritionValue(nutrition.protein, 1)} F ${formatDetailNutritionValue(nutrition.fat, 1)} C ${formatDetailNutritionValue(nutrition.carbohydrates, 1)}`;
-  };
 
   function validateWeightInputs() {
     const hasImage = !!selectedWeightFile;
@@ -818,6 +593,60 @@
     if (btnAnalyzeWeight) {
       btnAnalyzeWeight.disabled = !(hasImage || hasText);
     }
+  }
+
+  function getDefaultMealType(date = new Date()) {
+    const hour = date.getHours();
+    if (hour >= 5 && hour < 10) return 'morning';
+    if (hour >= 10 && hour < 15) return 'noon';
+    if (hour >= 17 && hour < 22) return 'night';
+    return 'snack';
+  }
+
+  function validateMealInputs() {
+    const hasImage = !!selectedMealFile;
+    const hasText = mealTextInput && mealTextInput.value.trim().length > 0;
+    if (btnAnalyzeMeal) {
+      btnAnalyzeMeal.disabled = !(hasImage || hasText);
+    }
+  }
+
+  function setMealTypeActive(type) {
+    activeMealType = type;
+    mealTypeChips.forEach((chip) => {
+      if (chip.getAttribute('data-type') === type) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+
+  function initializeMealSelectors() {
+    if (!mealDateInput) return;
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    mealDateInput.value = `${yyyy}-${mm}-${dd}`;
+    setMealTypeActive(getDefaultMealType(today));
+  }
+
+  function resetMealImage() {
+    selectedMealFile = null;
+    if (mealCameraInput) mealCameraInput.value = '';
+    if (mealGalleryInput) mealGalleryInput.value = '';
+    if (mealPreviewContainer) mealPreviewContainer.style.display = 'none';
+    if (mealImagePreview) mealImagePreview.src = '';
+    if (mealUploadBadge) mealUploadBadge.style.display = 'none';
+    validateMealInputs();
+  }
+
+  function resetMealEntryForm() {
+    resetMealImage();
+    if (mealTextInput) mealTextInput.value = '';
+    initializeMealSelectors();
+    validateMealInputs();
   }
 
   const storageJson = (key, fallback) => {
@@ -860,6 +689,111 @@
     lastUsedMap[id] = Date.now();
     writeStorageJson(PRESET_USAGE_KEY, usageMap);
     writeStorageJson(PRESET_LAST_USED_KEY, lastUsedMap);
+  };
+
+  const getMealTypeLabel = (type) => {
+    return {
+      morning: '朝食',
+      noon: '昼食',
+      night: '夕食',
+      snack: '間食',
+    }[type] || '食事';
+  };
+
+  const getDefaultMealDateTime = () => {
+    const now = new Date();
+    return {
+      mealDate: now.toISOString(),
+      mealType: getDefaultMealType(now),
+    };
+  };
+
+  const registerPresetMenu = async (preset, { requireConfirm = false } = {}) => {
+    if (!preset) return;
+
+    const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0
+      ? roundTo1(preset.baseAmount)
+      : 1;
+    const servingUnit = preset.servingUnit || '個';
+    const { mealDate, mealType } = getDefaultMealDateTime();
+    const mealTypeLabel = getMealTypeLabel(mealType);
+
+    if (requireConfirm) {
+      const confirmed = confirm(`「${preset.name}」を${mealTypeLabel}として登録しますか？`);
+      if (!confirmed) return;
+    }
+
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '定番メニューを登録しています...';
+    loadingSubTextEl.textContent = '履歴にそのまま保存中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const formData = new FormData();
+      formData.append('name', preset.name || '');
+      formData.append('calories', preset.calories ?? '');
+      formData.append('protein', preset.protein ?? '');
+      formData.append('fat', preset.fat ?? '');
+      formData.append('carbohydrates', preset.carbohydrates ?? '');
+      formData.append('mealDate', mealDate);
+      formData.append('mealType', mealType);
+      formData.append('presetId', preset.id);
+      formData.append('servingAmount', String(baseAmount));
+      formData.append('baseServingAmount', String(baseAmount));
+      formData.append('servingUnit', servingUnit);
+
+      const response = await fetch('/api/history/preset', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const payload = contentType.includes('application/json') ? await response.json() : {};
+      if (!response.ok) {
+        throw new Error(payload.error || '定番メニューの登録に失敗しました。');
+      }
+
+      markPresetUsed(preset.id);
+      await loadHistory();
+      await updateDailySummary();
+      await loadPresets();
+      alert(`「${preset.name}」を${mealTypeLabel}として登録しました。`);
+    } catch (err) {
+      console.error(err);
+      alert('定番メニューの登録に失敗しました。\n詳細: ' + (err.message || ''));
+    } finally {
+      loadingOverlay.style.display = 'none';
+    }
+  };
+
+  const deletePreset = async (preset) => {
+    if (!preset?.id) return;
+    const confirmed = confirm(`「${preset.name}」を定番メニューから削除しますか？`);
+    if (!confirmed) return;
+
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '定番メニューを削除しています...';
+    loadingSubTextEl.textContent = '保存済みデータを消去中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const response = await fetch(`/api/presets/${preset.id}`, {
+        method: 'DELETE',
+      });
+      const contentType = response.headers.get('content-type') || '';
+      const payload = contentType.includes('application/json') ? await response.json() : {};
+      if (!response.ok) {
+        throw new Error(payload.error || '定番メニューの削除に失敗しました。');
+      }
+      await loadPresets();
+    } catch (err) {
+      console.error(err);
+      alert('定番メニューの削除に失敗しました。\n詳細: ' + (err.message || ''));
+    } finally {
+      loadingOverlay.style.display = 'none';
+    }
   };
 
   const togglePresetExpanded = (id) => {
@@ -905,157 +839,6 @@
   const getPresetLastUsedAt = (id) => Number(getLastUsedMap()[id] || 0);
   const isPresetFavorite = (id) => getFavoriteSet().has(id);
 
-  const selectPresetById = (id) => {
-    if (!presetSelector) return;
-    presetSelector.value = id || '';
-    presetSelector.dispatchEvent(new Event('change', { bubbles: true }));
-  };
-
-  const renderRegisterPresets = () => {
-    if (!registerPresetsList) return;
-
-    const searchTerm = (registerSearchInput?.value || '').trim().toLowerCase();
-    const sortMode = registerSortSelect?.value || 'recent';
-    const favoriteSet = getFavoriteSet();
-    const usageMap = getUsageMap();
-    const lastUsedMap = getLastUsedMap();
-
-    const items = loadedPresets.map(preset => {
-      const category = inferPresetCategory(preset);
-      return {
-        ...preset,
-        category,
-        isFavorite: favoriteSet.has(preset.id),
-        usageCount: Number(usageMap[preset.id] || 0),
-        lastUsedAt: Number(lastUsedMap[preset.id] || 0),
-      };
-    }).filter(preset => {
-      if (registerCategoryFilter !== 'all' && preset.category !== registerCategoryFilter) return false;
-      if (!searchTerm) return true;
-      const haystack = [
-        preset.name,
-        preset.category,
-        preset.calories,
-        preset.protein,
-        preset.fat,
-        preset.carbohydrates,
-        preset.baseAmount,
-        preset.servingUnit,
-      ].join(' ').toLowerCase();
-      return haystack.includes(searchTerm);
-    });
-
-    const sortItems = (list) => {
-      const next = list.slice();
-      if (sortMode === 'name') {
-        next.sort((a, b) => `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja'));
-      } else if (sortMode === 'favorite') {
-        next.sort((a, b) => {
-          if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
-          if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
-          return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
-        });
-      } else {
-        next.sort((a, b) => {
-          if (b.lastUsedAt !== a.lastUsedAt) return b.lastUsedAt - a.lastUsedAt;
-          if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
-          return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
-        });
-      }
-      return next;
-    };
-
-    const formatMeta = (preset) => {
-      const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
-      const servingUnit = preset.servingUnit || '個';
-      return `${baseAmount.toFixed(1)}${servingUnit} / ${Math.round(Number(preset.calories) || 0)}kcal`;
-    };
-
-    const renderCard = (preset) => {
-      const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0 ? roundTo1(preset.baseAmount) : 1;
-      const servingUnit = preset.servingUnit || '個';
-      const usageText = preset.lastUsedAt ? `最近使用: ${formatDateTimeDisplay(preset.lastUsedAt) || '記録済み'}` : `使用回数: ${preset.usageCount}`;
-      return `
-        <div class="register-preset-card" data-id="${preset.id}" role="button" tabindex="0" aria-pressed="${presetSelector?.value === preset.id ? 'true' : 'false'}">
-          <div class="register-preset-card-main">
-            <div class="register-preset-card-top">
-              <span class="preset-category-pill">${preset.category}</span>
-              <span class="preset-card-usage">${usageText}</span>
-            </div>
-            <div class="register-preset-card-title-row">
-              <span class="register-preset-card-title">${preset.name}</span>
-              <button type="button" class="register-preset-card-star ${preset.isFavorite ? 'is-favorite' : ''}" aria-pressed="${preset.isFavorite ? 'true' : 'false'}" aria-label="お気に入り切り替え">★</button>
-            </div>
-            <div class="register-preset-card-meta">${formatMeta(preset)}</div>
-            <div class="register-preset-card-macros">
-              <span class="macro-badge calories">${Math.round(Number(preset.calories) || 0)}kcal</span>
-              <span class="macro-badge p">P ${formatDetailNutritionValue(preset.protein, 1)}</span>
-              <span class="macro-badge f">F ${formatDetailNutritionValue(preset.fat, 1)}</span>
-              <span class="macro-badge c">C ${formatDetailNutritionValue(preset.carbohydrates, 1)}</span>
-            </div>
-            <div class="register-preset-card-footer">
-              <span class="register-preset-card-serving">${baseAmount.toFixed(1)}${servingUnit}</span>
-              <span class="register-preset-card-use-label">タップで選択</span>
-            </div>
-          </div>
-        </div>
-      `;
-    };
-
-    const sortedItems = sortItems(items);
-    if (!sortedItems.length) {
-      registerPresetsList.innerHTML = searchTerm || registerCategoryFilter !== 'all'
-        ? `<div class="presets-empty-state">条件に合う定番がありません。</div>`
-        : `<div class="presets-empty-state">登録されている定番メニューはありません。</div>`;
-      return;
-    }
-
-    registerPresetsList.innerHTML = sortedItems.map(renderCard).join('');
-
-    registerPresetsList.querySelectorAll('.register-preset-card').forEach(card => {
-      card.addEventListener('click', (event) => {
-        if (event.target.closest('.register-preset-card-star')) return;
-        selectPresetById(card.getAttribute('data-id'));
-      });
-      card.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          selectPresetById(card.getAttribute('data-id'));
-        }
-      });
-      const star = card.querySelector('.register-preset-card-star');
-      if (star) {
-        star.addEventListener('click', (event) => {
-          event.stopPropagation();
-          togglePresetFavorite(card.getAttribute('data-id'));
-          loadPresets();
-        });
-      }
-    });
-  };
-
-  if (presetSelector) {
-    presetSelector.addEventListener('change', () => {
-      const selectedId = presetSelector.value;
-      if (selectedId !== "") {
-        const opt = presetSelector.options[presetSelector.selectedIndex];
-        const baseAmount = Number(opt?.dataset.baseAmount || 1);
-        if (presetServingAmountInput) {
-          presetServingAmountInput.value = (Number.isFinite(baseAmount) && baseAmount > 0 ? baseAmount : 1).toFixed(1);
-        }
-      }
-      updatePresetServingControls();
-      validateInputs();
-    });
-  }
-
-  if (presetServingAmountInput) {
-    presetServingAmountInput.addEventListener('input', () => {
-      updatePresetServingControls();
-      validateInputs();
-    });
-  }
-
   if (presetSearchInput) {
     presetSearchInput.addEventListener('input', () => {
       loadPresets();
@@ -1084,162 +867,9 @@
     });
   }
 
-  if (registerSearchInput) {
-    registerSearchInput.addEventListener('input', () => {
-      renderRegisterPresets();
-    });
-  }
-
-  if (registerSortSelect) {
-    registerSortSelect.addEventListener('change', () => {
-      renderRegisterPresets();
-    });
-  }
-
-  if (registerCategoryChips.length) {
-    registerCategoryChips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        const nextCategory = chip.getAttribute('data-category') || 'all';
-        if (registerCategoryFilter === nextCategory) return;
-        registerCategoryFilter = nextCategory;
-        registerCategoryChips.forEach(btn => btn.classList.toggle('is-active', btn === chip));
-        renderRegisterPresets();
-      });
-    });
-  }
-
   if (weightTextInput) {
     weightTextInput.addEventListener('input', validateWeightInputs);
   }
-
-  // ==========================================================================
-  // Analyze Meal Execution
-  // ==========================================================================
-  btnAnalyze.addEventListener('click', async () => {
-    const opt = getSelectedPresetOption();
-    const hasImage = !!selectedFile;
-    if (!opt && !hasImage) return;
-
-    if (!opt && hasImage) {
-      btnAnalyze.disabled = true;
-      const loadingTextEl = loadingOverlay.querySelector('p');
-      const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-      loadingTextEl.textContent = 'AIが栄養素を解析しています...';
-      loadingSubTextEl.textContent = '写真からカロリーやPFCバランスを計算中';
-      loadingOverlay.style.display = 'flex';
-
-      const selectedDate = mealDateInput.value;
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
-      const mealDateToSend = new Date(fullDateTimeStr).toISOString();
-
-      const formData = new FormData();
-      formData.append('image', selectedFile);
-      formData.append('mealDate', mealDateToSend);
-      formData.append('mealType', activeMealType);
-
-      try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          body: formData
-        });
-
-        const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload.error || '食事の解析に失敗しました。');
-        }
-
-        updateDailySummary();
-        await loadHistory();
-        hideModal(mealAnalysisModal);
-        const historyNavItem = document.querySelector('[data-tab="tab-history"]');
-        if (historyNavItem) {
-          historyNavItem.click();
-        }
-        openDetailModal(payload);
-        resetAnalyzeForm();
-      } catch (err) {
-        console.error(err);
-        alert(err.message || '食事の解析に失敗しました。');
-      } finally {
-        loadingOverlay.style.display = 'none';
-        btnAnalyze.disabled = false;
-      }
-      return;
-    }
-
-    const calculatedNutrition = calculatePresetNutrition(opt);
-    const servingValues = getPresetServingValues(opt);
-    if (!calculatedNutrition || servingValues.servingAmount == null) {
-      alert('今回量を正しく入力してください。');
-      validateInputs();
-      return;
-    }
-
-    btnAnalyze.disabled = true;
-    const loadingTextEl = loadingOverlay.querySelector('p');
-    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-    loadingTextEl.textContent = '定番メニューを記録しています...';
-    loadingSubTextEl.textContent = '計算済みのデータを食事履歴へ追加中';
-    loadingOverlay.style.display = 'flex';
-
-    const presetName = opt.dataset.name || opt.textContent.trim();
-    const selectedDate = mealDateInput.value;
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const fullDateTimeStr = `${selectedDate}T${hours}:${minutes}:${seconds}`;
-    const mealDateToSend = new Date(fullDateTimeStr).toISOString();
-
-    const formData = new FormData();
-    formData.append('name', presetName);
-    formData.append('calories', calculatedNutrition.calories);
-    formData.append('protein', calculatedNutrition.protein);
-    formData.append('fat', calculatedNutrition.fat);
-    formData.append('carbohydrates', calculatedNutrition.carbohydrates);
-    formData.append('mealDate', mealDateToSend);
-    formData.append('mealType', activeMealType);
-    formData.append('presetId', opt.value);
-    formData.append('servingAmount', servingValues.servingAmount.toFixed(1));
-    formData.append('baseServingAmount', servingValues.baseAmount.toFixed(1));
-    formData.append('servingUnit', servingValues.servingUnit);
-    if (selectedFile) {
-      formData.append('image', selectedFile);
-    }
-
-    try {
-      const response = await fetch('/api/history/preset', {
-        method: 'POST',
-        body: formData
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || '定番メニューの記録に失敗しました。');
-      }
-
-      updateDailySummary();
-      await loadHistory();
-      markPresetUsed(opt.value);
-      hideModal(mealAnalysisModal);
-      const historyNavItem = document.querySelector('[data-tab="tab-history"]');
-      if (historyNavItem) {
-        historyNavItem.click();
-      }
-      openDetailModal(payload);
-      resetAnalyzeForm();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || '定番メニューの記録に失敗しました。');
-    } finally {
-      loadingOverlay.style.display = 'none';
-      btnAnalyze.disabled = false;
-    }
-  });
 
   // ==========================================================================
   // Update Daily Summary (Always Visible Card on Analyze Tab)
@@ -1390,27 +1020,6 @@
       const presets = await response.json();
       loadedPresets = Array.isArray(presets) ? presets : [];
 
-      // A. 解析画面のドロップダウンを更新
-      if (presetSelector) {
-        presetSelector.innerHTML = '<option value="">定番メニューから選択</option>';
-        loadedPresets.forEach(p => {
-          const opt = document.createElement('option');
-          const baseAmount = Number.isFinite(Number(p.baseAmount)) && Number(p.baseAmount) > 0 ? roundTo1(p.baseAmount) : 1;
-          const servingUnit = p.servingUnit || '個';
-          opt.value = p.id;
-          opt.dataset.calories = p.calories;
-          opt.dataset.protein = p.protein;
-          opt.dataset.fat = p.fat;
-          opt.dataset.carbohydrates = p.carbohydrates;
-          opt.dataset.name = p.name;
-          opt.dataset.baseAmount = baseAmount;
-          opt.dataset.servingUnit = servingUnit;
-          opt.textContent = `${p.name} (${baseAmount.toFixed(1)}${servingUnit} / ${p.calories} kcal - P:${p.protein} F:${p.fat} C:${p.carbohydrates})`;
-          presetSelector.appendChild(opt);
-        });
-        updatePresetServingControls();
-      }
-
       // B. 定番タブの一覧リストを更新
       if (presetsList) {
         const searchTerm = (presetSearchInput?.value || '').trim().toLowerCase();
@@ -1490,11 +1099,6 @@
                   </div>
                   <div class="preset-card-actions">
                     <button type="button" class="preset-favorite-btn" data-id="${preset.id}" aria-pressed="${favoritePressed}" aria-label="お気に入り切り替え">★</button>
-                    <button type="button" class="preset-card-toggle-btn" data-id="${preset.id}" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="${isExpanded ? '閉じる' : '開く'}">
-                      <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
-                    </button>
                   </div>
                 </div>
                 <div class="preset-card-matrix-body" ${isExpanded ? '' : 'hidden'}>
@@ -1509,6 +1113,17 @@
                         <option value="個"${servingUnit === '個' ? ' selected' : ''}>個</option>
                         <option value="g"${servingUnit === 'g' ? ' selected' : ''}>g</option>
                       </select>
+                    </div>
+                    <div class="preset-delete-row">
+                      <button type="button" class="preset-delete-btn" data-id="${preset.id}" aria-label="定番メニューを削除" title="削除">
+                        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M3 6h18"/>
+                          <path d="M8 6V4h8v2"/>
+                          <path d="M6 6l1 14h10l1-14"/>
+                          <path d="M10 11v5"/>
+                          <path d="M14 11v5"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                   <div class="preset-card-matrix-column preset-card-matrix-column-right">
@@ -1576,32 +1191,20 @@
           presetsList.innerHTML = viewItems.map(renderPresetCard).join('');
         }
 
-        const deletePreset = async (id) => {
-          if (confirm('この定番メニューを削除してもよろしいですか？')) {
-            try {
-              const res = await fetch(`/api/presets/${id}`, { method: 'DELETE' });
-              if (res.ok) {
-                loadPresets();
-              } else {
-                alert('削除に失敗しました。');
-              }
-            } catch (err) {
-              console.error(err);
-              alert('通信エラーが発生しました。');
-            }
-          }
-        };
-
         document.querySelectorAll('.preset-card-matrix').forEach(card => {
           let pressTimer = null;
           let startX = 0;
           let startY = 0;
           let longPressTriggered = false;
           const shell = card.querySelector('.preset-card-matrix-shell');
+          const body = card.querySelector('.preset-card-matrix-body');
           const toggleExpansion = () => {
             const id = card.dataset.id;
+            const isExpanded = body ? !body.hidden : false;
+            if (body) body.hidden = isExpanded;
+            if (shell) shell.classList.toggle('is-expanded', !isExpanded);
+            shell?.setAttribute('aria-expanded', String(!isExpanded));
             togglePresetExpanded(id);
-            loadPresets();
           };
           const cancelLongPress = () => {
             if (pressTimer) clearTimeout(pressTimer);
@@ -1618,7 +1221,8 @@
               longPressTriggered = true;
               shell?.classList.remove('is-pressing');
               navigator.vibrate?.(30);
-              deletePreset(card.dataset.id);
+              const preset = loadedPresets.find(item => item.id === card.dataset.id);
+              registerPresetMenu(preset, { requireConfirm: true });
             }, 650);
           });
 
@@ -1656,11 +1260,11 @@
           });
         });
 
-        document.querySelectorAll('.preset-card-toggle-btn').forEach(button => {
-          button.addEventListener('click', (event) => {
+        document.querySelectorAll('.preset-delete-btn').forEach(button => {
+          button.addEventListener('click', async (event) => {
             event.stopPropagation();
-            togglePresetExpanded(button.getAttribute('data-id'));
-            loadPresets();
+            const preset = loadedPresets.find(item => item.id === button.getAttribute('data-id'));
+            await deletePreset(preset);
           });
         });
 
@@ -1858,25 +1462,19 @@
             input.addEventListener('blur', saveNameEdit);
           });
         });
-
-        renderRegisterPresets();
       }
     } catch (err) {
       console.error('Failed to load predefined menu presets:', err);
     }
   }
 
-  // 2. 手動登録アコーディオン制御
+  // 2. 手動登録ポップアップ制御
   if (presetsManualToggle) {
     presetsManualToggle.addEventListener('click', () => {
-      const isHidden = presetsManualContent.style.display === 'none' || !presetsManualContent.style.display;
-      if (isHidden) {
-        presetsManualContent.style.display = 'block';
-        presetsManualArrow.classList.add('active');
-      } else {
-        presetsManualContent.style.display = 'none';
-        presetsManualArrow.classList.remove('active');
-      }
+      const isOpen = !presetsManualContent.hidden;
+      presetsManualContent.hidden = isOpen;
+      presetsManualToggle.textContent = isOpen ? '＋' : '×';
+      presetsManualToggle.setAttribute('aria-expanded', String(!isOpen));
     });
   }
 
@@ -1903,8 +1501,9 @@
 
         if (response.ok) {
           formPresetsManual.reset();
-          presetsManualContent.style.display = 'none';
-          presetsManualArrow.classList.remove('active');
+          presetsManualContent.hidden = true;
+          presetsManualToggle.textContent = '＋';
+          presetsManualToggle.setAttribute('aria-expanded', 'false');
           loadPresets();
         } else {
           alert('定番マスタの登録に失敗しました。');
@@ -2901,11 +2500,6 @@
     }
   }
 
-  // 食事の日付変更時に体組成サマリーも連動更新
-  mealDateInput.addEventListener('change', () => {
-    updateDailyWeightSummary();
-  });
-
   // 1. 画像アップロードイベント
   btnWeightCameraTrigger.addEventListener('click', () => weightCameraInput.click());
   btnWeightGalleryTrigger.addEventListener('click', () => weightGalleryInput.click());
@@ -2950,6 +2544,75 @@
     btnClearWeightBadge.addEventListener('click', (e) => {
       e.stopPropagation(); // Galleryダイアログ起動を防止
       clearWeightImage();
+    });
+  }
+
+  if (btnMealCameraTrigger && mealCameraInput) {
+    btnMealCameraTrigger.addEventListener('click', () => mealCameraInput.click());
+  }
+
+  if (btnMealGalleryTrigger && mealGalleryInput) {
+    btnMealGalleryTrigger.addEventListener('click', () => mealGalleryInput.click());
+  }
+
+  const handleMealFileSelect = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください。');
+      return;
+    }
+    selectedMealFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (mealImagePreview) mealImagePreview.src = e.target.result;
+      if (mealPreviewContainer) mealPreviewContainer.style.display = 'none';
+      if (mealUploadBadge) mealUploadBadge.style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+    validateMealInputs();
+  };
+
+  if (mealCameraInput) {
+    mealCameraInput.addEventListener('change', (e) => handleMealFileSelect(e.target.files[0]));
+  }
+
+  if (mealGalleryInput) {
+    mealGalleryInput.addEventListener('change', (e) => handleMealFileSelect(e.target.files[0]));
+  }
+
+  if (mealTextInput) {
+    mealTextInput.addEventListener('input', () => validateMealInputs());
+  }
+
+  if (btnRemoveMealImage) {
+    btnRemoveMealImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetMealImage();
+    });
+  }
+
+  if (btnClearMealBadge) {
+    btnClearMealBadge.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetMealImage();
+    });
+  }
+
+  if (mealDropZone) {
+    mealDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      mealDropZone.classList.add('dragover');
+    });
+
+    mealDropZone.addEventListener('dragleave', () => {
+      mealDropZone.classList.remove('dragover');
+    });
+
+    mealDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      mealDropZone.classList.remove('dragover');
+      handleMealFileSelect(e.dataTransfer.files[0]);
     });
   }
 
@@ -3082,6 +2745,65 @@
       btnAnalyzeWeight.disabled = false;
     }
   });
+
+  if (btnAnalyzeMeal) {
+    btnAnalyzeMeal.addEventListener('click', async () => {
+      const hasMealText = mealTextInput && mealTextInput.value.trim().length > 0;
+      if (!selectedMealFile && !hasMealText) {
+        alert('写真か補足テキストを入力してください。');
+        return;
+      }
+
+      const loadingTextEl = loadingOverlay.querySelector('p');
+      const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+      loadingTextEl.textContent = 'AIがメニューを解析しています...';
+      loadingSubTextEl.textContent = '料理名と栄養を読み取り中';
+      loadingOverlay.style.display = 'flex';
+      btnAnalyzeMeal.disabled = true;
+
+      const analyzeFormData = new FormData();
+      if (selectedMealFile) {
+        analyzeFormData.append('image', selectedMealFile);
+      }
+      analyzeFormData.append('textInput', mealTextInput?.value || '');
+      analyzeFormData.append('mealDate', mealDateInput?.value || '');
+      analyzeFormData.append('mealType', activeMealType || 'snack');
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: analyzeFormData,
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        const payload = contentType.includes('application/json') ? await response.json() : {};
+        if (!response.ok) {
+          const error = new Error(payload.error || 'メニューの解析に失敗しました。');
+          error.status = response.status;
+          throw error;
+        }
+
+        const analyzedRecord = payload;
+        resetMealEntryForm();
+        hideModal(mealAnalysisModal);
+        await loadHistory();
+        openDetailModal(analyzedRecord);
+      } catch (err) {
+        console.error(err);
+        const msg = err.message || '';
+        if (err.status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+          alert('【AIアクセス制限】\nメニュー解析のアクセスが一時的に集中しています。\n\nお手数ですが、10秒〜20秒ほど待ってから、もう一度お試しください。');
+        } else if (err.status === 503 || msg.includes('503') || msg.includes('UNAVAILABLE') || msg.includes('temporary') || msg.includes('high demand')) {
+          alert('【AIサーバー一時混雑】\n現在、GoogleのAIサーバーが非常に混み合っています。\n\n一時的な制限ですので、10秒〜15秒ほど待ってから、もう一度お試しください。');
+        } else {
+          alert('メニュー登録に失敗しました。\n\n少し時間をおいてからもう一度お試しください。\n詳細: ' + msg);
+        }
+      } finally {
+        loadingOverlay.style.display = 'none';
+        btnAnalyzeMeal.disabled = false;
+      }
+    });
+  }
 
   // 3. 解析結果の保存処理
   btnSaveWeight.addEventListener('click', async () => {
@@ -3688,7 +3410,6 @@
   loadWeightHistory();
   updateDailyWeightSummary();
   loadStats();
-  validateInputs();
   loadPresets();
   loadAiConsultations();
 });

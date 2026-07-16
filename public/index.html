@@ -166,114 +166,10 @@
         </div>
       </section>
 
-      <!-- 3. 登録タブ -->
-      <section id="tab-register" class="tab-content">
-        <div class="register-page">
-          <div class="register-layout">
-            <div class="register-left-rail">
-              <div class="card register-hero">
-                <div class="register-hero-copy">
-                  <h3>メニュー登録</h3>
-                </div>
-                <div class="register-hero-meta">
-                  <div class="register-date-box">
-                    <span class="register-meta-label">記録日</span>
-                    <input type="date" id="meal-date-input" class="date-input">
-                  </div>
-                  <div class="register-meal-type-box">
-                    <span class="register-meta-label">区分</span>
-                    <span class="register-meal-type-auto">自動</span>
-                  </div>
-                </div>
-              </div>
-
-              <aside class="register-action-rail">
-              <div class="register-rail-card card">
-                <button type="button" class="btn register-action-btn register-action-camera" id="btn-camera-trigger">
-                  <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                  撮る
-                </button>
-                <button type="button" class="btn register-action-btn register-action-gallery" id="btn-gallery-trigger">
-                  <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  アルバム
-                  <span class="upload-badge" id="meal-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-meal-badge">×</span></span>
-                </button>
-                <button class="btn btn-primary btn-block register-save-btn" id="btn-analyze" disabled>保存</button>
-                <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
-                <input type="file" id="gallery-input" accept="image/*" hidden>
-              </div>
-            </aside>
-            </div>
-
-            <div class="register-main-column">
-              <div class="card register-photo-card">
-                <div class="register-photo-header">
-                  <div>
-                    <h3 class="section-title" style="margin-bottom: 6px;">写真プレビュー</h3>
-                    <p class="register-photo-hint">写真がない場合は、定番だけを選んで登録もできます。</p>
-                  </div>
-                </div>
-                <div class="preview-container register-preview-container" id="preview-container" style="display: none;">
-                  <img id="image-preview" src="#" alt="食事プレビュー">
-                  <button class="btn btn-danger btn-sm" id="btn-remove-image">写真を消去</button>
-                </div>
-                <div class="register-empty-preview" id="register-empty-preview">
-                  写真を撮るか、アルバムから選択するとここに表示されます。
-                </div>
-              </div>
-
-              <div class="card register-preset-panel">
-                <div class="register-preset-panel-header">
-                  <div>
-                    <h3 class="section-title" style="margin-bottom: 6px;">定番から選ぶ</h3>
-                    <p class="register-preset-panel-copy">最近使った順やカテゴリで探して、そのまま保存へ進めます。</p>
-                  </div>
-                </div>
-                <div class="preset-select-wrapper register-preset-selector-block" style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left;">
-                  <select id="preset-selector" style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid var(--design-border); font-size: 13px; font-weight: 700; color: var(--design-foreground); background: var(--design-card); outline: none; cursor: pointer; box-sizing: border-box;">
-                    <option value="">定番メニューから選択</option>
-                  </select>
-                  <div id="preset-serving-controls" class="preset-serving-controls" hidden>
-                    <div class="preset-serving-field">
-                      <label for="preset-serving-amount">今回量</label>
-                      <input type="number" id="preset-serving-amount" min="0.1" step="0.1" inputmode="decimal" value="1.0">
-                    </div>
-                    <output id="preset-serving-unit" class="preset-serving-unit">個</output>
-                    <output id="preset-serving-preview" class="preset-serving-preview">-- kcal / P --.- F --.- C --.-</output>
-                  </div>
-                </div>
-                <div class="register-search-toolbar">
-                  <input type="search" id="register-search-input" class="register-search-input" placeholder="定番を検索">
-                  <select id="register-sort-select" class="register-sort-select" aria-label="定番の並び替え">
-                    <option value="recent">最近使った順</option>
-                    <option value="favorite">お気に入り順</option>
-                    <option value="name">名前順</option>
-                  </select>
-                </div>
-                <div class="register-category-chips" role="tablist" aria-label="定番のカテゴリ">
-                  <button type="button" class="register-category-chip is-active" data-category="all">すべて</button>
-                  <button type="button" class="register-category-chip" data-category="主食">主食</button>
-                  <button type="button" class="register-category-chip" data-category="主菜">主菜</button>
-                  <button type="button" class="register-category-chip" data-category="副菜">副菜</button>
-                  <button type="button" class="register-category-chip" data-category="汁物">汁物</button>
-                  <button type="button" class="register-category-chip" data-category="間食">間食</button>
-                  <button type="button" class="register-category-chip" data-category="飲料">飲料</button>
-                </div>
-                <div id="register-presets-list" class="register-presets-list">
-                  <div class="presets-empty-state">
-                    定番メニューを読み込んでいます。
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- 4. 履歴タブ -->
       <section id="tab-history" class="tab-content">
         <div class="history-quick-actions">
-          <button type="button" class="history-quick-action-btn" id="btn-open-meal-analysis">登録タブを開く</button>
+          <button type="button" class="history-quick-action-btn" id="btn-open-meal-entry">メニュー登録</button>
           <button type="button" class="history-quick-action-btn" id="btn-open-weight-entry">体組成登録</button>
         </div>
         <div id="history-list" class="history-list">
@@ -292,15 +188,17 @@
 
       <!-- 5. 定番タブ -->
       <section id="tab-presets" class="tab-content">
-        <!-- 手動で数値を入力して定番登録 -->
-        <div class="card accordion-card" style="margin-bottom: 16px; padding: 12px 14px; text-align: left; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px;">
-          <div class="accordion-header" id="presets-manual-toggle" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-            <h3 class="card-title-v2" style="font-size: 13.5px; margin: 0; color: var(--text-main); font-weight: 800; display: flex; align-items: center;">
-              <svg class="icon-svg" style="margin-right: 6px; color: var(--text-muted); width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>手動で数値を入力して定番登録
-            </h3>
-            <span class="accordion-arrow" id="presets-manual-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+        <div class="presets-toolbar-wrap">
+          <div class="presets-toolbar card">
+            <button type="button" id="presets-manual-toggle" class="preset-manual-toggle-btn" aria-expanded="false" aria-controls="presets-manual-content" aria-label="手動定番登録を開く">＋</button>
+            <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
+            <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
+              <option value="recent">最近使った順</option>
+              <option value="favorite">お気に入り順</option>
+              <option value="name">名前順</option>
+            </select>
           </div>
-          <div class="accordion-content" id="presets-manual-content" style="display: none; margin-top: 12px; border-top: 1.5px solid var(--border-color); padding-top: 12px;">
+          <div class="preset-manual-popover card" id="presets-manual-content" hidden>
             <form id="form-presets-manual">
               <div class="preset-manual-top-row">
                 <div class="form-group-compact preset-manual-name-field">
@@ -344,15 +242,6 @@
           </div>
         </div>
 
-        <div class="presets-toolbar card">
-          <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
-          <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
-            <option value="recent">最近使った順</option>
-            <option value="favorite">お気に入り順</option>
-            <option value="name">名前順</option>
-          </select>
-        </div>
-
         <div class="preset-view-switch" role="tablist" aria-label="定番の表示切り替え">
           <button type="button" class="preset-view-chip is-active" data-view="recent">最近使った</button>
           <button type="button" class="preset-view-chip" data-view="categories">カテゴリ別</button>
@@ -367,6 +256,48 @@
         </div>
       </section>
     </main>
+
+    <div class="modal-overlay" id="meal-analysis-modal" style="display: none;">
+      <div class="modal-content">
+        <button class="modal-close-btn" id="btn-close-meal-analysis-modal">✕</button>
+        <div class="modal-header-fixed" style="padding-bottom: 8px;">
+          <h3 class="modal-title" style="margin-bottom: 6px;">メニュー登録</h3>
+          <p style="margin: 0; color: var(--design-muted); font-size: 12px; line-height: 1.5;">写真を選ぶとAIがメニュー名と栄養を推定して、そのまま履歴に保存します。</p>
+        </div>
+        <div class="modal-body-scrollable" style="display: grid; gap: 12px;">
+          <div class="card upload-card">
+            <div class="upload-action-buttons" id="meal-drop-zone">
+              <button type="button" class="btn upload-action-btn" id="btn-meal-camera-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
+              </button>
+              <button type="button" class="btn upload-action-btn" id="btn-meal-gallery-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
+                <span class="upload-badge" id="meal-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-meal-badge">×</span></span>
+              </button>
+              <input type="file" id="meal-camera-input" accept="image/*" capture="environment" hidden>
+              <input type="file" id="meal-gallery-input" accept="image/*" hidden>
+            </div>
+            <div class="preview-container" id="meal-preview-container" style="display: none;">
+              <img id="meal-image-preview" src="#" alt="メニュープレビュー">
+              <button class="btn btn-danger btn-sm" id="btn-remove-meal-image">写真を消去</button>
+            </div>
+            <div class="text-input-area">
+              <textarea id="meal-text-input" class="meal-textarea" placeholder="補足したい内容を入力してください。例: ご飯少なめ、スープは半分、から揚げは2個など" rows="2"></textarea>
+            </div>
+            <div class="selectors-inline-row">
+              <input type="date" id="meal-date-input" class="date-input">
+              <div class="meal-type-chips" id="meal-type-chips">
+                <button type="button" class="chip" data-type="morning">朝</button>
+                <button type="button" class="chip" data-type="noon">昼</button>
+                <button type="button" class="chip" data-type="night">夜</button>
+                <button type="button" class="chip" data-type="snack">間食</button>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-analyze" disabled>AIでメニューを分析して登録する</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="modal-overlay" id="weight-entry-modal" style="display: none;">
       <div class="modal-content">
@@ -440,10 +371,6 @@
       <button class="nav-item" data-tab="tab-analyze">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
         <span class="nav-label">AI</span>
-      </button>
-      <button class="nav-item" data-tab="tab-register">
-        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="4" ry="4"/></svg></span>
-        <span class="nav-label">登録</span>
       </button>
       <button class="nav-item" data-tab="tab-history">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v8c0 1.1.9 2 2 2h3Zm0 0v5"/></svg></span>

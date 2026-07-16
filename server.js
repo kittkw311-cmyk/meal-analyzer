@@ -821,27 +821,30 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 // 1. 食事画像AI解析 API
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: '画像が入力されていません。' });
-    }
-
     if (!ai) {
       return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
     }
 
+    const textInput = typeof req.body.textInput === 'string' ? req.body.textInput.trim() : '';
+    if (!req.file && !textInput) {
+      return res.status(400).json({ error: '画像か補足テキストのいずれかを入力してください。' });
+    }
+
     const mealDate = req.body.mealDate ? new Date(req.body.mealDate).toISOString() : new Date().toISOString();
     const mealType = req.body.mealType || 'snack';
-    const contents = [
-      {
+    const contents = [];
+    if (req.file) {
+      contents.push({
         inlineData: {
           mimeType: req.file.mimetype,
           data: req.file.buffer.toString('base64'),
         },
-      },
-      `料理写真を解析し、食事名と栄養推定を日本語でJSONのみで返してください。
-画像から読み取れる範囲で、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。
-推定は見た目の量や一般的なレシピを基にして構いません。`,
-    ];
+      });
+    }
+    contents.push(`画像${req.file ? 'と補足メモ' : 'なしの補足メモ'}をもとに、食事名と栄養推定を日本語でJSONのみで返してください。
+${req.file ? '画像から読み取れる範囲で、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。' : '補足メモから料理内容を推定し、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。'}
+推定は見た目の量や一般的なレシピを基にして構いません。
+${textInput ? `補足メモ: ${textInput}` : ''}`);
 
     let nutritionData = null;
     let isFailed = false;
@@ -928,7 +931,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       mealDate,
       mealType,
       mealName: safeMealName,
-      textInput: '',
+      textInput,
       imageSource,
       imageId,
       status: isFailed ? 'failed' : 'success',
