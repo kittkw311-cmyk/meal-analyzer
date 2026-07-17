@@ -1070,9 +1070,9 @@
     progress.setAttribute('aria-valuenow', String(Math.min(percentage, 100)));
     progress.setAttribute('aria-valuetext', `目標の${percentage}%`);
     progress.classList.toggle('is-over', consumed > target);
-    status.textContent = consumed > target
-      ? `目標の${percentage}%（${consumed - target} kcal超過）`
-      : `目標の${percentage}%（あと${remaining} kcal）`;
+    status.innerHTML = consumed > target
+      ? `目標の${percentage}%<br>（${consumed - target} kcal超過）`
+      : `目標の${percentage}%<br>（あと${remaining} kcal）`;
   }
 
   function updateDailyPfcProgress() {
