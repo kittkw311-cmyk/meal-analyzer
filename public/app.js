@@ -58,8 +58,7 @@
     if (!match) return '';
     const month = String(Number(match[2]));
     const day = String(Number(match[3]));
-    const typeLabel = measurementType === 'morning' ? '朝' : measurementType === 'night' ? '夜' : '';
-    return typeLabel ? `${month}/${day} ${typeLabel}` : `${month}/${day}`;
+    return `${month}/${day}`;
   };
 
   // ==========================================================================
