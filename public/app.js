@@ -857,12 +857,16 @@
     };
   };
 
-  const registerPresetMenu = async (preset, { requireConfirm = false } = {}) => {
+  const registerPresetMenu = async (preset, { requireConfirm = false, servingAmount = null } = {}) => {
     if (!preset) return;
 
     const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0
       ? roundTo1(preset.baseAmount)
       : 1;
+    const requestedAmount = Number(servingAmount);
+    const actualServingAmount = Number.isFinite(requestedAmount) && requestedAmount > 0
+      ? roundTo1(requestedAmount)
+      : baseAmount;
     const servingUnit = preset.servingUnit || '個';
     const { mealDate, mealType } = getDefaultMealDateTime();
     const mealTypeLabel = getMealTypeLabel(mealType);
@@ -888,7 +892,7 @@
       formData.append('mealDate', mealDate);
       formData.append('mealType', mealType);
       formData.append('presetId', preset.id);
-      formData.append('servingAmount', String(baseAmount));
+      formData.append('servingAmount', String(actualServingAmount));
       formData.append('baseServingAmount', String(baseAmount));
       formData.append('servingUnit', servingUnit);
 
@@ -914,6 +918,25 @@
     } finally {
       loadingOverlay.style.display = 'none';
     }
+  };
+
+  const promptPresetServingAmount = (preset) => {
+    if (!preset) return null;
+    const baseAmount = Number.isFinite(Number(preset.baseAmount)) && Number(preset.baseAmount) > 0
+      ? roundTo1(preset.baseAmount)
+      : 1;
+    const servingUnit = preset.servingUnit || '個';
+    const input = window.prompt(
+      `${preset.name || '定番メニュー'} の数量を入力してください。\n基準量: ${baseAmount.toFixed(1)} ${servingUnit}`,
+      baseAmount.toFixed(1)
+    );
+    if (input === null) return null;
+    const parsed = Number(input);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      alert('数量は0より大きい数値で入力してください。');
+      return null;
+    }
+    return roundTo1(parsed);
   };
 
   const deletePreset = async (preset) => {
@@ -1372,7 +1395,10 @@
               shell?.classList.remove('is-pressing');
               navigator.vibrate?.(30);
               const preset = loadedPresets.find(item => item.id === card.dataset.id);
-              registerPresetMenu(preset, { requireConfirm: true });
+              const servingAmount = promptPresetServingAmount(preset);
+              if (servingAmount !== null && servingAmount !== undefined) {
+                registerPresetMenu(preset, { servingAmount });
+              }
             }, 650);
           });
 

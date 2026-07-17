@@ -6757,6 +6757,10 @@ body {
 }
 
 @media (max-width: 600px) {
+  #tab-presets .presets-list {
+    grid-template-columns: 1fr;
+  }
+
   #tab-presets {
     padding-inline: 20px;
   }
