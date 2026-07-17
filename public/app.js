@@ -1259,9 +1259,6 @@
                       <span class="preset-category-pill">${preset.category}</span>
                       <div class="preset-card-name-wrapper" data-id="${preset.id}">
                         <span class="preset-card-name">${preset.name}</span>
-                        <span class="preset-edit-icon" title="名前を編集">
-                          <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </span>
                       </div>
                     </div>
                     <div class="preset-card-matrix-topline">
@@ -1564,88 +1561,6 @@
           });
         });
 
-        document.querySelectorAll('.preset-card-name-wrapper').forEach(wrapper => {
-          wrapper.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = wrapper.getAttribute('data-id');
-            const nameSpan = wrapper.querySelector('.preset-card-name');
-            const currentName = nameSpan.textContent;
-            if (wrapper.querySelector('.preset-edit-input')) return;
-
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'preset-edit-input';
-            input.value = currentName;
-
-            nameSpan.style.display = 'none';
-            const editIcon = wrapper.querySelector('.preset-edit-icon');
-            if (editIcon) editIcon.style.display = 'none';
-            wrapper.appendChild(input);
-            input.focus();
-            input.select();
-
-            const saveNameEdit = async () => {
-              if (wrapper.classList.contains('is-saving')) return;
-              const newName = input.value.trim();
-              if (newName === '' || newName === currentName) {
-                nameSpan.style.display = '';
-                if (editIcon) editIcon.style.display = '';
-                input.remove();
-                return;
-              }
-
-              const showNameSaving = () => {
-                wrapper.classList.add('is-saving');
-                wrapper.innerHTML = '<span class="preset-macro-spinner" aria-hidden="true"></span><span class="preset-name-saving-text">更新中</span>';
-              };
-
-              const restoreNameEdit = () => {
-                wrapper.classList.remove('is-saving');
-                wrapper.innerHTML = `
-                  <span class="preset-card-name">${currentName}</span>
-                  <span class="preset-edit-icon" title="名前を編集">
-                    <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  </span>
-                `;
-              };
-
-              try {
-                showNameSaving();
-
-                const res = await fetch(`/api/presets/${id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ name: newName })
-                });
-
-                if (res.ok) {
-                  loadPresets();
-                } else {
-                  alert('名前の更新に失敗しました。');
-                  restoreNameEdit();
-                }
-              } catch (err) {
-                console.error(err);
-                alert('更新中に通信エラーが発生しました。');
-                restoreNameEdit();
-              }
-            };
-
-            input.addEventListener('keydown', (event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                input.blur();
-              } else if (event.key === 'Escape') {
-                event.preventDefault();
-                nameSpan.style.display = '';
-                if (editIcon) editIcon.style.display = '';
-                input.remove();
-              }
-            });
-
-            input.addEventListener('blur', saveNameEdit);
-          });
-        });
       }
     } catch (err) {
       console.error('Failed to load predefined menu presets:', err);
