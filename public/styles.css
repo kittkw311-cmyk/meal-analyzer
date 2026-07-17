@@ -6757,6 +6757,14 @@ body {
 }
 
 @media (max-width: 600px) {
+  #tab-presets {
+    padding-inline: 16px;
+  }
+
+  #tab-presets .presets-list {
+    padding-inline: 0;
+  }
+
   #tab-presets .preset-card-matrix-top {
     align-items: flex-start;
     flex-direction: column;
