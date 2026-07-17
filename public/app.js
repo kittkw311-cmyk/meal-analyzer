@@ -2198,6 +2198,13 @@
       const chartCard = designColor('--design-card');
       const chartMuted = designColor('--design-muted');
       const chartBorder = designColor('--design-border');
+      const chartMorningPoint = designColor('--secondary');
+      const chartNightPoint = designColor('--accent-blue');
+      const weightPointColors = slicedHistory.map((item) => {
+        if (item.measurementType === 'night') return chartNightPoint;
+        if (item.measurementType === 'morning') return chartMorningPoint;
+        return chartAccent;
+      });
 
       weightTrendChart = new Chart(weightChartCanvas.getContext('2d'), {
         type: 'line',
@@ -2211,7 +2218,7 @@
             borderWidth: 3,
             fill: true,
             tension: 0.25,
-            pointBackgroundColor: chartAccent,
+            pointBackgroundColor: weightPointColors,
             pointBorderColor: chartCard,
             pointBorderWidth: 2,
             pointRadius: 4,
