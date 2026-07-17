@@ -35,6 +35,33 @@
     }).format(date).replace(/\s+/g, ' ');
   };
 
+  const formatJstDateKeyFromDate = (date) => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+
+  const shiftJstDateKey = (dateKey, deltaDays) => {
+    const match = typeof dateKey === 'string'
+      ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      : null;
+    if (!match) return '';
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+    date.setUTCDate(date.getUTCDate() + deltaDays);
+    return formatJstDateKeyFromDate(date);
+  };
+
+  const formatOverviewWeightLabel = (dateLike, measurementType) => {
+    const dateKey = jstDateKey(dateLike);
+    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return '';
+    const month = String(Number(match[2]));
+    const day = String(Number(match[3]));
+    const typeLabel = measurementType === 'morning' ? '朝' : measurementType === 'night' ? '夜' : '';
+    return typeLabel ? `${month}/${day} ${typeLabel}` : `${month}/${day}`;
+  };
+
   // ==========================================================================
   // DOM Elements
   // ==========================================================================
@@ -93,6 +120,16 @@
   let pfcChart = null;
   let weightTrendChart = null;
   let bmiTrendChart = null;
+  const OVERVIEW_WEIGHT_RANGE_KEY = 'physilog_overview_weight_range';
+  const OVERVIEW_WEIGHT_RANGE_CONFIG = {
+    week: { days: 7, maxTicksLimit: 7, pointRadius: 4, pointHoverRadius: 6 },
+    month: { days: 30, maxTicksLimit: 8, pointRadius: 3.5, pointHoverRadius: 5.5 },
+    year: { days: 365, maxTicksLimit: 12, pointRadius: 2.5, pointHoverRadius: 4.5 }
+  };
+  let overviewWeightRange = localStorage.getItem(OVERVIEW_WEIGHT_RANGE_KEY) || 'month';
+  if (!OVERVIEW_WEIGHT_RANGE_CONFIG[overviewWeightRange]) {
+    overviewWeightRange = 'month';
+  }
 
 
   let loadedPresets = [];
@@ -198,6 +235,7 @@
   const summaryWeightVal = document.getElementById('summary-weight-val');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
   const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
+  const overviewWeightRangeButtons = document.querySelectorAll('.overview-chart-range-btn');
   const overviewAiQuestion = document.getElementById('overview-ai-question');
   const btnOverviewAiConsultation = document.getElementById('btn-overview-ai-consultation');
   const dailyTargetProtein = document.getElementById('daily-target-protein');
@@ -771,6 +809,24 @@
     });
   }
 
+  const syncOverviewWeightRangeButtons = () => {
+    overviewWeightRangeButtons.forEach((button) => {
+      const isActive = button.dataset.overviewRange === overviewWeightRange;
+      button.classList.toggle('active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  };
+
+  const setOverviewWeightRange = (rangeKey) => {
+    if (!OVERVIEW_WEIGHT_RANGE_CONFIG[rangeKey]) return;
+    if (overviewWeightRange !== rangeKey) {
+      overviewWeightRange = rangeKey;
+      localStorage.setItem(OVERVIEW_WEIGHT_RANGE_KEY, rangeKey);
+    }
+    syncOverviewWeightRangeButtons();
+    loadStats();
+  };
+
   function initializeMealSelectors() {
     if (!mealDateInput) return;
     const today = new Date();
@@ -780,6 +836,13 @@
     mealDateInput.value = `${yyyy}-${mm}-${dd}`;
     setMealTypeActive(getDefaultMealType(today));
   }
+
+  overviewWeightRangeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const nextRange = button.dataset.overviewRange;
+      if (nextRange) setOverviewWeightRange(nextRange);
+    });
+  });
 
   function resetMealImage() {
     selectedMealFile = null;
@@ -2171,6 +2234,8 @@
       const weightChartCanvas = document.getElementById('weight-trend-chart');
       if (!weightChartCanvas) return;
 
+      syncOverviewWeightRangeButtons();
+
       // 古い順にソート（時系列）
       const validHistory = [...weightHistory]
         .filter(d => d.weight !== null && d.weight > 0)
@@ -2182,10 +2247,15 @@
           return (priority[a.measurementType] || 0) - (priority[b.measurementType] || 0);
         });
 
-      // 直近30件のみ
-      const slicedHistory = validHistory.slice(-30);
-      const weightLabels = slicedHistory.map(d => formatDisplayDate(d.date));
-      const weightValues = slicedHistory.map(d => d.weight);
+      const rangeConfig = OVERVIEW_WEIGHT_RANGE_CONFIG[overviewWeightRange] || OVERVIEW_WEIGHT_RANGE_CONFIG.month;
+      const todayKey = jstDateKey(new Date());
+      const startKey = shiftJstDateKey(todayKey, -(rangeConfig.days - 1));
+      const filteredHistory = validHistory.filter((item) => {
+        const itemKey = jstDateKey(item.date);
+        return itemKey && itemKey >= startKey && itemKey <= todayKey;
+      });
+      const weightLabels = filteredHistory.map(d => formatOverviewWeightLabel(d.date, d.measurementType));
+      const weightValues = filteredHistory.map(d => d.weight);
       if (weightTrendChart) weightTrendChart.destroy();
       if (bmiTrendChart) {
         bmiTrendChart.destroy();
@@ -2200,7 +2270,7 @@
       const chartBorder = designColor('--design-border');
       const chartMorningPoint = designColor('--secondary');
       const chartNightPoint = designColor('--accent-blue');
-      const weightPointColors = slicedHistory.map((item) => {
+      const weightPointColors = filteredHistory.map((item) => {
         if (item.measurementType === 'night') return chartNightPoint;
         if (item.measurementType === 'morning') return chartMorningPoint;
         return chartAccent;
@@ -2221,15 +2291,30 @@
             pointBackgroundColor: weightPointColors,
             pointBorderColor: chartCard,
             pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6
+            pointRadius: rangeConfig.pointRadius,
+            pointHoverRadius: rangeConfig.pointHoverRadius
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const item = filteredHistory[items[0]?.dataIndex ?? -1];
+                  if (!item) return '';
+                  const typeLabel = item.measurementType === 'morning'
+                    ? '朝'
+                    : item.measurementType === 'night'
+                      ? '夜'
+                      : '';
+                  return typeLabel ? `${formatDisplayDate(item.date)} ${typeLabel}` : formatDisplayDate(item.date);
+                },
+                label: (context) => `体重 ${Number(context.parsed.y).toFixed(1)} kg`
+              }
+            }
           },
           scales: {
             y: {
@@ -2244,7 +2329,7 @@
                 font: { size: 10, weight: '700' },
                 maxRotation: 0,
                 autoSkip: true,
-                maxTicksLimit: 6
+                maxTicksLimit: rangeConfig.maxTicksLimit
               }
             }
           }

@@ -82,7 +82,14 @@
           </div>
         </div>
         <div class="card overview-trend-card">
-          <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--design-primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体重推移 (直近30回測定)</h3>
+          <div class="overview-trend-header">
+            <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--design-primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>体重推移</h3>
+            <div class="overview-chart-range" role="group" aria-label="表示期間">
+              <button type="button" class="overview-chart-range-btn" data-overview-range="week">週</button>
+              <button type="button" class="overview-chart-range-btn" data-overview-range="month">月</button>
+              <button type="button" class="overview-chart-range-btn" data-overview-range="year">年</button>
+            </div>
+          </div>
           <div class="chart-container overview-trend-chart-container">
             <canvas id="weight-trend-chart"></canvas>
           </div>

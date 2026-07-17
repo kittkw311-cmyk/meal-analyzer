@@ -1427,6 +1427,56 @@ body.modal-open {
   padding: calc(var(--design-space) * 2);
 }
 
+.overview-trend-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.overview-trend-header .chart-title {
+  margin-bottom: 0;
+}
+
+.overview-chart-range {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.overview-chart-range-btn {
+  background: transparent;
+  border: 1px solid var(--design-border);
+  border-radius: 999px;
+  color: var(--design-muted);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 40px;
+  padding: 6px 10px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.overview-chart-range-btn:hover {
+  border-color: var(--design-primary);
+  color: var(--design-primary);
+}
+
+.overview-chart-range-btn.active {
+  background: var(--design-primary);
+  border-color: var(--design-primary);
+  color: var(--design-primary-foreground);
+}
+
+.overview-chart-range-btn:active {
+  transform: translateY(1px);
+}
+
 .overview-trend-chart-container {
   height: 210px;
 }
@@ -1463,6 +1513,17 @@ body.modal-open {
 
 .overview-chart-legend-swatch.night {
   background: var(--accent-blue);
+}
+
+@media (max-width: 600px) {
+  .overview-trend-header {
+    align-items: flex-start;
+  }
+
+  .overview-chart-range {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* 体重差を知らせる右肩重ねの吹き出しバッジ */
