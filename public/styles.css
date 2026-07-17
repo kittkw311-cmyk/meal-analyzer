@@ -4220,6 +4220,7 @@ body {
   color: var(--presets-foreground);
   margin-inline: auto;
   max-width: 800px;
+  overflow-x: hidden;
   padding: 8px;
   width: 100%;
 }
@@ -4362,6 +4363,7 @@ body {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-x: hidden;
   overflow-y: auto;
   padding-bottom: 16px;
 }
@@ -6654,6 +6656,94 @@ body {
   color: #ffb31a;
 }
 
+#preset-edit-modal .modal-content {
+  max-width: 520px;
+}
+
+#preset-edit-modal .preset-edit-modal-header {
+  padding-bottom: 8px;
+}
+
+#preset-edit-modal .preset-edit-modal-subtitle {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+#preset-edit-modal .preset-edit-modal-body {
+  display: block;
+}
+
+#preset-edit-modal .preset-edit-form {
+  display: grid;
+  gap: 12px;
+}
+
+#preset-edit-modal .preset-edit-field {
+  display: grid;
+  gap: 4px;
+}
+
+#preset-edit-modal .preset-edit-field label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+#preset-edit-modal .preset-edit-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#preset-edit-modal .preset-edit-grid-macro {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#preset-edit-modal .preset-edit-input {
+  background: #122431;
+  border: 1px solid #2b4558;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #f4fbff;
+  font: 800 13px var(--font-heading);
+  min-width: 0;
+  min-height: 40px;
+  outline: none;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+#preset-edit-modal .preset-edit-input:focus {
+  border-color: var(--presets-accent);
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.14);
+}
+
+#preset-edit-modal .preset-edit-modal-footer {
+  display: flex;
+  gap: 8px;
+}
+
+#preset-edit-modal .preset-edit-modal-footer .btn {
+  flex: 1 1 0;
+}
+
+#preset-edit-modal .preset-edit-delete-btn {
+  background: rgba(255, 91, 91, 0.12);
+  border: 1px solid rgba(255, 91, 91, 0.36);
+  color: #ff8d8d;
+}
+
+#preset-edit-modal .preset-edit-delete-btn:hover,
+#preset-edit-modal .preset-edit-delete-btn:focus-visible {
+  background: rgba(255, 91, 91, 0.2);
+  border-color: #ff5b5b;
+  color: #ffffff;
+  outline: none;
+}
+
 @media (max-width: 840px) {
   #tab-presets .preset-card-matrix-body {
     grid-template-columns: 1fr;
@@ -6672,12 +6762,41 @@ body {
     flex-direction: column;
   }
 
+  #tab-presets .preset-card-matrix-body {
+    display: none !important;
+  }
+
+  #tab-presets .preset-card-matrix-shell {
+    padding: 10px 12px !important;
+  }
+
+  #tab-presets .preset-card-matrix-top {
+    gap: 10px;
+  }
+
+  #tab-presets .preset-card-matrix-title-row {
+    gap: 6px;
+  }
+
+  #tab-presets .preset-card-name {
+    font-size: 11px;
+  }
+
   #tab-presets .preset-card-actions {
     align-self: flex-end;
   }
 
   #tab-presets .preset-favorite-btn {
     align-self: auto;
+  }
+
+  #preset-edit-modal .modal-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #preset-edit-modal .preset-edit-grid-macro {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

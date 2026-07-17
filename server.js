@@ -62,7 +62,7 @@ const DEFAULT_CONSULTATION_PROMPT_TEMPLATE = `Role: 経験豊富で圧倒的な�
 現在状況(JSON):
 {{contextJson}}
 
-本日の食事グループ:
+対象日の食事グループ:
 {{mealGroupsText}}
 
 現在の体組成:
@@ -119,6 +119,79 @@ function getJstDateParts(dateLike) {
     month: Number(map.month || 0),
     day: Number(map.day || 0),
   };
+}
+
+function formatJstDateLabel(dateKey) {
+  const match = typeof dateKey === 'string' ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null;
+  if (!match) return '';
+  const [, year, month, day] = match;
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  return new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).format(date).replace(/\s+/g, '');
+}
+
+function addDaysToJstDateKey(dateLike, offsetDays) {
+  const { year, month, day } = getJstDateParts(dateLike);
+  if (!year || !month || !day) return '';
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + offsetDays);
+  return getJstDateKey(date);
+}
+
+function parseConsultationTargetDateKey(question, fallbackDate = new Date()) {
+  const reference = getJstDateParts(fallbackDate);
+  const text = typeof question === 'string' ? question : '';
+
+  const isoMatch = text.match(/(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})日?/);
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+    if (year > 0 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  const monthDayMatch = text.match(/(?:^|[^0-9])(\d{1,2})[\/\-月](\d{1,2})日?/);
+  if (monthDayMatch) {
+    const month = Number(monthDayMatch[1]);
+    const day = Number(monthDayMatch[2]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${String(reference.year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  const relativeMatchers = [
+    [/(?:^|[^ぁ-んァ-ヶ一-龠a-zA-Z])(?:今日|きょう|本日)(?:[^ぁ-んァ-ヶ一-龠a-zA-Z]|$)/, 0],
+    [/(?:^|[^ぁ-んァ-ヶ一-龠a-zA-Z])(?:昨日|きのう|きのふ|昨日)(?:[^ぁ-んァ-ヶ一-龠a-zA-Z]|$)/, -1],
+    [/(?:^|[^ぁ-んァ-ヶ一-龠a-zA-Z])(?:一昨日|おととい)(?:[^ぁ-んァ-ヶ一-龠a-zA-Z]|$)/, -2],
+    [/(?:^|[^ぁ-んァ-ヶ一-龠a-zA-Z])(?:明日|あした|あす|翌日)(?:[^ぁ-んァ-ヶ一-龠a-zA-Z]|$)/, 1],
+    [/(?:^|[^ぁ-んァ-ヶ一-龠a-zA-Z])(?:明後日|しあさって)(?:[^ぁ-んァ-ヶ一-龠a-zA-Z]|$)/, 2],
+  ];
+  for (const [pattern, offsetDays] of relativeMatchers) {
+    if (pattern.test(text)) {
+      return addDaysToJstDateKey(reference, offsetDays);
+    }
+  }
+
+  return getJstDateKey(fallbackDate);
+}
+
+function getLatestBodyCompositionAtOrBefore(weightHistory, targetDateKey) {
+  if (!Array.isArray(weightHistory) || !targetDateKey) return null;
+  const priority = { night: 3, morning: 2, other: 1 };
+  return weightHistory
+    .filter(item => getJstDateKey(item.date) <= targetDateKey)
+    .slice()
+    .sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      return dateDiff || (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
+    })[0] || null;
 }
 
 function readLocalProfile() {
@@ -2078,31 +2151,40 @@ app.post('/api/ai-consultation', async (req, res) => {
     if (!ai) return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
 
     const [history, weights, profile] = await Promise.all([readHistory(), readWeight(), readProfile()]);
-    const today = getJstDateKey(new Date());
-    const todayMeals = history.filter(item => getJstDateKey(item.mealDate || item.date) === today);
-    const totals = todayMeals.reduce((sum, item) => ({
+    const targetDateKey = parseConsultationTargetDateKey(question, new Date());
+    const targetDateLabel = formatJstDateLabel(targetDateKey) || targetDateKey;
+    const targetDate = new Date(`${targetDateKey}T00:00:00+09:00`);
+    const targetMeals = history.filter(item => getJstDateKey(item.mealDate || item.date) === targetDateKey);
+    const totals = targetMeals.reduce((sum, item) => ({
       calories: sum.calories + Number(item.nutrition?.calories || 0),
       protein: sum.protein + Number(item.nutrition?.protein || 0),
       fat: sum.fat + Number(item.nutrition?.fat || 0),
       carbohydrates: sum.carbohydrates + Number(item.nutrition?.carbohydrates || 0),
     }), { calories: 0, protein: 0, fat: 0, carbohydrates: 0 });
-    const mealGroups = groupMealEntriesByType(todayMeals);
+    const mealGroups = groupMealEntriesByType(targetMeals);
 
     const bodyCompositionHistory = sortBodyCompositionRecords(weights);
-    const currentBodyComposition = bodyCompositionHistory[0] || null;
-    const previousBodyComposition = bodyCompositionHistory[1] || null;
-    const weeklyBodyCompositionTrend = formatBodyCompositionTrend(bodyCompositionHistory, new Date());
+    const eligibleBodyCompositionHistory = bodyCompositionHistory.filter(record => {
+      const recordDateKey = getJstDateKey(record.date);
+      return recordDateKey && recordDateKey <= targetDateKey;
+    });
+    const currentBodyComposition = getLatestBodyCompositionAtOrBefore(bodyCompositionHistory, targetDateKey);
+    const previousBodyComposition = eligibleBodyCompositionHistory[1] || null;
+    const weeklyBodyCompositionTrend = formatBodyCompositionTrend(bodyCompositionHistory, targetDate);
 
     const context = {
-      date: today,
+      date: targetDateKey,
+      dateLabel: targetDateLabel,
+      requestedDate: targetDateKey,
+      requestedDateLabel: targetDateLabel,
       currentWeightKg: currentBodyComposition ? Number(currentBodyComposition.weight) : null,
       weightMeasuredAt: currentBodyComposition?.date || null,
-      todayNutrition: {
+      targetNutrition: {
         calories: Math.round(totals.calories),
         proteinG: Math.round(totals.protein * 10) / 10,
         fatG: Math.round(totals.fat * 10) / 10,
         carbohydratesG: Math.round(totals.carbohydrates * 10) / 10,
-        recordedEntryCount: todayMeals.length,
+        recordedEntryCount: targetMeals.length,
         mealTypeCount: mealGroups.length,
       },
       mealGroups,

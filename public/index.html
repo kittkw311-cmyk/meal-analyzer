@@ -647,6 +647,60 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="preset-edit-modal" style="display: none;">
+    <div class="modal-content preset-edit-modal-content">
+      <button class="modal-close-btn" id="btn-close-preset-edit-modal">✕</button>
+      <div class="modal-header-fixed preset-edit-modal-header">
+        <h3 class="modal-title" id="preset-edit-modal-title">定番を編集</h3>
+        <div class="preset-edit-modal-subtitle" id="preset-edit-modal-subtitle">タップで開く編集ポップアップです。</div>
+      </div>
+      <div class="modal-body-scrollable preset-edit-modal-body">
+        <form id="preset-edit-form" class="preset-edit-form">
+          <div class="preset-edit-field preset-edit-field-name">
+            <label for="preset-edit-name">メニュー名</label>
+            <input type="text" id="preset-edit-name" class="preset-edit-input">
+          </div>
+          <div class="preset-edit-grid">
+            <div class="preset-edit-field">
+              <label for="preset-edit-base-amount">基準量</label>
+              <input type="number" id="preset-edit-base-amount" class="preset-edit-input" min="0.1" step="0.1">
+            </div>
+            <div class="preset-edit-field">
+              <label for="preset-edit-serving-unit">単位</label>
+              <select id="preset-edit-serving-unit" class="preset-edit-input">
+                <option value="個">個</option>
+                <option value="g">g</option>
+              </select>
+            </div>
+          </div>
+          <div class="preset-edit-grid preset-edit-grid-macro">
+            <div class="preset-edit-field">
+              <label for="preset-edit-calories">kcal</label>
+              <input type="number" id="preset-edit-calories" class="preset-edit-input" min="0" step="1">
+            </div>
+            <div class="preset-edit-field">
+              <label for="preset-edit-protein">P</label>
+              <input type="number" id="preset-edit-protein" class="preset-edit-input" min="0" step="0.1">
+            </div>
+            <div class="preset-edit-field">
+              <label for="preset-edit-fat">F</label>
+              <input type="number" id="preset-edit-fat" class="preset-edit-input" min="0" step="0.1">
+            </div>
+            <div class="preset-edit-field">
+              <label for="preset-edit-carbs">C</label>
+              <input type="number" id="preset-edit-carbs" class="preset-edit-input" min="0" step="0.1">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer-fixed preset-edit-modal-footer">
+        <button type="button" class="btn preset-edit-delete-btn" id="btn-delete-preset-edit">削除</button>
+        <button type="button" class="btn btn-secondary" id="btn-cancel-preset-edit">キャンセル</button>
+        <button type="button" class="btn btn-primary" id="btn-save-preset-edit">保存</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 全画面ローディングオーバーレイ -->
   <div class="loading-overlay" id="loading-overlay" style="display: none;">
     <div class="loader-content">

@@ -97,6 +97,7 @@
 
   let loadedPresets = [];
   let aiConsultationRecords = [];
+  let currentPresetEditTarget = null;
   let presetViewMode = localStorage.getItem('preset_view_mode') || 'recent';
   const PRESET_FAVORITE_KEY = 'physilog_preset_favorites';
   const PRESET_USAGE_KEY = 'physilog_preset_usage';
@@ -213,6 +214,23 @@
   const aiConsultationModalQuestion = document.getElementById('ai-consultation-modal-question');
   const aiConsultationModalAnswer = document.getElementById('ai-consultation-modal-answer');
   const btnDeleteAiConsultationModal = document.getElementById('btn-delete-ai-consultation-modal');
+
+  // Preset Edit Modal Elements
+  const presetEditModal = document.getElementById('preset-edit-modal');
+  const btnClosePresetEditModal = document.getElementById('btn-close-preset-edit-modal');
+  const btnCancelPresetEdit = document.getElementById('btn-cancel-preset-edit');
+  const btnSavePresetEdit = document.getElementById('btn-save-preset-edit');
+  const btnDeletePresetEdit = document.getElementById('btn-delete-preset-edit');
+  const presetEditForm = document.getElementById('preset-edit-form');
+  const presetEditModalTitle = document.getElementById('preset-edit-modal-title');
+  const presetEditModalSubtitle = document.getElementById('preset-edit-modal-subtitle');
+  const presetEditNameInput = document.getElementById('preset-edit-name');
+  const presetEditBaseAmountInput = document.getElementById('preset-edit-base-amount');
+  const presetEditServingUnitSelect = document.getElementById('preset-edit-serving-unit');
+  const presetEditCaloriesInput = document.getElementById('preset-edit-calories');
+  const presetEditProteinInput = document.getElementById('preset-edit-protein');
+  const presetEditFatInput = document.getElementById('preset-edit-fat');
+  const presetEditCarbsInput = document.getElementById('preset-edit-carbs');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -259,6 +277,100 @@
     if (!modalEl) return;
     modalEl.style.display = 'none';
     updateModalBodyLock();
+  };
+
+  const isCompactPresetLayout = () => window.matchMedia('(max-width: 600px)').matches;
+
+  const getPresetEditDisplayValue = (value, decimals) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return '';
+    return decimals === 0 ? String(Math.round(numericValue)) : roundTo1(numericValue).toFixed(decimals);
+  };
+
+  const openPresetEditModal = (preset) => {
+    if (!presetEditModal || !preset) return;
+    currentPresetEditTarget = preset;
+    if (presetEditModalTitle) presetEditModalTitle.textContent = `${preset.name || '定番'} を編集`;
+    if (presetEditModalSubtitle) {
+      const category = preset.category || 'その他';
+      const usageText = preset.lastUsedAt ? `最近使用 ${formatDateTimeDisplay(preset.lastUsedAt) || '記録済み'}` : '最近使用 なし';
+      presetEditModalSubtitle.textContent = `${category} / ${usageText}`;
+    }
+    if (presetEditNameInput) presetEditNameInput.value = preset.name || '';
+    if (presetEditBaseAmountInput) presetEditBaseAmountInput.value = getPresetEditDisplayValue(preset.baseAmount ?? 1, 1);
+    if (presetEditServingUnitSelect) presetEditServingUnitSelect.value = preset.servingUnit === 'g' ? 'g' : '個';
+    if (presetEditCaloriesInput) presetEditCaloriesInput.value = getPresetEditDisplayValue(preset.calories, 0);
+    if (presetEditProteinInput) presetEditProteinInput.value = getPresetEditDisplayValue(preset.protein, 1);
+    if (presetEditFatInput) presetEditFatInput.value = getPresetEditDisplayValue(preset.fat, 1);
+    if (presetEditCarbsInput) presetEditCarbsInput.value = getPresetEditDisplayValue(preset.carbohydrates, 1);
+    showModal(presetEditModal);
+    presetEditNameInput?.focus();
+    presetEditNameInput?.select();
+  };
+
+  const closePresetEditModal = () => {
+    currentPresetEditTarget = null;
+    if (presetEditForm) presetEditForm.reset();
+    hideModal(presetEditModal);
+  };
+
+  const savePresetEdit = async () => {
+    if (!currentPresetEditTarget?.id || !presetEditModal) return;
+    const id = currentPresetEditTarget.id;
+    const name = presetEditNameInput?.value.trim() || '';
+    const baseAmount = Number(presetEditBaseAmountInput?.value);
+    const servingUnit = presetEditServingUnitSelect?.value === 'g' ? 'g' : '個';
+    const calories = Number(presetEditCaloriesInput?.value);
+    const protein = Number(presetEditProteinInput?.value);
+    const fat = Number(presetEditFatInput?.value);
+    const carbohydrates = Number(presetEditCarbsInput?.value);
+
+    if (!name) {
+      alert('メニュー名を入力してください。');
+      return;
+    }
+    if (!Number.isFinite(baseAmount) || baseAmount <= 0) {
+      alert('基準量を正しく入力してください。');
+      return;
+    }
+    if ([calories, protein, fat, carbohydrates].some(value => !Number.isFinite(value) || value < 0)) {
+      alert('栄養値を正しく入力してください。');
+      return;
+    }
+
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    loadingTextEl.textContent = '定番を更新しています...';
+    loadingSubTextEl.textContent = '編集内容を保存中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const response = await fetch(`/api/presets/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          baseAmount: roundTo1(baseAmount),
+          servingUnit,
+          calories: Math.round(calories),
+          protein: roundTo1(protein),
+          fat: roundTo1(fat),
+          carbohydrates: roundTo1(carbohydrates),
+        }),
+      });
+      const contentType = response.headers.get('content-type') || '';
+      const payload = contentType.includes('application/json') ? await response.json() : {};
+      if (!response.ok) {
+        throw new Error(payload.error || '定番メニューの更新に失敗しました。');
+      }
+      closePresetEditModal();
+      await loadPresets();
+    } catch (err) {
+      console.error(err);
+      alert('定番メニューの更新に失敗しました。\n詳細: ' + (err.message || ''));
+    } finally {
+      loadingOverlay.style.display = 'none';
+    }
   };
 
   const sortAiConsultations = (records) => {
@@ -433,6 +545,43 @@
       if (event.target === aiConsultationModal) {
         hideModal(aiConsultationModal);
       }
+    });
+  }
+
+  if (btnClosePresetEditModal) {
+    btnClosePresetEditModal.addEventListener('click', closePresetEditModal);
+  }
+
+  if (btnCancelPresetEdit) {
+    btnCancelPresetEdit.addEventListener('click', closePresetEditModal);
+  }
+
+  if (presetEditModal) {
+    presetEditModal.addEventListener('click', (event) => {
+      if (event.target === presetEditModal) {
+        closePresetEditModal();
+      }
+    });
+  }
+
+  if (presetEditForm) {
+    presetEditForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await savePresetEdit();
+    });
+  }
+
+  if (btnSavePresetEdit) {
+    btnSavePresetEdit.addEventListener('click', async () => {
+      await savePresetEdit();
+    });
+  }
+
+  if (btnDeletePresetEdit) {
+    btnDeletePresetEdit.addEventListener('click', async () => {
+      if (!currentPresetEditTarget) return;
+      await deletePreset(currentPresetEditTarget);
+      closePresetEditModal();
     });
   }
 
@@ -1077,7 +1226,7 @@
           const proteinText = `${formatDetailNutritionValue(preset.protein, 1) || '0.0'}`;
           const fatText = `${formatDetailNutritionValue(preset.fat, 1) || '0.0'}`;
           const carbohydratesText = `${formatDetailNutritionValue(preset.carbohydrates, 1) || '0.0'}`;
-          const isExpanded = expandedSet.has(preset.id);
+          const isExpanded = !isCompactPresetLayout() && expandedSet.has(preset.id);
           return `
             <div class="preset-card-matrix" data-id="${preset.id}">
               <div class="preset-card-matrix-shell ${isExpanded ? 'is-expanded' : ''}" data-id="${preset.id}" aria-expanded="${isExpanded ? 'true' : 'false'}">
@@ -1198,6 +1347,7 @@
           let longPressTriggered = false;
           const shell = card.querySelector('.preset-card-matrix-shell');
           const body = card.querySelector('.preset-card-matrix-body');
+          const preset = loadedPresets.find(item => item.id === card.dataset.id) || null;
           const toggleExpansion = () => {
             const id = card.dataset.id;
             const isExpanded = body ? !body.hidden : false;
@@ -1246,6 +1396,14 @@
               event.preventDefault();
               event.stopImmediatePropagation();
               longPressTriggered = false;
+              return;
+            }
+            if (isCompactPresetLayout()) {
+              event.preventDefault();
+              event.stopPropagation();
+              if (preset) {
+                openPresetEditModal(preset);
+              }
               return;
             }
             toggleExpansion();
