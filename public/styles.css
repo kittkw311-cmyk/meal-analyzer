@@ -6758,7 +6758,7 @@ body {
 
 @media (max-width: 600px) {
   #tab-presets {
-    padding-inline: 16px;
+    padding-inline: 20px;
   }
 
   #tab-presets .presets-list {
