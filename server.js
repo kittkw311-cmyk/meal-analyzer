@@ -669,6 +669,71 @@ function normalizePresetImageMeta(imageSource, imageId) {
   return { imageSource: normalizedSource, imageId: normalizedId };
 }
 
+function getUploadFileExtension(file) {
+  const originalExt = path.extname(file?.originalname || '').toLowerCase();
+  if (originalExt) return originalExt;
+  const mimeType = file?.mimetype || '';
+  if (mimeType === 'image/png') return '.png';
+  if (mimeType === 'image/webp') return '.webp';
+  if (mimeType === 'image/gif') return '.gif';
+  return '.jpg';
+}
+
+async function storePresetImage(file, filenamePrefix) {
+  if (!file) return { imageSource: '', imageId: '' };
+
+  const ext = getUploadFileExtension(file);
+  const filename = `${filenamePrefix}_${Date.now()}${ext}`;
+
+  if (drive && folderId) {
+    try {
+      const fileMetadata = {
+        name: filename,
+        parents: [folderId],
+      };
+      const media = {
+        mimeType: file.mimetype,
+        body: bufferToStream(file.buffer),
+      };
+      const driveResponse = await drive.files.create({
+        requestBody: fileMetadata,
+        media,
+        fields: 'id',
+      });
+      return { imageSource: 'drive', imageId: driveResponse.data.id };
+    } catch (err) {
+      console.error('Failed to upload preset image to Google Drive, saving locally instead:', err.message);
+    }
+  }
+
+  const localPath = path.join(UPLOADS_DIR, filename);
+  fs.writeFileSync(localPath, file.buffer);
+  return { imageSource: 'local', imageId: filename };
+}
+
+async function deletePresetImage(imageSource, imageId) {
+  if (!imageSource || !imageId) return;
+  if (imageSource === 'drive' && drive) {
+    try {
+      await drive.files.delete({ fileId: imageId });
+    } catch (err) {
+      console.error(`Failed to delete preset image from Google Drive (${imageId}):`, err.message);
+    }
+    return;
+  }
+
+  if (imageSource === 'local') {
+    const filePath = path.join(UPLOADS_DIR, imageId);
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.error(`Failed to delete local preset image (${filePath}):`, err.message);
+      }
+    }
+  }
+}
+
 // ==========================================================================
 // API 繧ｨ繝ｳ繝峨・繧､繝ｳ繝・
 // ==========================================================================
@@ -1108,14 +1173,16 @@ app.get('/api/presets', async (req, res) => {
 });
 
 // 2. 螳夂分繝｡繝九Η繝ｼ謇句虚逋ｻ骭ｲ API
-app.post('/api/presets', async (req, res) => {
+app.post('/api/presets', upload.single('image'), async (req, res) => {
   try {
     const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '入力された数値が不正です。' });
     }
     const normalizedBaseAmount = Number(baseAmount);
-    const normalizedImageMeta = normalizePresetImageMeta(imageSource, imageId);
+    const normalizedImageMeta = req.file
+      ? await storePresetImage(req.file, 'preset_photo')
+      : normalizePresetImageMeta(imageSource, imageId);
     const now = new Date().toISOString();
     const presets = await readPresets();
     const newPreset = {
@@ -1156,13 +1223,13 @@ app.delete('/api/presets/:id', async (req, res) => {
 });
 
 // 4.5. 螳夂分繝｡繝九Η繝ｼ驛ｨ蛻・峩譁ｰ・亥錐蜑阪・縺ｿ・・API
-app.patch('/api/presets/:id', async (req, res) => {
+app.patch('/api/presets/:id', upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId } = req.body;
+    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId, clearImage } = req.body;
     const hasMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount].some(value => value !== undefined);
     const hasUnitUpdate = servingUnit !== undefined;
-    const hasImageUpdate = imageSource !== undefined || imageId !== undefined;
+    const hasImageUpdate = req.file || clearImage !== undefined || imageSource !== undefined || imageId !== undefined;
     const hasInvalidMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount]
       .filter(value => value !== undefined)
       .some(value => !Number.isFinite(Number(value)) || Number(value) < 0 || (value === baseAmount && Number(value) <= 0));
@@ -1202,7 +1269,16 @@ app.patch('/api/presets/:id', async (req, res) => {
     if (servingUnit === 'g' || servingUnit === '個') {
       preset.servingUnit = servingUnit;
     }
-    if (hasImageUpdate) {
+    if (req.file) {
+      const nextImageMeta = await storePresetImage(req.file, 'preset_photo');
+      await deletePresetImage(preset.imageSource, preset.imageId);
+      preset.imageSource = nextImageMeta.imageSource;
+      preset.imageId = nextImageMeta.imageId;
+    } else if (String(clearImage) === '1' || String(clearImage).toLowerCase() === 'true') {
+      await deletePresetImage(preset.imageSource, preset.imageId);
+      preset.imageSource = '';
+      preset.imageId = '';
+    } else if (imageSource !== undefined || imageId !== undefined) {
       const normalizedImageMeta = normalizePresetImageMeta(imageSource, imageId);
       preset.imageSource = normalizedImageMeta.imageSource;
       preset.imageId = normalizedImageMeta.imageId;

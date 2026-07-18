@@ -4739,6 +4739,44 @@ body {
   outline: none;
 }
 
+#preset-edit-modal .card.upload-card {
+  background: var(--design-card);
+  border: 1px solid var(--design-border);
+  color: var(--design-foreground);
+}
+
+#preset-edit-modal .upload-action-btn {
+  background: var(--design-card) !important;
+  border: 1px solid var(--design-border) !important;
+  color: var(--design-foreground) !important;
+  box-shadow: none;
+}
+
+#preset-edit-modal .upload-action-btn:hover,
+#preset-edit-modal .upload-action-btn:focus-visible {
+  border-color: var(--design-accent) !important;
+  color: var(--design-accent) !important;
+  outline: none;
+}
+
+#preset-edit-modal .preview-container {
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#preset-edit-modal #preset-edit-photo-preview-image {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+#preset-edit-modal .preset-edit-photo-note {
+  margin-top: 0;
+}
+
 #meal-analysis-modal .meal-textarea,
 #weight-entry-modal .meal-textarea,
 #meal-analysis-modal .preset-serving-controls,
@@ -6711,55 +6749,6 @@ body {
   gap: 12px;
 }
 
-#preset-edit-modal .preset-edit-section-label {
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-#preset-edit-modal .preset-edit-photo-panel {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
-  align-items: start;
-}
-
-#preset-edit-modal .preset-edit-photo-preview {
-  align-items: center;
-  background: #122431;
-  border: 1px solid #2b4558;
-  border-radius: 4px;
-  box-sizing: border-box;
-  display: flex;
-  justify-content: center;
-  min-height: 140px;
-  overflow: hidden;
-}
-
-#preset-edit-modal .preset-edit-photo-preview img {
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-#preset-edit-modal .preset-edit-photo-placeholder {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.5;
-  padding: 16px;
-  text-align: center;
-}
-
-#preset-edit-modal .preset-edit-photo-fields {
-  display: grid;
-  gap: 12px;
-}
-
 #preset-edit-modal .preset-edit-photo-note {
   color: var(--text-muted);
   font-size: 11px;
@@ -6850,14 +6839,6 @@ body {
 
   #tab-presets {
     padding-inline: 20px;
-  }
-
-  #preset-edit-modal .preset-edit-photo-panel {
-    grid-template-columns: 1fr;
-  }
-
-  #preset-edit-modal .preset-edit-photo-preview {
-    min-height: 120px;
   }
 
   #tab-presets .presets-list {

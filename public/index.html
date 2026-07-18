@@ -678,28 +678,24 @@
             <label for="preset-edit-name">メニュー名</label>
             <input type="text" id="preset-edit-name" class="preset-edit-input">
           </div>
-          <div class="preset-edit-section-label">写真情報</div>
-          <div class="preset-edit-photo-panel">
-            <div class="preset-edit-photo-preview">
-              <img id="preset-edit-photo-preview-image" alt="定番写真プレビュー" hidden>
-              <div class="preset-edit-photo-placeholder" id="preset-edit-photo-placeholder">写真は未設定です</div>
+          <div class="card upload-card preset-edit-upload-card">
+            <div class="upload-action-buttons" id="preset-edit-drop-zone">
+              <button type="button" class="btn upload-action-btn" id="btn-preset-edit-camera-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>写真を撮る
+              </button>
+              <button type="button" class="btn upload-action-btn" id="btn-preset-edit-gallery-trigger">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>アルバムから選択
+                <span class="upload-badge" id="preset-edit-upload-badge" style="display: none;">1 <span class="badge-clear" id="btn-clear-preset-edit-badge">×</span></span>
+              </button>
+              <input type="file" id="preset-edit-camera-input" accept="image/*" capture="environment" hidden>
+              <input type="file" id="preset-edit-gallery-input" accept="image/*" hidden>
             </div>
-            <div class="preset-edit-photo-fields">
-              <div class="preset-edit-field">
-                <label for="preset-edit-image-source">写真ソース</label>
-                <select id="preset-edit-image-source" class="preset-edit-input">
-                  <option value="">未設定</option>
-                  <option value="local">local</option>
-                  <option value="drive">drive</option>
-                </select>
-              </div>
-              <div class="preset-edit-field">
-                <label for="preset-edit-image-id">写真ID</label>
-                <input type="text" id="preset-edit-image-id" class="preset-edit-input" placeholder="ファイル名 / DriveファイルID">
-              </div>
+            <div class="preview-container" id="preset-edit-preview-container" style="display: none;">
+              <img id="preset-edit-photo-preview-image" src="#" alt="定番写真プレビュー">
+              <button type="button" class="btn btn-danger btn-sm" id="btn-remove-preset-edit-image">写真を消去</button>
             </div>
+            <div class="preset-edit-photo-note">選んだ写真はGoogle Driveに保存されます。</div>
           </div>
-          <div class="preset-edit-photo-note">写真を紐づける場合は、ソースとIDを両方入力してください。</div>
           <div class="preset-edit-grid">
             <div class="preset-edit-field">
               <label for="preset-edit-base-amount">基準量</label>

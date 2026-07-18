@@ -262,10 +262,16 @@
   const presetEditModalTitle = document.getElementById('preset-edit-modal-title');
   const presetEditModalSubtitle = document.getElementById('preset-edit-modal-subtitle');
   const presetEditNameInput = document.getElementById('preset-edit-name');
-  const presetEditImageSourceSelect = document.getElementById('preset-edit-image-source');
-  const presetEditImageIdInput = document.getElementById('preset-edit-image-id');
+  const presetEditDropZone = document.getElementById('preset-edit-drop-zone');
+  const presetEditCameraInput = document.getElementById('preset-edit-camera-input');
+  const presetEditGalleryInput = document.getElementById('preset-edit-gallery-input');
+  const btnPresetEditCameraTrigger = document.getElementById('btn-preset-edit-camera-trigger');
+  const btnPresetEditGalleryTrigger = document.getElementById('btn-preset-edit-gallery-trigger');
+  const presetEditPreviewContainer = document.getElementById('preset-edit-preview-container');
   const presetEditPhotoPreviewImage = document.getElementById('preset-edit-photo-preview-image');
-  const presetEditPhotoPlaceholder = document.getElementById('preset-edit-photo-placeholder');
+  const btnRemovePresetEditImage = document.getElementById('btn-remove-preset-edit-image');
+  const presetEditUploadBadge = document.getElementById('preset-edit-upload-badge');
+  const btnClearPresetEditBadge = document.getElementById('btn-clear-preset-edit-badge');
   const presetEditBaseAmountInput = document.getElementById('preset-edit-base-amount');
   const presetEditServingUnitSelect = document.getElementById('preset-edit-serving-unit');
   const presetEditCaloriesInput = document.getElementById('preset-edit-calories');
@@ -299,6 +305,9 @@
 
   let selectedWeightFile = null;
   let selectedMealFile = null;
+  let selectedPresetEditFile = null;
+  let presetEditBaseImageUrl = '';
+  let presetEditImageMarkedForRemoval = false;
   let activeMealType = 'snack';
 
   const updateModalBodyLock = () => {
@@ -339,34 +348,77 @@
     return `/api/image?source=${encodeURIComponent(imageSource)}&id=${encodeURIComponent(imageId)}`;
   };
 
-  const syncPresetEditPhotoPreview = () => {
-    if (!presetEditPhotoPreviewImage || !presetEditPhotoPlaceholder) return;
-    const imageSource = presetEditImageSourceSelect?.value || '';
-    const imageId = presetEditImageIdInput?.value.trim() || '';
-    const imageUrl = getPresetImageUrl(imageSource, imageId);
-
+  const updatePresetEditPhotoPreview = (imageUrl = '') => {
+    if (!presetEditPreviewContainer || !presetEditPhotoPreviewImage) return;
     if (imageUrl) {
       presetEditPhotoPreviewImage.src = imageUrl;
-      presetEditPhotoPreviewImage.hidden = false;
-      presetEditPhotoPlaceholder.hidden = true;
+      presetEditPreviewContainer.style.display = 'flex';
     } else {
       presetEditPhotoPreviewImage.removeAttribute('src');
-      presetEditPhotoPreviewImage.hidden = true;
-      presetEditPhotoPlaceholder.hidden = false;
+      presetEditPreviewContainer.style.display = 'none';
     }
+  };
+
+  const syncPresetEditPhotoPreview = () => {
+    if (presetEditImageMarkedForRemoval) {
+      updatePresetEditPhotoPreview('');
+      return;
+    }
+    if (selectedPresetEditFile) {
+      return;
+    }
+    updatePresetEditPhotoPreview(presetEditBaseImageUrl);
   };
 
   if (presetEditPhotoPreviewImage) {
     presetEditPhotoPreviewImage.addEventListener('error', () => {
       presetEditPhotoPreviewImage.removeAttribute('src');
-      presetEditPhotoPreviewImage.hidden = true;
-      if (presetEditPhotoPlaceholder) presetEditPhotoPlaceholder.hidden = false;
+      if (presetEditPreviewContainer) presetEditPreviewContainer.style.display = 'none';
     });
   }
+
+  const handlePresetEditFileSelect = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください。');
+      return;
+    }
+
+    selectedPresetEditFile = file;
+    presetEditImageMarkedForRemoval = false;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        updatePresetEditPhotoPreview(String(e.target.result));
+      }
+      if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearPresetEditSelectedPhoto = ({ removeExisting = false } = {}) => {
+    selectedPresetEditFile = null;
+    presetEditImageMarkedForRemoval = removeExisting;
+    if (presetEditCameraInput) presetEditCameraInput.value = '';
+    if (presetEditGalleryInput) presetEditGalleryInput.value = '';
+    if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
+    if (presetEditImageMarkedForRemoval) {
+      updatePresetEditPhotoPreview('');
+    } else {
+      syncPresetEditPhotoPreview();
+    }
+  };
 
   const openPresetEditModal = (preset) => {
     if (!presetEditModal || !preset) return;
     currentPresetEditTarget = preset;
+    selectedPresetEditFile = null;
+    presetEditImageMarkedForRemoval = false;
+    presetEditBaseImageUrl = getPresetImageUrl(preset.imageSource, preset.imageId);
+    if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
+    if (presetEditCameraInput) presetEditCameraInput.value = '';
+    if (presetEditGalleryInput) presetEditGalleryInput.value = '';
     if (presetEditModalTitle) presetEditModalTitle.textContent = `${preset.name || '定番'} を編集`;
     if (presetEditModalSubtitle) {
       const category = preset.category || 'その他';
@@ -380,8 +432,6 @@
     if (presetEditProteinInput) presetEditProteinInput.value = getPresetEditDisplayValue(preset.protein, 1);
     if (presetEditFatInput) presetEditFatInput.value = getPresetEditDisplayValue(preset.fat, 1);
     if (presetEditCarbsInput) presetEditCarbsInput.value = getPresetEditDisplayValue(preset.carbohydrates, 1);
-    if (presetEditImageSourceSelect) presetEditImageSourceSelect.value = preset.imageSource === 'drive' || preset.imageSource === 'local' ? preset.imageSource : '';
-    if (presetEditImageIdInput) presetEditImageIdInput.value = preset.imageId || '';
     syncPresetEditPhotoPreview();
     showModal(presetEditModal);
     presetEditNameInput?.focus();
@@ -390,7 +440,11 @@
 
   const closePresetEditModal = () => {
     currentPresetEditTarget = null;
+    selectedPresetEditFile = null;
+    presetEditBaseImageUrl = '';
+    presetEditImageMarkedForRemoval = false;
     if (presetEditForm) presetEditForm.reset();
+    if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
     syncPresetEditPhotoPreview();
     hideModal(presetEditModal);
   };
@@ -405,8 +459,6 @@
     const protein = Number(presetEditProteinInput?.value);
     const fat = Number(presetEditFatInput?.value);
     const carbohydrates = Number(presetEditCarbsInput?.value);
-    const imageSource = presetEditImageSourceSelect?.value || '';
-    const imageId = presetEditImageIdInput?.value.trim() || '';
 
     if (!name) {
       alert('メニュー名を入力してください。');
@@ -428,21 +480,43 @@
     loadingOverlay.style.display = 'flex';
 
     try {
-      const response = await fetch(`/api/presets/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          baseAmount: roundTo1(baseAmount),
-          servingUnit,
-          calories: Math.round(calories),
-          protein: roundTo1(protein),
-          fat: roundTo1(fat),
-          carbohydrates: roundTo1(carbohydrates),
-          imageSource,
-          imageId,
-        }),
+      const shouldUploadImage = !!selectedPresetEditFile || presetEditImageMarkedForRemoval;
+      const requestBody = shouldUploadImage ? new FormData() : JSON.stringify({
+        name,
+        baseAmount: roundTo1(baseAmount),
+        servingUnit,
+        calories: Math.round(calories),
+        protein: roundTo1(protein),
+        fat: roundTo1(fat),
+        carbohydrates: roundTo1(carbohydrates),
       });
+      let requestInit;
+      if (shouldUploadImage) {
+        requestBody.append('name', name);
+        requestBody.append('baseAmount', String(roundTo1(baseAmount)));
+        requestBody.append('servingUnit', servingUnit);
+        requestBody.append('calories', String(Math.round(calories)));
+        requestBody.append('protein', String(roundTo1(protein)));
+        requestBody.append('fat', String(roundTo1(fat)));
+        requestBody.append('carbohydrates', String(roundTo1(carbohydrates)));
+        if (selectedPresetEditFile) {
+          requestBody.append('image', selectedPresetEditFile);
+        } else if (presetEditImageMarkedForRemoval) {
+          requestBody.append('clearImage', '1');
+        }
+        requestInit = {
+          method: 'PATCH',
+          body: requestBody,
+        };
+      } else {
+        requestInit = {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+      }
+
+      const response = await fetch(`/api/presets/${id}`, requestInit);
       const contentType = response.headers.get('content-type') || '';
       const payload = contentType.includes('application/json') ? await response.json() : {};
       if (!response.ok) {
@@ -670,12 +744,51 @@
     });
   }
 
-  if (presetEditImageSourceSelect) {
-    presetEditImageSourceSelect.addEventListener('change', syncPresetEditPhotoPreview);
+  if (btnPresetEditCameraTrigger && presetEditCameraInput) {
+    btnPresetEditCameraTrigger.addEventListener('click', () => presetEditCameraInput.click());
   }
 
-  if (presetEditImageIdInput) {
-    presetEditImageIdInput.addEventListener('input', syncPresetEditPhotoPreview);
+  if (btnPresetEditGalleryTrigger && presetEditGalleryInput) {
+    btnPresetEditGalleryTrigger.addEventListener('click', () => presetEditGalleryInput.click());
+  }
+
+  if (presetEditCameraInput) {
+    presetEditCameraInput.addEventListener('change', (event) => handlePresetEditFileSelect(event.target.files[0]));
+  }
+
+  if (presetEditGalleryInput) {
+    presetEditGalleryInput.addEventListener('change', (event) => handlePresetEditFileSelect(event.target.files[0]));
+  }
+
+  if (btnRemovePresetEditImage) {
+    btnRemovePresetEditImage.addEventListener('click', (event) => {
+      event.stopPropagation();
+      clearPresetEditSelectedPhoto({ removeExisting: true });
+    });
+  }
+
+  if (btnClearPresetEditBadge) {
+    btnClearPresetEditBadge.addEventListener('click', (event) => {
+      event.stopPropagation();
+      clearPresetEditSelectedPhoto({ removeExisting: false });
+    });
+  }
+
+  if (presetEditDropZone) {
+    presetEditDropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      presetEditDropZone.classList.add('dragover');
+    });
+
+    presetEditDropZone.addEventListener('dragleave', () => {
+      presetEditDropZone.classList.remove('dragover');
+    });
+
+    presetEditDropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      presetEditDropZone.classList.remove('dragover');
+      handlePresetEditFileSelect(event.dataTransfer.files[0]);
+    });
   }
 
   if (btnDeleteAiConsultationModal) {
