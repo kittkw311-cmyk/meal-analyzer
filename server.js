@@ -660,6 +660,15 @@ async function writePresets(presets) {
   }
 }
 
+function normalizePresetImageMeta(imageSource, imageId) {
+  const normalizedSource = imageSource === 'drive' || imageSource === 'local' ? imageSource : '';
+  const normalizedId = typeof imageId === 'string' ? imageId.trim() : '';
+  if (!normalizedSource || !normalizedId) {
+    return { imageSource: '', imageId: '' };
+  }
+  return { imageSource: normalizedSource, imageId: normalizedId };
+}
+
 // ==========================================================================
 // API 繧ｨ繝ｳ繝峨・繧､繝ｳ繝・
 // ==========================================================================
@@ -1106,6 +1115,8 @@ app.post('/api/presets', async (req, res) => {
       return res.status(400).json({ error: '入力された数値が不正です。' });
     }
     const normalizedBaseAmount = Number(baseAmount);
+    const normalizedImageMeta = normalizePresetImageMeta(imageSource, imageId);
+    const now = new Date().toISOString();
     const presets = await readPresets();
     const newPreset = {
       id: `preset_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -1116,8 +1127,10 @@ app.post('/api/presets', async (req, res) => {
       carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
       baseAmount: Number.isFinite(normalizedBaseAmount) && normalizedBaseAmount > 0 ? Math.round(normalizedBaseAmount * 10) / 10 : 1,
       servingUnit: servingUnit === 'g' ? 'g' : '個',
-      imageSource: imageSource || '',
-      imageId: imageId || ''
+      imageSource: normalizedImageMeta.imageSource,
+      imageId: normalizedImageMeta.imageId,
+      createdAt: now,
+      updatedAt: now
     };
     presets.push(newPreset);
     await writePresets(presets);
@@ -1146,9 +1159,10 @@ app.delete('/api/presets/:id', async (req, res) => {
 app.patch('/api/presets/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit } = req.body;
+    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId } = req.body;
     const hasMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount].some(value => value !== undefined);
     const hasUnitUpdate = servingUnit !== undefined;
+    const hasImageUpdate = imageSource !== undefined || imageId !== undefined;
     const hasInvalidMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount]
       .filter(value => value !== undefined)
       .some(value => !Number.isFinite(Number(value)) || Number(value) < 0 || (value === baseAmount && Number(value) <= 0));
@@ -1158,7 +1172,7 @@ app.patch('/api/presets/:id', async (req, res) => {
     if (hasUnitUpdate && servingUnit !== 'g' && servingUnit !== '個') {
       return res.status(400).json({ error: 'Preset serving unit must be g or 個.' });
     }
-    if ((!name || name.trim() === '') && !hasMacroUpdate && !hasUnitUpdate) {
+    if ((!name || name.trim() === '') && !hasMacroUpdate && !hasUnitUpdate && !hasImageUpdate) {
       return res.status(400).json({ error: 'メニュー名を入力してください。' });
     }
 
@@ -1188,12 +1202,18 @@ app.patch('/api/presets/:id', async (req, res) => {
     if (servingUnit === 'g' || servingUnit === '個') {
       preset.servingUnit = servingUnit;
     }
+    if (hasImageUpdate) {
+      const normalizedImageMeta = normalizePresetImageMeta(imageSource, imageId);
+      preset.imageSource = normalizedImageMeta.imageSource;
+      preset.imageId = normalizedImageMeta.imageId;
+    }
+    preset.updatedAt = new Date().toISOString();
     await writePresets(presets);
 
     res.json({ success: true, preset });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: '定番メニュー名の更新に失敗しました。' });
+    res.status(500).json({ error: '定番メニューの更新に失敗しました。' });
   }
 });
 

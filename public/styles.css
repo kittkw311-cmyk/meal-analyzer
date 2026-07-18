@@ -6688,7 +6688,7 @@ body {
 }
 
 #preset-edit-modal .modal-content {
-  max-width: 520px;
+  max-width: 700px;
 }
 
 #preset-edit-modal .preset-edit-modal-header {
@@ -6709,6 +6709,62 @@ body {
 #preset-edit-modal .preset-edit-form {
   display: grid;
   gap: 12px;
+}
+
+#preset-edit-modal .preset-edit-section-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+#preset-edit-modal .preset-edit-photo-panel {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+  align-items: start;
+}
+
+#preset-edit-modal .preset-edit-photo-preview {
+  align-items: center;
+  background: #122431;
+  border: 1px solid #2b4558;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  min-height: 140px;
+  overflow: hidden;
+}
+
+#preset-edit-modal .preset-edit-photo-preview img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+#preset-edit-modal .preset-edit-photo-placeholder {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 16px;
+  text-align: center;
+}
+
+#preset-edit-modal .preset-edit-photo-fields {
+  display: grid;
+  gap: 12px;
+}
+
+#preset-edit-modal .preset-edit-photo-note {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: -4px;
 }
 
 #preset-edit-modal .preset-edit-field {
@@ -6794,6 +6850,14 @@ body {
 
   #tab-presets {
     padding-inline: 20px;
+  }
+
+  #preset-edit-modal .preset-edit-photo-panel {
+    grid-template-columns: 1fr;
+  }
+
+  #preset-edit-modal .preset-edit-photo-preview {
+    min-height: 120px;
   }
 
   #tab-presets .presets-list {

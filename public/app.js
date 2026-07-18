@@ -262,6 +262,10 @@
   const presetEditModalTitle = document.getElementById('preset-edit-modal-title');
   const presetEditModalSubtitle = document.getElementById('preset-edit-modal-subtitle');
   const presetEditNameInput = document.getElementById('preset-edit-name');
+  const presetEditImageSourceSelect = document.getElementById('preset-edit-image-source');
+  const presetEditImageIdInput = document.getElementById('preset-edit-image-id');
+  const presetEditPhotoPreviewImage = document.getElementById('preset-edit-photo-preview-image');
+  const presetEditPhotoPlaceholder = document.getElementById('preset-edit-photo-placeholder');
   const presetEditBaseAmountInput = document.getElementById('preset-edit-base-amount');
   const presetEditServingUnitSelect = document.getElementById('preset-edit-serving-unit');
   const presetEditCaloriesInput = document.getElementById('preset-edit-calories');
@@ -324,6 +328,42 @@
     return decimals === 0 ? String(Math.round(numericValue)) : roundTo1(numericValue).toFixed(decimals);
   };
 
+  const getPresetRegistrationKey = (preset, fallbackIndex = 0) => {
+    const createdAt = Date.parse(preset?.createdAt || '');
+    if (Number.isFinite(createdAt)) return createdAt;
+    return Number.isFinite(fallbackIndex) ? fallbackIndex : 0;
+  };
+
+  const getPresetImageUrl = (imageSource, imageId) => {
+    if (!imageSource || !imageId) return '';
+    return `/api/image?source=${encodeURIComponent(imageSource)}&id=${encodeURIComponent(imageId)}`;
+  };
+
+  const syncPresetEditPhotoPreview = () => {
+    if (!presetEditPhotoPreviewImage || !presetEditPhotoPlaceholder) return;
+    const imageSource = presetEditImageSourceSelect?.value || '';
+    const imageId = presetEditImageIdInput?.value.trim() || '';
+    const imageUrl = getPresetImageUrl(imageSource, imageId);
+
+    if (imageUrl) {
+      presetEditPhotoPreviewImage.src = imageUrl;
+      presetEditPhotoPreviewImage.hidden = false;
+      presetEditPhotoPlaceholder.hidden = true;
+    } else {
+      presetEditPhotoPreviewImage.removeAttribute('src');
+      presetEditPhotoPreviewImage.hidden = true;
+      presetEditPhotoPlaceholder.hidden = false;
+    }
+  };
+
+  if (presetEditPhotoPreviewImage) {
+    presetEditPhotoPreviewImage.addEventListener('error', () => {
+      presetEditPhotoPreviewImage.removeAttribute('src');
+      presetEditPhotoPreviewImage.hidden = true;
+      if (presetEditPhotoPlaceholder) presetEditPhotoPlaceholder.hidden = false;
+    });
+  }
+
   const openPresetEditModal = (preset) => {
     if (!presetEditModal || !preset) return;
     currentPresetEditTarget = preset;
@@ -340,6 +380,9 @@
     if (presetEditProteinInput) presetEditProteinInput.value = getPresetEditDisplayValue(preset.protein, 1);
     if (presetEditFatInput) presetEditFatInput.value = getPresetEditDisplayValue(preset.fat, 1);
     if (presetEditCarbsInput) presetEditCarbsInput.value = getPresetEditDisplayValue(preset.carbohydrates, 1);
+    if (presetEditImageSourceSelect) presetEditImageSourceSelect.value = preset.imageSource === 'drive' || preset.imageSource === 'local' ? preset.imageSource : '';
+    if (presetEditImageIdInput) presetEditImageIdInput.value = preset.imageId || '';
+    syncPresetEditPhotoPreview();
     showModal(presetEditModal);
     presetEditNameInput?.focus();
     presetEditNameInput?.select();
@@ -348,6 +391,7 @@
   const closePresetEditModal = () => {
     currentPresetEditTarget = null;
     if (presetEditForm) presetEditForm.reset();
+    syncPresetEditPhotoPreview();
     hideModal(presetEditModal);
   };
 
@@ -361,6 +405,8 @@
     const protein = Number(presetEditProteinInput?.value);
     const fat = Number(presetEditFatInput?.value);
     const carbohydrates = Number(presetEditCarbsInput?.value);
+    const imageSource = presetEditImageSourceSelect?.value || '';
+    const imageId = presetEditImageIdInput?.value.trim() || '';
 
     if (!name) {
       alert('メニュー名を入力してください。');
@@ -393,6 +439,8 @@
           protein: roundTo1(protein),
           fat: roundTo1(fat),
           carbohydrates: roundTo1(carbohydrates),
+          imageSource,
+          imageId,
         }),
       });
       const contentType = response.headers.get('content-type') || '';
@@ -620,6 +668,14 @@
       await deletePreset(currentPresetEditTarget);
       closePresetEditModal();
     });
+  }
+
+  if (presetEditImageSourceSelect) {
+    presetEditImageSourceSelect.addEventListener('change', syncPresetEditPhotoPreview);
+  }
+
+  if (presetEditImageIdInput) {
+    presetEditImageIdInput.addEventListener('input', syncPresetEditPhotoPreview);
   }
 
   if (btnDeleteAiConsultationModal) {
@@ -1257,17 +1313,18 @@
       // B. 定番タブの一覧リストを更新
       if (presetsList) {
         const searchTerm = (presetSearchInput?.value || '').trim().toLowerCase();
-        const sortMode = presetSortSelect?.value || 'recent';
+        const sortMode = presetSortSelect?.value || 'newest';
         const favoriteSet = getFavoriteSet();
         const usageMap = getUsageMap();
         const lastUsedMap = getLastUsedMap();
 
-        const enrichedPresets = loadedPresets.map(p => ({
+        const enrichedPresets = loadedPresets.map((p, index) => ({
           ...p,
           category: inferPresetCategory(p),
           isFavorite: favoriteSet.has(p.id),
           usageCount: Number(usageMap[p.id] || 0),
           lastUsedAt: Number(lastUsedMap[p.id] || 0),
+          registrationKey: getPresetRegistrationKey(p, index),
         })).filter(p => {
           if (!searchTerm) return true;
           const haystack = [
@@ -1292,7 +1349,12 @@
             if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
             return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
           }
-          if (b.lastUsedAt !== a.lastUsedAt) return b.lastUsedAt - a.lastUsedAt;
+          if (sortMode === 'recent') {
+            if (b.lastUsedAt !== a.lastUsedAt) return b.lastUsedAt - a.lastUsedAt;
+            if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+            return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
+          }
+          if (b.registrationKey !== a.registrationKey) return b.registrationKey - a.registrationKey;
           if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
           return `${a.name || ''}`.localeCompare(`${b.name || ''}`, 'ja');
         };

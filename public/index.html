@@ -210,6 +210,7 @@
             <button type="button" id="presets-manual-toggle" class="preset-manual-toggle-btn" aria-expanded="false" aria-controls="presets-manual-content" aria-label="手動定番登録を開く">＋</button>
             <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
             <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
+              <option value="newest">登録が新しい順</option>
               <option value="recent">最近使った順</option>
               <option value="favorite">お気に入り順</option>
               <option value="name">名前順</option>
@@ -677,6 +678,28 @@
             <label for="preset-edit-name">メニュー名</label>
             <input type="text" id="preset-edit-name" class="preset-edit-input">
           </div>
+          <div class="preset-edit-section-label">写真情報</div>
+          <div class="preset-edit-photo-panel">
+            <div class="preset-edit-photo-preview">
+              <img id="preset-edit-photo-preview-image" alt="定番写真プレビュー" hidden>
+              <div class="preset-edit-photo-placeholder" id="preset-edit-photo-placeholder">写真は未設定です</div>
+            </div>
+            <div class="preset-edit-photo-fields">
+              <div class="preset-edit-field">
+                <label for="preset-edit-image-source">写真ソース</label>
+                <select id="preset-edit-image-source" class="preset-edit-input">
+                  <option value="">未設定</option>
+                  <option value="local">local</option>
+                  <option value="drive">drive</option>
+                </select>
+              </div>
+              <div class="preset-edit-field">
+                <label for="preset-edit-image-id">写真ID</label>
+                <input type="text" id="preset-edit-image-id" class="preset-edit-input" placeholder="ファイル名 / DriveファイルID">
+              </div>
+            </div>
+          </div>
+          <div class="preset-edit-photo-note">写真を紐づける場合は、ソースとIDを両方入力してください。</div>
           <div class="preset-edit-grid">
             <div class="preset-edit-field">
               <label for="preset-edit-base-amount">基準量</label>
