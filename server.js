@@ -852,24 +852,26 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`);
 
     let imageSource = '';
     let imageId = '';
-    const dateStr = mealDate.substring(0, 10);
-    const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
+    if (req.file) {
+      const dateStr = mealDate.substring(0, 10);
+      const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
 
-    const storedImage = await saveBinaryFileToDriveOrLocal({
-      drive,
-      folderId,
-      localDir: UPLOADS_DIR,
-      fileName: filename,
-      buffer: req.file.buffer,
-      mimeType: req.file.mimetype,
-    });
-    imageSource = storedImage.imageSource;
-    imageId = storedImage.imageId;
-    if (storedImage.driveError) {
-      console.error('Failed to upload meal image to Google Drive, saving locally instead:', storedImage.driveError.message);
+      const storedImage = await saveBinaryFileToDriveOrLocal({
+        drive,
+        folderId,
+        localDir: UPLOADS_DIR,
+        fileName: filename,
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+      });
+      imageSource = storedImage.imageSource;
+      imageId = storedImage.imageId;
+      if (storedImage.driveError) {
+        console.error('Failed to upload meal image to Google Drive, saving locally instead:', storedImage.driveError.message);
+      }
     }
 
-    const safeMealName = nutritionData?.mealName || '食事画像';
+    const safeMealName = nutritionData?.mealName || (textInput ? textInput.slice(0, 40) : '食事');
     const safeNumber = (value, fallback = 0) => {
       const numeric = Number(value);
       return Number.isFinite(numeric) ? numeric : fallback;
@@ -910,7 +912,7 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`);
   } catch (error) {
     console.error('Meal analyze error:', error);
     const statusCode = error.status || error.statusCode || 500;
-    res.status(statusCode).json({ error: '食事画像の解析中にエラーが発生しました。' + error.message, status: statusCode });
+    res.status(statusCode).json({ error: '食事の解析中にエラーが発生しました。' + error.message, status: statusCode });
   }
 });
 

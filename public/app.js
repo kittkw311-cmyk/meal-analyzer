@@ -624,6 +624,7 @@
   // Preset Edit Modal Elements
   const presetEditModal = document.getElementById('preset-edit-modal');
   const btnClosePresetEditModal = document.getElementById('btn-close-preset-edit-modal');
+  const btnSwitchPresetEditMode = document.getElementById('btn-switch-preset-edit-mode');
   const btnFavoritePresetEdit = document.getElementById('btn-favorite-preset-edit');
   const btnSavePresetEdit = document.getElementById('btn-save-preset-edit');
   const btnDeletePresetEdit = document.getElementById('btn-delete-preset-edit');
@@ -847,6 +848,9 @@
       btnDeletePresetEdit.hidden = false;
       btnSavePresetEdit.hidden = false;
       setPresetEditFieldsReadonly(false);
+    }
+    if (btnSwitchPresetEditMode) {
+      btnSwitchPresetEditMode.hidden = currentPresetEditMode !== 'view';
     }
     syncPresetEditFavoriteButton();
   };
@@ -1165,6 +1169,17 @@
 
   if (btnClosePresetEditModal) {
     btnClosePresetEditModal.addEventListener('click', closePresetEditModal);
+  }
+
+  if (btnSwitchPresetEditMode) {
+    btnSwitchPresetEditMode.addEventListener('click', () => {
+      if (!currentPresetEditTarget) return;
+      currentPresetEditMode = 'edit';
+      persistLocalValue(PRESET_DETAIL_MODE_KEY, currentPresetEditMode);
+      syncPresetEditModalMode();
+      presetEditNameInput?.focus();
+      presetEditNameInput?.select();
+    });
   }
 
   if (presetEditModal) {
