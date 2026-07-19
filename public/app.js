@@ -321,15 +321,46 @@
 
   const quickRegisterPresetFromList = async (preset) => {
     if (!preset) return;
-    const defaultMealType = getDefaultMealType(new Date());
-    const mealTypeLabel = getMealTypeLabel(defaultMealType);
-    const confirmed = confirm(`「${preset.name}」を${mealTypeLabel}として登録しますか？`);
-    if (!confirmed) return;
-
     const servingAmount = promptPresetServingAmount(preset);
     if (servingAmount === null) return;
 
+    const nutritionPreview = getPresetServingNutritionPreview(preset, servingAmount);
+    const mealTypeLabel = getMealTypeLabel(getDefaultMealType(new Date()));
+    const confirmed = confirm(
+      `「${preset.name}」を${mealTypeLabel}として登録しますか？\n\n` +
+      `基準量: ${nutritionPreview.baseAmount.toFixed(1)} ${nutritionPreview.servingUnit}\n` +
+      `今回量: ${nutritionPreview.servingAmount.toFixed(1)} ${nutritionPreview.servingUnit}\n` +
+      `カロリー: ${nutritionPreview.calories} kcal\n` +
+      `P: ${nutritionPreview.protein.toFixed(1)} g / F: ${nutritionPreview.fat.toFixed(1)} g / C: ${nutritionPreview.carbohydrates.toFixed(1)} g`
+    );
+    if (!confirmed) return;
+
     await registerPresetMenu(preset, { servingAmount });
+  };
+
+  const getPresetServingNutritionPreview = (preset, servingAmount) => {
+    const baseAmount = Number.isFinite(Number(preset?.baseAmount)) && Number(preset.baseAmount) > 0
+      ? roundTo1(preset.baseAmount)
+      : 1;
+    const requestedAmount = Number(servingAmount);
+    const actualServingAmount = Number.isFinite(requestedAmount) && requestedAmount > 0
+      ? roundTo1(requestedAmount)
+      : baseAmount;
+    const servingUnit = preset?.servingUnit || '個';
+    const servingRatio = baseAmount > 0 ? actualServingAmount / baseAmount : 1;
+    const calories = Math.round(Number(preset?.calories || 0) * servingRatio);
+    const protein = Math.round(Number(preset?.protein || 0) * servingRatio * 10) / 10;
+    const fat = Math.round(Number(preset?.fat || 0) * servingRatio * 10) / 10;
+    const carbohydrates = Math.round(Number(preset?.carbohydrates || 0) * servingRatio * 10) / 10;
+    return {
+      baseAmount,
+      servingAmount: actualServingAmount,
+      servingUnit,
+      calories,
+      protein,
+      fat,
+      carbohydrates,
+    };
   };
 
   const isPresetMobileLayout = () => window.matchMedia('(max-width: 720px)').matches;
