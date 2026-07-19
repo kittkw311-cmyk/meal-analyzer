@@ -7275,8 +7275,12 @@ body {
   outline: none;
 }
 
-#preset-edit-modal.is-view-mode .preset-edit-upload-card,
 #preset-edit-modal.is-view-mode .preset-edit-action-row {
+  display: none;
+}
+
+#preset-edit-modal.is-view-mode .preset-edit-upload-card .upload-action-buttons,
+#preset-edit-modal.is-view-mode .preset-edit-upload-card #btn-remove-preset-edit-image {
   display: none;
 }
 
@@ -7480,11 +7484,7 @@ body {
 
   #preset-edit-modal .preset-edit-name-row {
     gap: 8px;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  #preset-edit-modal .preset-edit-field-name {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1.3fr) minmax(72px, 0.55fr) minmax(66px, 0.45fr);
   }
 
   #preset-edit-modal .preset-edit-grid-macro {
