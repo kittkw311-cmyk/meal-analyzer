@@ -3196,6 +3196,18 @@ body.modal-open {
   min-height: 0;
 }
 
+#tab-presets .preset-compare-shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+#tab-presets .presets-toolbar-wrap {
+  flex: 0 0 auto;
+}
+
 .presets-list {
   display: flex;
   flex: 1;
@@ -3601,17 +3613,24 @@ body.modal-open {
 }
 
 #tab-presets .preset-workbench {
-  display: grid;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   gap: 12px;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
+  min-height: 0;
 }
 
 #tab-presets .preset-list-panel,
 #tab-presets .preset-detail-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  flex: 1 1 auto;
   min-height: 0;
+}
+
+#tab-presets .preset-list-panel {
+  overflow: hidden;
 }
 
 #tab-presets .preset-list-head {
@@ -3647,10 +3666,14 @@ body.modal-open {
 
 #tab-presets .presets-list {
   display: grid;
+  flex: 1 1 auto;
   gap: 0;
+  min-height: 0;
   max-height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 #tab-presets .preset-list-table-head {
@@ -6681,10 +6704,10 @@ body {
 
 #tab-presets .presets-list {
   display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  align-items: start;
+  align-items: stretch;
   overflow-y: auto;
   padding-bottom: 16px;
 }
@@ -7279,7 +7302,7 @@ body {
   #tab-presets .presets-list {
     grid-template-columns: 1fr;
     max-height: none;
-    overflow: visible;
+    overflow-y: auto;
   }
 
   #tab-presets .preset-list-head {
@@ -7352,7 +7375,7 @@ body {
   #preset-edit-modal .modal-content {
     width: 100%;
     max-width: 100%;
-    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
   }
 
   #preset-edit-modal .preset-edit-modal-header {
@@ -7388,6 +7411,11 @@ body {
 
   #preset-edit-modal .preset-edit-action-row {
     justify-items: end;
+  }
+
+  #preset-edit-modal .preset-edit-modal-body {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   #preset-edit-modal.modal-overlay {
