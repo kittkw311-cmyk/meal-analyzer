@@ -3697,10 +3697,9 @@ body.modal-open {
   border-bottom: 1px solid rgba(39, 66, 85, 0.6);
   color: #f4fbff;
   cursor: pointer;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: minmax(0, 1fr);
-  padding: 12px;
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
   text-align: left;
   transition: background-color 0.2s ease;
   width: 100%;
@@ -3712,8 +3711,41 @@ body.modal-open {
 }
 
 #tab-presets .preset-list-row-name {
+  flex: 1 1 auto;
   font: 800 15px var(--font-heading);
   line-height: 1.35;
+  min-width: 0;
+}
+
+#tab-presets .preset-list-register-btn {
+  align-items: center;
+  background: rgba(0, 229, 255, 0.11);
+  border: 1px solid rgba(0, 229, 255, 0.32);
+  border-radius: 4px;
+  color: #00e5ff;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  transition: var(--transition);
+  width: 34px;
+}
+
+#tab-presets .preset-list-register-btn:hover,
+#tab-presets .preset-list-register-btn:focus-visible {
+  background: rgba(0, 229, 255, 0.16);
+  border-color: #00e5ff;
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+#tab-presets .preset-list-register-icon {
+  display: block;
+  height: 16px;
+  width: 16px;
 }
 
 #tab-presets .preset-detail-panel {

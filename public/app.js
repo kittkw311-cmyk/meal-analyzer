@@ -293,6 +293,12 @@
   const renderPresetListItem = (preset, isSelected) => {
     return `
       <article class="preset-list-row ${isSelected ? 'is-selected' : ''}" data-id="${preset.id}" role="button" tabindex="0" aria-selected="${isSelected ? 'true' : 'false'}">
+        <button type="button" class="preset-list-register-btn" data-action="register" data-id="${preset.id}" aria-label="記録に登録" title="記録に登録">
+          <svg class="preset-list-register-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5v14"></path>
+            <path d="M5 12h14"></path>
+          </svg>
+        </button>
         <span class="preset-list-row-name">${preset.name}</span>
       </article>
     `;
@@ -311,6 +317,19 @@
       persistLocalValue('physilog_selected_preset_id', selectedPresetId);
     }
     return selected;
+  };
+
+  const quickRegisterPresetFromList = async (preset) => {
+    if (!preset) return;
+    const defaultMealType = getDefaultMealType(new Date());
+    const mealTypeLabel = getMealTypeLabel(defaultMealType);
+    const confirmed = confirm(`「${preset.name}」を${mealTypeLabel}として登録しますか？`);
+    if (!confirmed) return;
+
+    const servingAmount = promptPresetServingAmount(preset);
+    if (servingAmount === null) return;
+
+    await registerPresetMenu(preset, { servingAmount });
   };
 
   const isPresetMobileLayout = () => window.matchMedia('(max-width: 720px)').matches;
@@ -1640,6 +1659,17 @@
 
   if (presetsList) {
     presetsList.addEventListener('click', async (event) => {
+      const registerButton = event.target.closest('[data-action="register"]');
+      if (registerButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const registerPreset = getPresetById(registerButton.getAttribute('data-id'));
+        if (registerPreset) {
+          await quickRegisterPresetFromList(registerPreset);
+        }
+        return;
+      }
+
       const item = event.target.closest('.preset-list-row');
       if (!item) return;
       const nextId = item.getAttribute('data-id') || '';
@@ -1652,6 +1682,18 @@
     });
 
     presetsList.addEventListener('keydown', (event) => {
+      const registerButton = event.target.closest('[data-action="register"]');
+      if (registerButton) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+        const registerPreset = getPresetById(registerButton.getAttribute('data-id'));
+        if (registerPreset) {
+          quickRegisterPresetFromList(registerPreset);
+        }
+        return;
+      }
+
       const item = event.target.closest('.preset-list-row');
       if (!item) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
