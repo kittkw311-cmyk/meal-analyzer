@@ -3554,34 +3554,12 @@ body.modal-open {
 }
 
 #tab-presets .preset-list-edit-btn {
-  align-items: center;
-  appearance: none;
-  background: rgba(0, 229, 255, 0.08);
-  border: 1px solid rgba(0, 229, 255, 0.24);
-  border-radius: 10px;
   color: #b8f8ff;
-  cursor: pointer;
-  display: inline-flex;
-  flex: 0 0 auto;
-  height: 34px;
-  justify-content: center;
-  line-height: 1;
-  padding: 0;
-  transition: all 0.2s ease;
-  width: 34px;
-}
-
-#tab-presets .preset-list-edit-btn:hover,
-#tab-presets .preset-list-edit-btn:focus-visible {
-  background: rgba(255, 205, 93, 0.14);
-  border-color: rgba(255, 205, 93, 0.45);
-  color: #fff1bf;
-  outline: none;
 }
 
 #tab-presets .preset-list-edit-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 #tab-presets .preset-search-input,
@@ -3737,24 +3715,35 @@ body.modal-open {
   min-width: 0;
 }
 
-#tab-presets .preset-list-register-btn {
+#tab-presets .preset-list-register-btn,
+#tab-presets .preset-list-edit-btn,
+#preset-edit-modal .preset-edit-icon-btn,
+#preset-edit-modal .preset-edit-close-btn {
   align-items: center;
-  background: rgba(0, 229, 255, 0.11);
-  border: 1px solid rgba(0, 229, 255, 0.32);
+  appearance: none;
+  background: rgba(0, 229, 255, 0.06);
+  border: 1px solid rgba(0, 229, 255, 0.3);
   border-radius: 4px;
   color: #00e5ff;
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
-  height: 34px;
+  height: 40px;
   justify-content: center;
+  line-height: 1;
   padding: 0;
   transition: var(--transition);
-  width: 34px;
+  width: 40px;
 }
 
 #tab-presets .preset-list-register-btn:hover,
-#tab-presets .preset-list-register-btn:focus-visible {
+#tab-presets .preset-list-register-btn:focus-visible,
+#tab-presets .preset-list-edit-btn:hover,
+#tab-presets .preset-list-edit-btn:focus-visible,
+#preset-edit-modal .preset-edit-icon-btn:hover,
+#preset-edit-modal .preset-edit-icon-btn:focus-visible,
+#preset-edit-modal .preset-edit-close-btn:hover,
+#preset-edit-modal .preset-edit-close-btn:focus-visible {
   background: rgba(0, 229, 255, 0.16);
   border-color: #00e5ff;
   color: #ffffff;
@@ -3762,10 +3751,17 @@ body.modal-open {
   transform: translateY(-1px);
 }
 
-#tab-presets .preset-list-register-icon {
+#tab-presets .preset-list-register-icon,
+#tab-presets .preset-list-edit-icon,
+#preset-edit-modal .preset-edit-action-icon {
   display: block;
-  height: 16px;
-  width: 16px;
+  height: 18px;
+  width: 18px;
+}
+
+#tab-presets .preset-list-register-btn {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.28);
 }
 
 #tab-presets .preset-detail-panel {
@@ -7252,19 +7248,8 @@ body {
 
 #preset-edit-modal .preset-edit-icon-btn,
 #preset-edit-modal .preset-edit-close-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  border: 1px solid var(--design-border);
-  background: var(--design-card);
-  color: var(--design-foreground);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  cursor: pointer;
-  transition: var(--transition);
-  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
 }
 
 #preset-edit-modal .preset-edit-icon-btn:hover,
@@ -7272,7 +7257,6 @@ body {
 #preset-edit-modal .preset-edit-close-btn:hover,
 #preset-edit-modal .preset-edit-close-btn:focus-visible {
   transform: translateY(-1px);
-  outline: none;
 }
 
 #preset-edit-modal.is-view-mode .preset-edit-action-row {
