@@ -112,6 +112,7 @@
   const presetDetailEditBtn = document.getElementById('preset-detail-edit-btn');
   const presetDetailEditCancel = document.getElementById('preset-detail-edit-cancel');
   const presetDetailEditImageBtn = document.getElementById('preset-detail-edit-image-btn');
+  const presetDetailToggleBtn = document.getElementById('presets-detail-toggle');
   const presetDetailCategory = document.getElementById('preset-detail-category');
   const presetDetailName = document.getElementById('preset-detail-name');
   const presetDetailMeta = document.getElementById('preset-detail-meta');
@@ -168,6 +169,7 @@
   let selectedPresetId = localStorage.getItem('physilog_selected_preset_id') || '';
   let presetDetailMode = localStorage.getItem('physilog_preset_detail_mode') === 'edit' ? 'edit' : 'view';
   let presetPanelMode = localStorage.getItem('physilog_preset_panel_mode') === 'detail' ? 'detail' : 'list';
+  let presetDetailReadOnly = false;
   const PRESET_FAVORITE_KEY = 'physilog_preset_favorites';
   const PRESET_USAGE_KEY = 'physilog_preset_usage';
   const PRESET_LAST_USED_KEY = 'physilog_preset_last_used';
@@ -186,6 +188,7 @@
   if (window.matchMedia('(max-width: 720px)').matches) {
     presetPanelMode = 'list';
     presetDetailMode = 'view';
+    presetDetailReadOnly = false;
     persistLocalValue(PRESET_PANEL_MODE_KEY, presetPanelMode);
     persistLocalValue(PRESET_DETAIL_MODE_KEY, presetDetailMode);
   }
@@ -363,6 +366,16 @@
     };
   };
 
+  const openPresetReadOnlyDetail = async (preset) => {
+    if (!preset?.id) return;
+    selectedPresetId = preset.id;
+    persistLocalValue('physilog_selected_preset_id', selectedPresetId);
+    setPresetDetailMode('view');
+    setPresetDetailReadOnly(true);
+    setPresetPanelMode('detail');
+    await loadPresets();
+  };
+
   const isPresetMobileLayout = () => window.matchMedia('(max-width: 720px)').matches;
 
   const setPresetDetailMode = (mode) => {
@@ -371,9 +384,17 @@
     syncPresetDetailPanels();
   };
 
+  const setPresetDetailReadOnly = (value) => {
+    presetDetailReadOnly = !!value;
+    syncPresetDetailPanels();
+  };
+
   const setPresetPanelMode = (mode) => {
     presetPanelMode = mode === 'detail' ? 'detail' : 'list';
     persistLocalValue(PRESET_PANEL_MODE_KEY, presetPanelMode);
+    if (presetPanelMode === 'list') {
+      presetDetailReadOnly = false;
+    }
     if (presetPanelMode === 'detail' && presetDetailMode !== 'view') {
       presetDetailMode = 'view';
       persistLocalValue(PRESET_DETAIL_MODE_KEY, presetDetailMode);
@@ -393,6 +414,9 @@
     presetDetailEmpty.hidden = true;
     presetDetailView.hidden = presetDetailMode !== 'view';
     presetDetailEdit.hidden = presetDetailMode !== 'edit';
+    if (presetDetailEditBtn) {
+      presetDetailEditBtn.hidden = presetDetailMode !== 'view' || presetDetailReadOnly;
+    }
     if (presetDetailBackBtn) {
       presetDetailBackBtn.textContent = presetDetailMode === 'edit' ? '← 詳細へ戻る' : '← 一覧へ戻る';
     }
@@ -1688,6 +1712,21 @@
     });
   }
 
+  if (presetDetailToggleBtn) {
+    presetDetailToggleBtn.addEventListener('click', async () => {
+      const preset = getPresetById(selectedPresetId) || loadedPresets[0] || null;
+      await openPresetReadOnlyDetail(preset);
+    });
+  }
+
+  if (presetDetailBackBtn) {
+    presetDetailBackBtn.addEventListener('click', () => {
+      setPresetDetailReadOnly(false);
+      setPresetPanelMode('list');
+      loadPresets();
+    });
+  }
+
   if (presetsList) {
     presetsList.addEventListener('click', async (event) => {
       const registerButton = event.target.closest('[data-action="register"]');
@@ -1705,6 +1744,7 @@
       if (!item) return;
       const nextId = item.getAttribute('data-id') || '';
       if (!nextId) return;
+      setPresetDetailReadOnly(false);
       selectedPresetId = nextId;
       persistLocalValue('physilog_selected_preset_id', selectedPresetId);
       const preset = getPresetById(nextId);
@@ -1731,6 +1771,7 @@
       event.preventDefault();
       const nextId = item.getAttribute('data-id') || '';
       if (!nextId) return;
+      setPresetDetailReadOnly(false);
       selectedPresetId = nextId;
       persistLocalValue('physilog_selected_preset_id', selectedPresetId);
       const preset = getPresetById(nextId);
