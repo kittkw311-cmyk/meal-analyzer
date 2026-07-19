@@ -3853,6 +3853,10 @@ body.modal-open {
   gap: 8px;
 }
 
+#tab-presets .preset-detail-edit-btn {
+  gap: 6px;
+}
+
 #tab-presets .preset-detail-edit-btn,
 #tab-presets .preset-detail-cancel-btn,
 #tab-presets .preset-detail-save-btn,
@@ -3881,6 +3885,11 @@ body.modal-open {
   border: 1px solid rgba(0, 229, 255, 0.35);
   color: #00e5ff;
   cursor: pointer;
+}
+
+#tab-presets .preset-detail-edit-icon {
+  height: 14px;
+  width: 14px;
 }
 
 #tab-presets .preset-detail-summary {
