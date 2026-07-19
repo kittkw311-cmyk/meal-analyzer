@@ -112,7 +112,6 @@
   const presetDetailEditBtn = document.getElementById('preset-detail-edit-btn');
   const presetDetailEditCancel = document.getElementById('preset-detail-edit-cancel');
   const presetDetailEditImageBtn = document.getElementById('preset-detail-edit-image-btn');
-  const presetDetailToggleBtn = document.getElementById('presets-edit-toggle');
   const presetDetailCategory = document.getElementById('preset-detail-category');
   const presetDetailName = document.getElementById('preset-detail-name');
   const presetDetailMeta = document.getElementById('preset-detail-meta');
@@ -298,6 +297,12 @@
           <svg class="preset-list-register-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 5v14"></path>
             <path d="M5 12h14"></path>
+          </svg>
+        </button>
+        <button type="button" class="preset-list-edit-btn" data-action="edit" data-id="${preset.id}" aria-label="定番を編集" title="定番を編集">
+          <svg class="preset-list-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
           </svg>
         </button>
         <span class="preset-list-row-name">${preset.name}</span>
@@ -1736,14 +1741,6 @@
     });
   }
 
-  if (presetDetailToggleBtn) {
-    presetDetailToggleBtn.addEventListener('click', async () => {
-      const preset = getPresetById(selectedPresetId) || loadedPresets[0] || null;
-      if (!preset) return;
-      await openPresetEditModal(preset, 'edit');
-    });
-  }
-
   if (presetDetailBackBtn) {
     presetDetailBackBtn.addEventListener('click', () => {
       setPresetPanelMode('list');
@@ -1768,6 +1765,17 @@
         const registerPreset = getPresetById(registerButton.getAttribute('data-id'));
         if (registerPreset) {
           await quickRegisterPresetFromList(registerPreset);
+        }
+        return;
+      }
+
+      const editButton = event.target.closest('[data-action="edit"]');
+      if (editButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const editPreset = getPresetById(editButton.getAttribute('data-id'));
+        if (editPreset) {
+          await openPresetEditModal(editPreset, 'edit');
         }
         return;
       }
@@ -1797,6 +1805,18 @@
         const registerPreset = getPresetById(registerButton.getAttribute('data-id'));
         if (registerPreset) {
           quickRegisterPresetFromList(registerPreset);
+        }
+        return;
+      }
+
+      const editButton = event.target.closest('[data-action="edit"]');
+      if (editButton) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+        const editPreset = getPresetById(editButton.getAttribute('data-id'));
+        if (editPreset) {
+          openPresetEditModal(editPreset, 'edit');
         }
         return;
       }
