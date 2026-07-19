@@ -3780,6 +3780,10 @@ body.modal-open {
 }
 
 #tab-presets .preset-detail-panel {
+  display: flex;
+}
+
+#tab-presets .preset-detail-panel[hidden] {
   display: none !important;
 }
 
