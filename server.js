@@ -2,11 +2,24 @@
 import multer from 'multer';
 import { GoogleGenAI, Type } from '@google/genai';
 import { google } from 'googleapis';
-import { Readable } from 'stream';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import {
+  deleteStoredFile,
+  ensureJsonFile,
+  ensureTextFile,
+  ensureDriveFileByName,
+  getMimeTypeFromFilePath,
+  readDriveTextFile,
+  readJsonFile,
+  readTextFile,
+  readStoredImage,
+  saveBinaryFileToDriveOrLocal,
+  writeDriveTextFile,
+  writeJsonFile,
+} from './storage-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -195,20 +208,14 @@ function getLatestBodyCompositionAtOrBefore(weightHistory, targetDateKey) {
 }
 
 function readLocalProfile() {
-  try {
-    const raw = fs.readFileSync(PROFILE_FILE, 'utf8');
-    return {
-      ...DEFAULT_PROFILE,
-      ...JSON.parse(raw || '{}')
-    };
-  } catch (err) {
-    console.error('Error reading local profile:', err);
-    return { ...DEFAULT_PROFILE };
-  }
+  return readJsonFile(PROFILE_FILE, DEFAULT_PROFILE, value => ({
+    ...DEFAULT_PROFILE,
+    ...value,
+  }));
 }
 
 function writeLocalProfile(profile) {
-  fs.writeFileSync(PROFILE_FILE, JSON.stringify(profile, null, 2));
+  writeJsonFile(PROFILE_FILE, profile);
 }
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -217,24 +224,12 @@ if (!fs.existsSync(DATA_DIR)) {
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR);
 }
-if (!fs.existsSync(HISTORY_FILE)) {
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify([], null, 2));
-}
-if (!fs.existsSync(WEIGHT_FILE)) {
-  fs.writeFileSync(WEIGHT_FILE, JSON.stringify([], null, 2));
-}
-if (!fs.existsSync(PRESETS_FILE)) {
-  fs.writeFileSync(PRESETS_FILE, JSON.stringify([], null, 2));
-}
-if (!fs.existsSync(PROFILE_FILE)) {
-  fs.writeFileSync(PROFILE_FILE, JSON.stringify(DEFAULT_PROFILE, null, 2));
-}
-if (!fs.existsSync(AI_CONSULTATIONS_FILE)) {
-  fs.writeFileSync(AI_CONSULTATIONS_FILE, JSON.stringify([], null, 2));
-}
-if (!fs.existsSync(AI_PROMPT_FILE)) {
-  fs.writeFileSync(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
-}
+ensureJsonFile(HISTORY_FILE, []);
+ensureJsonFile(WEIGHT_FILE, []);
+ensureJsonFile(PRESETS_FILE, []);
+ensureJsonFile(PROFILE_FILE, DEFAULT_PROFILE);
+ensureJsonFile(AI_CONSULTATIONS_FILE, []);
+ensureTextFile(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
 
 // Multer險ｭ螳夲ｼ医Γ繝｢繝ｪ荳翫↓繝舌ャ繝輔ぃ縺ｨ縺励※菫晏ｭ假ｼ・
 const storage = multer.memoryStorage();
@@ -286,39 +281,24 @@ let driveProfileFileId = null;
 let driveAiConsultationsFileId = null;
 let driveConsultationPromptFileId = null;
 
-// 菴鍋ｵ・・繝輔ぃ繧､繝ｫ繧呈､懃ｴ｢縺ｾ縺溘・譁ｰ隕丈ｽ懈・縺励※繝輔ぃ繧､繝ｫID繧定ｨｭ螳壹☆繧・
 async function initDriveProfile() {
   if (!drive || !folderId) return;
   try {
     console.log('Searching for profile.json in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'profile.json' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
+    const result = await ensureDriveFileByName({
+      drive,
+      folderId,
+      fileName: 'profile.json',
+      mimeType: 'application/json',
+      body: JSON.stringify(readLocalProfile(), null, 2),
     });
-
-    if (res.data.files && res.data.files.length > 0) {
-      driveProfileFileId = res.data.files[0].id;
+    driveProfileFileId = result.fileId;
+    if (result.created) {
+      console.log(`Created new profile.json in Google Drive. File ID: ${driveProfileFileId}`);
+    } else {
       console.log(`Found profile.json in Google Drive. File ID: ${driveProfileFileId}`);
       const profile = await readProfile();
       writeLocalProfile(profile);
-    } else {
-      console.log('profile.json not found in Google Drive. Creating a new one from local profile...');
-      const localProfile = readLocalProfile();
-      const driveResponse = await drive.files.create({
-        requestBody: {
-          name: 'profile.json',
-          parents: [folderId],
-          mimeType: 'application/json',
-        },
-        media: {
-          mimeType: 'application/json',
-          body: Readable.from(JSON.stringify(localProfile, null, 2)),
-        },
-        fields: 'id',
-      });
-      driveProfileFileId = driveResponse.data.id;
-      console.log(`Created new profile.json in Google Drive. File ID: ${driveProfileFileId}`);
     }
   } catch (err) {
     console.error('Failed to initialize Google Drive profile file:', err.message);
@@ -354,12 +334,11 @@ async function writeProfile(profile) {
 
   if (drive && driveProfileFileId) {
     try {
-      await drive.files.update({
+      await writeDriveTextFile({
+        drive,
         fileId: driveProfileFileId,
-        media: {
-          mimeType: 'application/json',
-          body: Readable.from(JSON.stringify(next, null, 2)),
-        },
+        mimeType: 'application/json',
+        body: JSON.stringify(next, null, 2),
       });
       console.log('Successfully updated profile.json in Google Drive.');
     } catch (err) {
@@ -372,34 +351,15 @@ async function initDriveWeight() {
   if (!drive || !folderId) return;
   try {
     console.log('Searching for weight_history.json in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'weight_history.json' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
+    const result = await ensureDriveFileByName({
+      drive,
+      folderId,
+      fileName: 'weight_history.json',
+      mimeType: 'application/json',
+      body: JSON.stringify([], null, 2),
     });
-    
-    if (res.data.files && res.data.files.length > 0) {
-      driveWeightFileId = res.data.files[0].id;
-      console.log(`Found weight_history.json in Google Drive. File ID: ${driveWeightFileId}`);
-    } else {
-      console.log('weight_history.json not found in Google Drive. Creating a new one...');
-      const fileMetadata = {
-        name: 'weight_history.json',
-        parents: [folderId],
-        mimeType: 'application/json',
-      };
-      const media = {
-        mimeType: 'application/json',
-        body: Readable.from(JSON.stringify([], null, 2)),
-      };
-      const driveResponse = await drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: 'id',
-      });
-      driveWeightFileId = driveResponse.data.id;
-      console.log(`Created new weight_history.json in Google Drive. File ID: ${driveWeightFileId}`);
-    }
+    driveWeightFileId = result.fileId;
+    console.log(`${result.created ? 'Created new' : 'Found'} weight_history.json in Google Drive. File ID: ${driveWeightFileId}`);
   } catch (err) {
     console.error('Failed to initialize Google Drive weight file:', err.message);
   }
@@ -409,11 +369,7 @@ async function initDriveWeight() {
 async function readWeight() {
   if (drive && driveWeightFileId) {
     try {
-      const res = await drive.files.get(
-        { fileId: driveWeightFileId, alt: 'media' },
-        { responseType: 'text' }
-      );
-      const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      const dataText = await readDriveTextFile({ drive, fileId: driveWeightFileId });
       return JSON.parse(dataText);
     } catch (err) {
       console.error('Error reading weight history from Google Drive, trying to re-initialize:', err.message);
@@ -421,13 +377,7 @@ async function readWeight() {
       return [];
     }
   } else {
-    try {
-      const data = fs.readFileSync(WEIGHT_FILE, 'utf8');
-      return JSON.parse(data);
-    } catch (err) {
-      console.error('Error reading local weight history file:', err);
-      return [];
-    }
+    return readJsonFile(WEIGHT_FILE, []);
   }
 }
 
@@ -435,60 +385,34 @@ async function readWeight() {
 async function writeWeight(weightHistory) {
   if (drive && driveWeightFileId) {
     try {
-      const media = {
-        mimeType: 'application/json',
-        body: Readable.from(JSON.stringify(weightHistory, null, 2)),
-      };
-      await drive.files.update({
+      await writeDriveTextFile({
+        drive,
         fileId: driveWeightFileId,
-        media: media,
+        mimeType: 'application/json',
+        body: JSON.stringify(weightHistory, null, 2),
       });
       console.log('Successfully updated weight_history.json in Google Drive.');
     } catch (err) {
       console.error('Error writing weight history to Google Drive:', err.message);
     }
   } else {
-    try {
-      fs.writeFileSync(WEIGHT_FILE, JSON.stringify(weightHistory, null, 2));
-    } catch (err) {
-      console.error('Error writing local weight history file:', err);
-    }
+    writeJsonFile(WEIGHT_FILE, weightHistory);
   }
 }
 
-// 螻･豁ｴ繝輔ぃ繧､繝ｫ繧呈､懃ｴ｢縺ｾ縺溘・譁ｰ隕丈ｽ懈・縺励※繝輔ぃ繧､繝ｫID繧定ｨｭ螳壹☆繧・
 async function initDriveHistory() {
   if (!drive || !folderId) return;
   try {
     console.log('Searching for history.json in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'history.json' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
+    const result = await ensureDriveFileByName({
+      drive,
+      folderId,
+      fileName: 'history.json',
+      mimeType: 'application/json',
+      body: JSON.stringify([], null, 2),
     });
-    
-    if (res.data.files && res.data.files.length > 0) {
-      driveHistoryFileId = res.data.files[0].id;
-      console.log(`Found history.json in Google Drive. File ID: ${driveHistoryFileId}`);
-    } else {
-      console.log('history.json not found in Google Drive. Creating a new one...');
-      const fileMetadata = {
-        name: 'history.json',
-        parents: [folderId],
-        mimeType: 'application/json',
-      };
-      const media = {
-        mimeType: 'application/json',
-        body: Readable.from(JSON.stringify([], null, 2)),
-      };
-      const driveResponse = await drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: 'id',
-      });
-      driveHistoryFileId = driveResponse.data.id;
-      console.log(`Created new history.json in Google Drive. File ID: ${driveHistoryFileId}`);
-    }
+    driveHistoryFileId = result.fileId;
+    console.log(`${result.created ? 'Created new' : 'Found'} history.json in Google Drive. File ID: ${driveHistoryFileId}`);
   } catch (err) {
     console.error('Failed to initialize Google Drive history file:', err.message);
   }
@@ -512,11 +436,7 @@ async function readHistory() {
 
   if (drive && driveHistoryFileId) {
     try {
-      const res = await drive.files.get(
-        { fileId: driveHistoryFileId, alt: 'media' },
-        { responseType: 'text' }
-      );
-      const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      const dataText = await readDriveTextFile({ drive, fileId: driveHistoryFileId });
       const parsed = JSON.parse(dataText);
       return Array.isArray(parsed) ? parsed.map(normalizeHistoryNutrition) : parsed;
     } catch (err) {
@@ -525,82 +445,41 @@ async function readHistory() {
       return [];
     }
   } else {
-    // 繝ｭ繝ｼ繧ｫ繝ｫ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繝｢繝ｼ繝・
-    try {
-      const data = fs.readFileSync(HISTORY_FILE, 'utf8');
-      const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed.map(normalizeHistoryNutrition) : parsed;
-    } catch (err) {
-      console.error('Error reading local history file:', err);
-      return [];
-    }
+    return readJsonFile(HISTORY_FILE, [], value => Array.isArray(value) ? value.map(normalizeHistoryNutrition) : value);
   }
 }
 
-// 螻･豁ｴ繝・・繧ｿ繧帝撼蜷梧悄縺ｧ譖ｸ縺崎ｾｼ繧髢｢謨ｰ
 async function writeHistory(history) {
   if (drive && driveHistoryFileId) {
     try {
-      const media = {
-        mimeType: 'application/json',
-        body: Readable.from(JSON.stringify(history, null, 2)),
-      };
-      await drive.files.update({
+      await writeDriveTextFile({
+        drive,
         fileId: driveHistoryFileId,
-        media: media,
+        mimeType: 'application/json',
+        body: JSON.stringify(history, null, 2),
       });
       console.log('Successfully updated history.json in Google Drive.');
     } catch (err) {
       console.error('Error writing history to Google Drive:', err.message);
     }
   } else {
-    // 繝ｭ繝ｼ繧ｫ繝ｫ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ繝｢繝ｼ繝・
-    try {
-      fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
-    } catch (err) {
-      console.error('Error writing local history file:', err);
-    }
+    writeJsonFile(HISTORY_FILE, history);
   }
 }
 
-// 繝舌ャ繝輔ぃ繧坦eadable Stream縺ｫ螟画鋤縺吶ｋ繝倥Ν繝代・
-function bufferToStream(buffer) {
-  return Readable.from(buffer);
-}
-
-// 螳夂分繝｡繝九Η繝ｼ繝輔ぃ繧､繝ｫ繧呈､懃ｴ｢縺ｾ縺溘・譁ｰ隕丈ｽ懈・縺励※繝輔ぃ繧､繝ｫID繧定ｨｭ螳壹☆繧・
 async function initDrivePresets() {
   if (!drive || !folderId) return;
   try {
     console.log('Searching for presets.json in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'presets.json' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
+    const result = await ensureDriveFileByName({
+      drive,
+      folderId,
+      fileName: 'presets.json',
+      mimeType: 'application/json',
+      body: JSON.stringify([], null, 2),
     });
-    
-    if (res.data.files && res.data.files.length > 0) {
-      drivePresetsFileId = res.data.files[0].id;
-      console.log(`Found presets.json in Google Drive. File ID: ${drivePresetsFileId}`);
-    } else {
-      console.log('presets.json not found in Google Drive. Creating a new one...');
-      const fileMetadata = {
-        name: 'presets.json',
-        parents: [folderId],
-        mimeType: 'application/json',
-      };
-      const media = {
-        mimeType: 'application/json',
-        body: Readable.from(JSON.stringify([], null, 2)),
-      };
-      const driveResponse = await drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: 'id',
-      });
-      drivePresetsFileId = driveResponse.data.id;
-      console.log(`Created new presets.json in Google Drive. File ID: ${drivePresetsFileId}`);
-    }
+    drivePresetsFileId = result.fileId;
+    console.log(`${result.created ? 'Created new' : 'Found'} presets.json in Google Drive. File ID: ${drivePresetsFileId}`);
   } catch (err) {
     console.error('Failed to initialize Google Drive presets file:', err.message);
   }
@@ -610,11 +489,7 @@ async function initDrivePresets() {
 async function readPresets() {
   if (drive && drivePresetsFileId) {
     try {
-      const res = await drive.files.get(
-        { fileId: drivePresetsFileId, alt: 'media' },
-        { responseType: 'text' }
-      );
-      const dataText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      const dataText = await readDriveTextFile({ drive, fileId: drivePresetsFileId });
       return JSON.parse(dataText);
     } catch (err) {
       console.error('Error reading presets from Google Drive, trying to re-initialize:', err.message);
@@ -622,16 +497,7 @@ async function readPresets() {
       return [];
     }
   } else {
-    try {
-      if (!fs.existsSync(PRESETS_FILE)) {
-        fs.writeFileSync(PRESETS_FILE, JSON.stringify([], null, 2));
-      }
-      const data = fs.readFileSync(PRESETS_FILE, 'utf8');
-      return JSON.parse(data);
-    } catch (err) {
-      console.error('Error reading local presets file:', err);
-      return [];
-    }
+    return readJsonFile(PRESETS_FILE, []);
   }
 }
 
@@ -639,24 +505,18 @@ async function readPresets() {
 async function writePresets(presets) {
   if (drive && drivePresetsFileId) {
     try {
-      const media = {
-        mimeType: 'application/json',
-        body: Readable.from(JSON.stringify(presets, null, 2)),
-      };
-      await drive.files.update({
+      await writeDriveTextFile({
+        drive,
         fileId: drivePresetsFileId,
-        media: media,
+        mimeType: 'application/json',
+        body: JSON.stringify(presets, null, 2),
       });
       console.log('Successfully updated presets.json in Google Drive.');
     } catch (err) {
       console.error('Error writing presets to Google Drive:', err.message);
     }
   } else {
-    try {
-      fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2));
-    } catch (err) {
-      console.error('Error writing local presets file:', err);
-    }
+    writeJsonFile(PRESETS_FILE, presets);
   }
 }
 
@@ -684,52 +544,31 @@ async function storePresetImage(file, filenamePrefix) {
 
   const ext = getUploadFileExtension(file);
   const filename = `${filenamePrefix}_${Date.now()}${ext}`;
-
-  if (drive && folderId) {
-    try {
-      const fileMetadata = {
-        name: filename,
-        parents: [folderId],
-      };
-      const media = {
-        mimeType: file.mimetype,
-        body: bufferToStream(file.buffer),
-      };
-      const driveResponse = await drive.files.create({
-        requestBody: fileMetadata,
-        media,
-        fields: 'id',
-      });
-      return { imageSource: 'drive', imageId: driveResponse.data.id };
-    } catch (err) {
-      console.error('Failed to upload preset image to Google Drive, saving locally instead:', err.message);
-    }
-  }
-
-  const localPath = path.join(UPLOADS_DIR, filename);
-  fs.writeFileSync(localPath, file.buffer);
-  return { imageSource: 'local', imageId: filename };
+  return saveBinaryFileToDriveOrLocal({
+    drive,
+    folderId,
+    localDir: UPLOADS_DIR,
+    fileName: filename,
+    buffer: file.buffer,
+    mimeType: file.mimetype,
+  });
 }
 
 async function deletePresetImage(imageSource, imageId) {
   if (!imageSource || !imageId) return;
-  if (imageSource === 'drive' && drive) {
-    try {
-      await drive.files.delete({ fileId: imageId });
-    } catch (err) {
+  try {
+    await deleteStoredFile({
+      drive,
+      imageSource,
+      imageId,
+      localDir: UPLOADS_DIR,
+    });
+  } catch (err) {
+    if (imageSource === 'drive') {
       console.error(`Failed to delete preset image from Google Drive (${imageId}):`, err.message);
-    }
-    return;
-  }
-
-  if (imageSource === 'local') {
-    const filePath = path.join(UPLOADS_DIR, imageId);
-    if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.error(`Failed to delete local preset image (${filePath}):`, err.message);
-      }
+    } else {
+      const filePath = path.join(UPLOADS_DIR, imageId);
+      console.error(`Failed to delete local preset image (${filePath}):`, err.message);
     }
   }
 }
@@ -865,47 +704,32 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 
     const contents = [];
     if (record.imageId) {
-      let imageBuffer = null;
-      let mimeType = 'image/jpeg';
-
-      if (record.imageSource === 'drive' && drive) {
-        try {
+      try {
+        if (record.imageSource === 'drive') {
           console.log(`Downloading image from Google Drive for reanalysis: ${record.imageId}`);
-          const meta = await drive.files.get({ fileId: record.imageId, fields: 'mimeType' });
-          mimeType = meta.data.mimeType || 'image/jpeg';
-          
-          const driveResponse = await drive.files.get(
-            { fileId: record.imageId, alt: 'media' },
-            { responseType: 'stream' }
-          );
-          const chunks = [];
-          for await (const chunk of driveResponse.data) {
-            chunks.push(chunk);
+        }
+        const storedImage = await readStoredImage({
+          drive,
+          imageSource: record.imageSource,
+          imageId: record.imageId,
+          localDir: UPLOADS_DIR,
+        });
+        if (storedImage) {
+          const imageMimeType = storedImage.mimeType || 'image/jpeg';
+          if (record.imageSource === 'drive') {
+            console.log('Successfully downloaded image from Google Drive.');
           }
-          imageBuffer = Buffer.concat(chunks);
-          console.log('Successfully downloaded image from Google Drive.');
-        } catch (err) {
+          contents.push({
+            inlineData: {
+              mimeType: imageMimeType,
+              data: storedImage.buffer.toString('base64'),
+            },
+          });
+        }
+      } catch (err) {
+        if (record.imageSource === 'drive') {
           console.error('Failed to download image from Google Drive for reanalysis:', err.message);
         }
-      } else {
-        // 繝ｭ繝ｼ繧ｫ繝ｫ
-        const filePath = path.join(UPLOADS_DIR, record.imageId);
-        if (fs.existsSync(filePath)) {
-          imageBuffer = fs.readFileSync(filePath);
-          const ext = path.extname(filePath).toLowerCase();
-          if (ext === '.png') mimeType = 'image/png';
-          if (ext === '.gif') mimeType = 'image/gif';
-          if (ext === '.webp') mimeType = 'image/webp';
-        }
-      }
-
-      if (imageBuffer) {
-        contents.push({
-          inlineData: {
-            mimeType: mimeType,
-            data: imageBuffer.toString('base64'),
-          },
-        });
       }
     }
 
@@ -1031,35 +855,18 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`);
     const dateStr = mealDate.substring(0, 10);
     const filename = `meal_${dateStr}_${mealType}_${Date.now()}.jpg`;
 
-    if (drive && folderId) {
-      try {
-        const fileMetadata = {
-          name: filename,
-          parents: [folderId],
-        };
-        const media = {
-          mimeType: req.file.mimetype,
-          body: bufferToStream(req.file.buffer),
-        };
-        const driveResponse = await drive.files.create({
-          requestBody: fileMetadata,
-          media,
-          fields: 'id',
-        });
-        imageSource = 'drive';
-        imageId = driveResponse.data.id;
-      } catch (err) {
-        console.error('Failed to upload meal image to Google Drive, saving locally instead:', err.message);
-        imageSource = 'local';
-        const localPath = path.join(UPLOADS_DIR, filename);
-        fs.writeFileSync(localPath, req.file.buffer);
-        imageId = filename;
-      }
-    } else {
-      imageSource = 'local';
-      const localPath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(localPath, req.file.buffer);
-      imageId = filename;
+    const storedImage = await saveBinaryFileToDriveOrLocal({
+      drive,
+      folderId,
+      localDir: UPLOADS_DIR,
+      fileName: filename,
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+    });
+    imageSource = storedImage.imageSource;
+    imageId = storedImage.imageId;
+    if (storedImage.driveError) {
+      console.error('Failed to upload meal image to Google Drive, saving locally instead:', storedImage.driveError.message);
     }
 
     const safeMealName = nutritionData?.mealName || '食事画像';
@@ -1175,11 +982,12 @@ app.get('/api/presets', async (req, res) => {
 // 2. 螳夂分繝｡繝九Η繝ｼ謇句虚逋ｻ骭ｲ API
 app.post('/api/presets', upload.single('image'), async (req, res) => {
   try {
-    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId } = req.body;
+    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId, category } = req.body;
     if (!name || calories === undefined || protein === undefined || fat === undefined || carbohydrates === undefined) {
       return res.status(400).json({ error: '入力された数値が不正です。' });
     }
     const normalizedBaseAmount = Number(baseAmount);
+    const normalizedCategory = typeof category === 'string' ? category.trim().slice(0, 30) : '';
     const normalizedImageMeta = req.file
       ? await storePresetImage(req.file, 'preset_photo')
       : normalizePresetImageMeta(imageSource, imageId);
@@ -1194,6 +1002,7 @@ app.post('/api/presets', upload.single('image'), async (req, res) => {
       carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
       baseAmount: Number.isFinite(normalizedBaseAmount) && normalizedBaseAmount > 0 ? Math.round(normalizedBaseAmount * 10) / 10 : 1,
       servingUnit: servingUnit === 'g' ? 'g' : '個',
+      category: normalizedCategory,
       imageSource: normalizedImageMeta.imageSource,
       imageId: normalizedImageMeta.imageId,
       createdAt: now,
@@ -1226,10 +1035,11 @@ app.delete('/api/presets/:id', async (req, res) => {
 app.patch('/api/presets/:id', upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId, clearImage } = req.body;
+    const { name, calories, protein, fat, carbohydrates, baseAmount, servingUnit, imageSource, imageId, clearImage, category } = req.body;
     const hasMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount].some(value => value !== undefined);
     const hasUnitUpdate = servingUnit !== undefined;
     const hasImageUpdate = req.file || clearImage !== undefined || imageSource !== undefined || imageId !== undefined;
+    const hasCategoryUpdate = category !== undefined;
     const hasInvalidMacroUpdate = [calories, protein, fat, carbohydrates, baseAmount]
       .filter(value => value !== undefined)
       .some(value => !Number.isFinite(Number(value)) || Number(value) < 0 || (value === baseAmount && Number(value) <= 0));
@@ -1239,7 +1049,7 @@ app.patch('/api/presets/:id', upload.single('image'), async (req, res) => {
     if (hasUnitUpdate && servingUnit !== 'g' && servingUnit !== '個') {
       return res.status(400).json({ error: 'Preset serving unit must be g or 個.' });
     }
-    if ((!name || name.trim() === '') && !hasMacroUpdate && !hasUnitUpdate && !hasImageUpdate) {
+    if ((!name || name.trim() === '') && !hasMacroUpdate && !hasUnitUpdate && !hasImageUpdate && !hasCategoryUpdate) {
       return res.status(400).json({ error: 'メニュー名を入力してください。' });
     }
 
@@ -1268,6 +1078,9 @@ app.patch('/api/presets/:id', upload.single('image'), async (req, res) => {
     applyMacroUpdate('baseAmount', baseAmount);
     if (servingUnit === 'g' || servingUnit === '個') {
       preset.servingUnit = servingUnit;
+    }
+    if (hasCategoryUpdate) {
+      preset.category = String(category || '').trim().slice(0, 30);
     }
     if (req.file) {
       const nextImageMeta = await storePresetImage(req.file, 'preset_photo');
@@ -1319,36 +1132,22 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
       const dateStr = mealDateParsed.substring(0, 10);
       const filename = `meal_preset_${dateStr}_${actualMealType}_${Date.now()}.jpg`;
 
-      if (drive && folderId) {
-        try {
-          console.log('Uploading preset record image to Google Drive...');
-          const fileMetadata = {
-            name: filename,
-            parents: [folderId],
-          };
-          const media = {
-            mimeType: req.file.mimetype,
-            body: bufferToStream(req.file.buffer),
-          };
-          const driveResponse = await drive.files.create({
-            requestBody: fileMetadata,
-            media: media,
-            fields: 'id',
-          });
-          imageSource = 'drive';
-          imageId = driveResponse.data.id;
-          console.log('Successfully uploaded preset record image to Google Drive. File ID:', imageId);
-        } catch (err) {
-          console.error('Failed to upload preset record image to Google Drive, saving locally instead:', err.message);
-          imageSource = 'local';
-          const localPath = path.join(UPLOADS_DIR, filename);
-          fs.writeFileSync(localPath, req.file.buffer);
-          imageId = filename;
-        }
+      const storedImage = await saveBinaryFileToDriveOrLocal({
+        drive,
+        folderId,
+        localDir: UPLOADS_DIR,
+        fileName: filename,
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+      });
+      imageSource = storedImage.imageSource;
+      imageId = storedImage.imageId;
+      if (storedImage.driveError) {
+        console.error('Failed to upload preset record image to Google Drive, saving locally instead:', storedImage.driveError.message);
+      }
+      if (imageSource === 'drive') {
+        console.log('Successfully uploaded preset record image to Google Drive. File ID:', imageId);
       } else {
-        const localPath = path.join(UPLOADS_DIR, filename);
-        fs.writeFileSync(localPath, req.file.buffer);
-        imageId = filename;
         console.log('Saved preset record image locally:', filename);
       }
     } else if (presetMaster) {
@@ -1492,17 +1291,20 @@ app.get('/api/image', async (req, res) => {
       return res.status(500).send('Google Drive client is not initialized');
     }
     try {
-      const meta = await drive.files.get({ fileId: id, fields: 'mimeType' });
-      res.setHeader('Content-Type', meta.data.mimeType || 'image/jpeg');
+      const storedImage = await readStoredImage({
+        drive,
+        imageSource: 'drive',
+        imageId: id,
+        localDir: UPLOADS_DIR,
+      });
+      if (!storedImage) {
+        return res.status(404).send('Image not found in Google Drive');
+      }
+      res.setHeader('Content-Type', storedImage.mimeType || 'image/jpeg');
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-
-      const driveResponse = await drive.files.get(
-        { fileId: id, alt: 'media' },
-        { responseType: 'stream' }
-      );
-      driveResponse.data.pipe(res);
+      res.send(storedImage.buffer);
     } catch (err) {
       console.error('Error fetching image from Google Drive:', err.message);
       res.status(404).send('Image not found in Google Drive');
@@ -1511,13 +1313,7 @@ app.get('/api/image', async (req, res) => {
     // 繝ｭ繝ｼ繧ｫ繝ｫ繝｢繝ｼ繝・
     const filePath = path.join(UPLOADS_DIR, id);
     if (fs.existsSync(filePath)) {
-      const ext = path.extname(filePath).toLowerCase();
-      let contentType = 'image/jpeg';
-      if (ext === '.png') contentType = 'image/png';
-      if (ext === '.gif') contentType = 'image/gif';
-      if (ext === '.webp') contentType = 'image/webp';
-      
-      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Type', getMimeTypeFromFilePath(filePath));
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
@@ -1543,20 +1339,29 @@ app.delete('/api/history/:id', async (req, res) => {
 
     // 逕ｻ蜒上ヵ繧｡繧､繝ｫ縺ｮ迚ｩ逅・炎髯､
     if (record.imageId) {
-      if (record.imageSource === 'drive' && drive) {
-        try {
+      try {
+        if (record.imageSource === 'drive' && drive) {
           console.log(`Deleting image from Google Drive: ${record.imageId}`);
-          await drive.files.delete({ fileId: record.imageId });
-          console.log('Successfully deleted image from Google Drive.');
-        } catch (err) {
-          console.error(`Failed to delete Google Drive image ${record.imageId}:`, err.message);
         }
-      } else {
-        const filePath = path.join(UPLOADS_DIR, record.imageId);
-        if (fs.existsSync(filePath)) {
+        const deleted = await deleteStoredFile({
+          drive,
+          imageSource: record.imageSource,
+          imageId: record.imageId,
+          localDir: UPLOADS_DIR,
+        });
+        if (record.imageSource === 'drive' && drive && deleted) {
+          console.log('Successfully deleted image from Google Drive.');
+        } else if (record.imageSource === 'local' && deleted) {
+          const filePath = path.join(UPLOADS_DIR, record.imageId);
           console.log(`Deleting local image file: ${filePath}`);
-          fs.unlinkSync(filePath);
           console.log('Successfully deleted local image file.');
+        }
+      } catch (err) {
+        if (record.imageSource === 'drive') {
+          console.error(`Failed to delete Google Drive image ${record.imageId}:`, err.message);
+        } else {
+          const filePath = path.join(UPLOADS_DIR, record.imageId);
+          console.error(`Failed to delete local image file (${filePath}):`, err.message);
         }
       }
     }
@@ -1790,22 +1595,26 @@ app.delete('/api/body-composition/:id', async (req, res) => {
     
     // 逕ｻ蜒上′縺ゅｋ蝣ｴ蜷医・蜑企勁
     if (record.imageId) {
-      if (record.imageSource === 'drive' && drive) {
-        try {
+      try {
+        if (record.imageSource === 'drive' && drive) {
           console.log(`Deleting weight image from Google Drive: ${record.imageId}`);
-          await drive.files.delete({ fileId: record.imageId });
-        } catch (err) {
-          console.error('Failed to delete weight image from Google Drive:', err.message);
         }
-      } else if (record.imageSource === 'local') {
-        const localPath = path.join(UPLOADS_DIR, record.imageId);
-        if (fs.existsSync(localPath)) {
-          try {
-            fs.unlinkSync(localPath);
-            console.log('Successfully deleted local weight image file.');
-          } catch (err) {
-            console.error('Failed to delete local weight image file:', err);
-          }
+        const deleted = await deleteStoredFile({
+          drive,
+          imageSource: record.imageSource,
+          imageId: record.imageId,
+          localDir: UPLOADS_DIR,
+        });
+        if (record.imageSource === 'drive' && drive && deleted) {
+          console.log('Successfully deleted weight image from Google Drive.');
+        } else if (record.imageSource === 'local' && deleted) {
+          console.log('Successfully deleted local weight image file.');
+        }
+      } catch (err) {
+        if (record.imageSource === 'drive') {
+          console.error('Failed to delete weight image from Google Drive:', err.message);
+        } else {
+          console.error('Failed to delete local weight image file:', err);
         }
       }
     }
@@ -1887,21 +1696,14 @@ app.put('/api/body-composition/:id', updateBodyCompositionRecord);
 async function initDriveAiConsultations() {
   if (!drive || !folderId) return;
   try {
-    const result = await drive.files.list({
-      q: `name = 'ai_consultations.json' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
+    const result = await ensureDriveFileByName({
+      drive,
+      folderId,
+      fileName: 'ai_consultations.json',
+      mimeType: 'application/json',
+      body: JSON.stringify([], null, 2),
     });
-    if (result.data.files?.length) {
-      driveAiConsultationsFileId = result.data.files[0].id;
-      return;
-    }
-    const created = await drive.files.create({
-      requestBody: { name: 'ai_consultations.json', parents: [folderId], mimeType: 'application/json' },
-      media: { mimeType: 'application/json', body: Readable.from(JSON.stringify([], null, 2)) },
-      fields: 'id',
-    });
-    driveAiConsultationsFileId = created.data.id;
+    driveAiConsultationsFileId = result.fileId;
   } catch (err) {
     console.error('Failed to initialize ai_consultations.json:', err.message);
   }
@@ -1909,26 +1711,24 @@ async function initDriveAiConsultations() {
 
 async function readAiConsultations() {
   if (drive && driveAiConsultationsFileId) {
-    const result = await drive.files.get(
-      { fileId: driveAiConsultationsFileId, alt: 'media' },
-      { responseType: 'text' }
-    );
-    const text = typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
+    const text = await readDriveTextFile({ drive, fileId: driveAiConsultationsFileId });
     return JSON.parse(text || '[]');
   }
-  try { return JSON.parse(fs.readFileSync(AI_CONSULTATIONS_FILE, 'utf8')); } catch { return []; }
+  return readJsonFile(AI_CONSULTATIONS_FILE, []);
 }
 
 async function writeAiConsultations(data) {
   const json = JSON.stringify(data, null, 2);
   if (drive && folderId && !driveAiConsultationsFileId) await initDriveAiConsultations();
   if (drive && driveAiConsultationsFileId) {
-    await drive.files.update({
+    await writeDriveTextFile({
+      drive,
       fileId: driveAiConsultationsFileId,
-      media: { mimeType: 'application/json', body: Readable.from(json) },
+      mimeType: 'application/json',
+      body: json,
     });
   } else {
-    fs.writeFileSync(AI_CONSULTATIONS_FILE, json);
+    writeJsonFile(AI_CONSULTATIONS_FILE, data);
   }
 }
 
@@ -1964,27 +1764,25 @@ async function initDriveConsultationPrompt() {
   try {
     const localPromptText = readLocalConsultationPromptTemplate();
     console.log('Searching for ai_prompt.txt in Google Drive...');
-    const res = await drive.files.list({
-      q: `name = 'ai_prompt.txt' and '${folderId}' in parents and trashed = false`,
-      fields: 'files(id)',
-      spaces: 'drive',
+    const result = await ensureDriveFileByName({
+      drive,
+      folderId,
+      fileName: 'ai_prompt.txt',
+      mimeType: 'text/plain',
+      body: localPromptText,
     });
-    if (res.data.files && res.data.files.length > 0) {
-      driveConsultationPromptFileId = res.data.files[0].id;
+    driveConsultationPromptFileId = result.fileId;
+    if (result.created) {
+      console.log(`Created ai_prompt.txt. File ID: ${driveConsultationPromptFileId}`);
+    } else {
       console.log(`Found ai_prompt.txt. File ID: ${driveConsultationPromptFileId}`);
-      await drive.files.update({
+      await writeDriveTextFile({
+        drive,
         fileId: driveConsultationPromptFileId,
-        media: { mimeType: 'text/plain', body: Readable.from(localPromptText) },
+        mimeType: 'text/plain',
+        body: localPromptText,
       });
       console.log('Synced ai_prompt.txt to Google Drive.');
-    } else {
-      const driveResponse = await drive.files.create({
-        requestBody: { name: 'ai_prompt.txt', parents: [folderId], mimeType: 'text/plain' },
-        media: { mimeType: 'text/plain', body: Readable.from(localPromptText) },
-        fields: 'id',
-      });
-      driveConsultationPromptFileId = driveResponse.data.id;
-      console.log(`Created ai_prompt.txt. File ID: ${driveConsultationPromptFileId}`);
     }
   } catch (err) {
     console.error('Failed to initialize ai_prompt.txt:', err.message);
@@ -1994,11 +1792,7 @@ async function initDriveConsultationPrompt() {
 async function readConsultationPromptTemplate() {
   if (drive && driveConsultationPromptFileId) {
     try {
-      const res = await drive.files.get(
-        { fileId: driveConsultationPromptFileId, alt: 'media' },
-        { responseType: 'text' }
-      );
-      const text = typeof res.data === 'string' ? res.data : String(res.data || '');
+      const text = await readDriveTextFile({ drive, fileId: driveConsultationPromptFileId });
       return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
     } catch (err) {
       console.error('Error reading ai_prompt.txt from Drive:', err.message);
@@ -2014,10 +1808,7 @@ async function readConsultationPromptTemplate() {
 }
 
 function readLocalConsultationPromptTemplate() {
-  if (!fs.existsSync(AI_PROMPT_FILE)) {
-    fs.writeFileSync(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
-  }
-  const text = fs.readFileSync(AI_PROMPT_FILE, 'utf8');
+  const text = readTextFile(AI_PROMPT_FILE, DEFAULT_CONSULTATION_PROMPT_TEMPLATE);
   return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
 }
 

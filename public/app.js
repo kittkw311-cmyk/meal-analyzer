@@ -201,7 +201,7 @@
 
     const enrichedPresets = presets.map((preset, index) => ({
       ...preset,
-      category: inferPresetCategory(preset),
+      category: `${preset.category || ''}`.trim() || inferPresetCategory(preset),
       isFavorite: favoriteSet.has(preset.id),
       usageCount: Number(usageMap[preset.id] || 0),
       lastUsedAt: Number(lastUsedMap[preset.id] || 0),
@@ -566,6 +566,7 @@
   // Preset Edit Modal Elements
   const presetEditModal = document.getElementById('preset-edit-modal');
   const btnClosePresetEditModal = document.getElementById('btn-close-preset-edit-modal');
+  const btnFavoritePresetEdit = document.getElementById('btn-favorite-preset-edit');
   const btnSavePresetEdit = document.getElementById('btn-save-preset-edit');
   const btnDeletePresetEdit = document.getElementById('btn-delete-preset-edit');
   const presetEditForm = document.getElementById('preset-edit-form');
@@ -587,6 +588,7 @@
   const presetEditProteinInput = document.getElementById('preset-edit-protein');
   const presetEditFatInput = document.getElementById('preset-edit-fat');
   const presetEditCarbsInput = document.getElementById('preset-edit-carbs');
+  const presetEditCategoryInput = document.getElementById('preset-edit-category');
   
   // バッジおよびクリアボタン要素
   const mealUploadBadge = document.getElementById('meal-upload-badge');
@@ -657,6 +659,12 @@
     return `/api/image?source=${encodeURIComponent(imageSource)}&id=${encodeURIComponent(imageId)}`;
   };
 
+  const getPresetEditCategoryValue = (preset) => {
+    const savedCategory = `${preset?.category || ''}`.trim();
+    if (savedCategory) return savedCategory;
+    return inferPresetCategory(preset) || '';
+  };
+
   const updatePresetEditUploadControls = (hasImage) => {
     if (presetEditDropZone) {
       presetEditDropZone.style.display = hasImage ? 'none' : 'flex';
@@ -674,6 +682,18 @@
       presetEditPreviewContainer.style.display = 'none';
       updatePresetEditUploadControls(false);
     }
+  };
+
+  const syncPresetEditFavoriteButton = () => {
+    if (!btnFavoritePresetEdit) return;
+    const presetId = currentPresetEditTarget?.id;
+    const isFavorite = !!presetId && getFavoriteSet().has(presetId);
+    const isCreateMode = currentPresetEditMode === 'create' || !presetId;
+    btnFavoritePresetEdit.hidden = isCreateMode;
+    btnFavoritePresetEdit.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
+    btnFavoritePresetEdit.setAttribute('aria-label', isFavorite ? 'お気に入り解除' : 'お気に入り登録');
+    btnFavoritePresetEdit.title = isFavorite ? 'お気に入り解除' : 'お気に入り登録';
+    btnFavoritePresetEdit.classList.toggle('is-active', isFavorite);
   };
 
   const syncPresetEditPhotoPreview = () => {
@@ -738,6 +758,7 @@
       presetEditModalTitle.textContent = `${presetName} を編集`;
       btnDeletePresetEdit.hidden = false;
     }
+    syncPresetEditFavoriteButton();
   };
 
   const fillPresetEditModalFields = (preset) => {
@@ -748,6 +769,7 @@
     if (presetEditProteinInput) presetEditProteinInput.value = getPresetEditDisplayValue(preset?.protein ?? 0, 1) || '0.0';
     if (presetEditFatInput) presetEditFatInput.value = getPresetEditDisplayValue(preset?.fat ?? 0, 1) || '0.0';
     if (presetEditCarbsInput) presetEditCarbsInput.value = getPresetEditDisplayValue(preset?.carbohydrates ?? 0, 1) || '0.0';
+    if (presetEditCategoryInput) presetEditCategoryInput.value = getPresetEditCategoryValue(preset);
   };
 
   const openPresetEditModal = (preset, mode = 'edit') => {
@@ -791,6 +813,7 @@
     const protein = Number(presetEditProteinInput?.value);
     const fat = Number(presetEditFatInput?.value);
     const carbohydrates = Number(presetEditCarbsInput?.value);
+    const category = `${presetEditCategoryInput?.value || ''}`.trim();
 
     if (!name) {
       alert('メニュー名を入力してください。');
@@ -813,7 +836,7 @@
 
     try {
       const shouldUploadImage = !!selectedPresetEditFile || presetEditImageMarkedForRemoval;
-      const requestBody = shouldUploadImage ? new FormData() : JSON.stringify({
+      const requestPayload = {
         name,
         baseAmount: roundTo1(baseAmount),
         servingUnit,
@@ -821,9 +844,11 @@
         protein: roundTo1(protein),
         fat: roundTo1(fat),
         carbohydrates: roundTo1(carbohydrates),
-      });
+        category,
+      };
       let requestInit;
       if (shouldUploadImage) {
+        const requestBody = new FormData();
         requestBody.append('name', name);
         requestBody.append('baseAmount', String(roundTo1(baseAmount)));
         requestBody.append('servingUnit', servingUnit);
@@ -831,6 +856,7 @@
         requestBody.append('protein', String(roundTo1(protein)));
         requestBody.append('fat', String(roundTo1(fat)));
         requestBody.append('carbohydrates', String(roundTo1(carbohydrates)));
+        requestBody.append('category', category);
         if (selectedPresetEditFile) {
           requestBody.append('image', selectedPresetEditFile);
         } else if (presetEditImageMarkedForRemoval) {
@@ -844,7 +870,7 @@
         requestInit = {
           method: isCreateMode ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: requestBody,
+          body: JSON.stringify(requestPayload),
         };
       }
 
@@ -1065,6 +1091,15 @@
   if (btnSavePresetEdit) {
     btnSavePresetEdit.addEventListener('click', async () => {
       await savePresetEdit();
+    });
+  }
+
+  if (btnFavoritePresetEdit) {
+    btnFavoritePresetEdit.addEventListener('click', async () => {
+      if (!currentPresetEditTarget?.id) return;
+      togglePresetFavorite(currentPresetEditTarget.id);
+      syncPresetEditFavoriteButton();
+      await loadPresets();
     });
   }
 

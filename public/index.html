@@ -752,6 +752,11 @@
       <div class="modal-header-fixed preset-edit-modal-header">
         <h3 class="modal-title preset-edit-modal-title" id="preset-edit-modal-title">定番を編集</h3>
         <div class="preset-edit-modal-actions">
+          <button type="button" class="preset-edit-icon-btn preset-edit-favorite-btn" id="btn-favorite-preset-edit" aria-label="お気に入り登録" title="お気に入り登録" aria-pressed="false">
+            <svg class="preset-edit-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2l3.09 6.26 6.91 1-5 4.87 1.18 6.86L12 17.77 5.82 21l1.18-6.86-5-4.87 6.91-1z"></path>
+            </svg>
+          </button>
           <button type="button" class="preset-edit-icon-btn preset-edit-save-btn" id="btn-save-preset-edit" aria-label="保存" title="保存">
             <svg class="preset-edit-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 4h14l2 2v14H4z"></path>
@@ -826,6 +831,10 @@
               <label for="preset-edit-carbs">C</label>
               <input type="number" id="preset-edit-carbs" class="preset-edit-input" min="0" step="0.1">
             </div>
+          </div>
+          <div class="preset-edit-field preset-edit-field-category">
+            <label for="preset-edit-category">カテゴリ</label>
+            <input type="text" id="preset-edit-category" class="preset-edit-input" placeholder="例: 主菜">
           </div>
         </form>
       </div>

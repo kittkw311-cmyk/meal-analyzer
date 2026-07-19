@@ -7109,6 +7109,12 @@ body {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+#preset-edit-modal .preset-edit-field-category {
+  display: grid;
+  gap: 4px;
+  grid-column: 1 / -1;
+}
+
 #preset-edit-modal .preset-edit-input {
   background: #122431;
   border: 1px solid #2b4558;
@@ -7180,6 +7186,25 @@ body {
   background: rgba(0, 229, 255, 0.18);
   border-color: var(--presets-accent);
   color: #ffffff;
+}
+
+#preset-edit-modal .preset-edit-favorite-btn {
+  background: rgba(255, 205, 93, 0.12);
+  border-color: rgba(255, 205, 93, 0.34);
+  color: #f1c95b;
+}
+
+#preset-edit-modal .preset-edit-favorite-btn:hover,
+#preset-edit-modal .preset-edit-favorite-btn:focus-visible {
+  background: rgba(255, 205, 93, 0.18);
+  border-color: #ffd86f;
+  color: #fff1bf;
+}
+
+#preset-edit-modal .preset-edit-favorite-btn.is-active {
+  background: rgba(255, 205, 93, 0.22);
+  border-color: #ffd86f;
+  color: #ffd86f;
 }
 
 #preset-edit-modal .preset-edit-delete-btn {
