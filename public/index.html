@@ -205,72 +205,154 @@
 
       <!-- 5. 定番タブ -->
       <section id="tab-presets" class="tab-content">
-        <div class="presets-toolbar-wrap">
-          <div class="presets-toolbar card">
-            <button type="button" id="presets-manual-toggle" class="preset-manual-toggle-btn" aria-expanded="false" aria-controls="presets-manual-content" aria-label="手動定番登録を開く">＋</button>
-            <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
-            <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
-              <option value="newest">登録が新しい順</option>
-              <option value="recent">最近使った順</option>
-              <option value="favorite">お気に入り順</option>
-              <option value="name">名前順</option>
-            </select>
+        <div class="preset-compare-shell">
+          <div class="presets-toolbar-wrap">
+            <div class="presets-toolbar card">
+              <button type="button" id="presets-manual-toggle" class="preset-manual-toggle-btn" aria-label="定番を新規登録">＋</button>
+              <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
+              <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
+                <option value="newest">登録が新しい順</option>
+                <option value="recent">最近使った順</option>
+                <option value="favorite">お気に入り順</option>
+                <option value="name">名前順</option>
+              </select>
+            </div>
           </div>
-          <div class="preset-manual-popover card" id="presets-manual-content" hidden>
-            <form id="form-presets-manual">
-              <div class="preset-manual-top-row">
-                <div class="form-group-compact preset-manual-name-field">
-                  <label class="preset-manual-field-label">メニュー名 / 商品名</label>
-                  <input type="text" id="preset-manual-name" class="preset-manual-name-input" placeholder="例：プロテインパウダー" required>
+
+          <section class="preset-workbench">
+            <aside class="preset-list-panel card">
+              <div class="preset-list-head">
+                <div>
+                  <div class="preset-list-kicker">一覧</div>
+                  <div class="preset-list-sub">メニュー名だけを並べた一覧です。</div>
                 </div>
-                <div class="form-group-compact preset-manual-amount-field">
-                  <label for="preset-manual-serving-amount" class="preset-manual-field-label">基準量</label>
-                  <input type="number" id="preset-manual-serving-amount" placeholder="1.0" value="1.0" required step="0.1" min="0.1">
-                </div>
-                <div class="form-group-compact preset-manual-unit-field">
-                  <label for="preset-manual-serving-unit" class="preset-manual-field-label">単位</label>
-                  <select id="preset-manual-serving-unit">
-                    <option value="個">個</option>
-                    <option value="g">g</option>
-                  </select>
+                <div class="preset-list-count" id="presets-count">0件</div>
+              </div>
+              <div class="preset-list-table-head" aria-hidden="true">
+                <span class="preset-list-table-col">メニュー名</span>
+              </div>
+              <div class="preset-view-switch" role="tablist" aria-label="定番の表示切り替え">
+                <button type="button" class="preset-view-chip is-active" data-view="recent">最近使った</button>
+                <button type="button" class="preset-view-chip" data-view="categories">カテゴリ別</button>
+                <button type="button" class="preset-view-chip" data-view="favorites">お気に入り</button>
+              </div>
+              <div id="presets-list" class="presets-list" aria-label="定番一覧">
+                <div class="presets-empty-state">
+                  登録されている定番メニューはありません。<br>上の手動入力から登録してください。
                 </div>
               </div>
-              <div class="preset-manual-macro-grid">
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">エネルギー (kcal)</label>
-                  <input type="number" id="preset-manual-calories" placeholder="140" required min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">タンパク質 (P) (g)</label>
-                  <input type="number" id="preset-manual-protein" placeholder="24.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">脂質 (F) (g)</label>
-                  <input type="number" id="preset-manual-fat" placeholder="1.5" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
-                <div class="form-group-compact">
-                  <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-align: left;">炭水化物 (C) (g)</label>
-                  <input type="number" id="preset-manual-carbs" placeholder="3.0" required step="0.1" min="0" style="width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid var(--design-border); outline: none; box-sizing: border-box; background: var(--design-card); color: var(--design-foreground); text-align: right;">
-                </div>
+            </aside>
+
+            <section class="preset-detail-panel card" id="preset-detail-panel">
+              <button type="button" class="preset-detail-back-btn" id="preset-detail-back-btn">← 一覧へ戻る</button>
+              <div id="preset-detail-empty" class="preset-detail-empty">
+                <div class="preset-detail-empty-title">詳細を表示</div>
+                <div class="preset-detail-empty-sub">一覧から定番を選ぶと、内容の確認と編集ができます。</div>
               </div>
-              <button type="submit" class="btn btn-secondary btn-block" style="padding: 10px; font-size: 12.5px; font-weight: 800; border-radius: 8px; width: 100%; box-sizing: border-box;">
-                手動入力で定番に保存
-              </button>
-            </form>
-          </div>
-        </div>
 
-        <div class="preset-view-switch" role="tablist" aria-label="定番の表示切り替え">
-          <button type="button" class="preset-view-chip is-active" data-view="recent">最近使った</button>
-          <button type="button" class="preset-view-chip" data-view="categories">カテゴリ別</button>
-          <button type="button" class="preset-view-chip" data-view="favorites">お気に入り</button>
-        </div>
+              <div id="preset-detail-view" class="preset-detail-view" hidden>
+                <div class="preset-detail-head">
+                  <div>
+                    <div class="preset-detail-kicker">詳細照会</div>
+                    <div class="preset-detail-title-row">
+                      <span class="preset-category-pill" id="preset-detail-category"></span>
+                      <h3 class="preset-detail-title" id="preset-detail-name"></h3>
+                    </div>
+                    <div class="preset-detail-meta" id="preset-detail-meta"></div>
+                  </div>
+                  <div class="preset-detail-actions">
+                    <button type="button" class="preset-add-btn" id="preset-detail-add-btn">＋ 追加</button>
+                    <button type="button" class="preset-detail-edit-btn" id="preset-detail-edit-btn">編集</button>
+                  </div>
+                </div>
 
-        <!-- 登録済み定番メニュー一覧 -->
-        <div id="presets-list" class="presets-list">
-          <div class="presets-empty-state">
-            登録されている定番メニューはありません。<br>上の手動入力から登録してください。
-          </div>
+                <div class="preset-detail-summary">
+                  <div class="preset-detail-summary-item">
+                    <span class="preset-detail-summary-label">基準量</span>
+                    <span class="preset-detail-summary-value" id="preset-detail-base"></span>
+                  </div>
+                  <div class="preset-detail-summary-item">
+                    <span class="preset-detail-summary-label">単位</span>
+                    <span class="preset-detail-summary-value" id="preset-detail-unit"></span>
+                  </div>
+                  <div class="preset-detail-summary-item">
+                    <span class="preset-detail-summary-label">使用回数</span>
+                    <span class="preset-detail-summary-value" id="preset-detail-usage"></span>
+                  </div>
+                  <div class="preset-detail-summary-item">
+                    <span class="preset-detail-summary-label">最近使用</span>
+                    <span class="preset-detail-summary-value" id="preset-detail-last-used"></span>
+                  </div>
+                </div>
+
+                <div class="preset-detail-nutrition">
+                  <div class="preset-detail-macro">
+                    <span class="preset-detail-macro-label">kcal</span>
+                    <span class="preset-detail-macro-value" id="preset-detail-calories"></span>
+                  </div>
+                  <div class="preset-detail-macro">
+                    <span class="preset-detail-macro-label">P</span>
+                    <span class="preset-detail-macro-value" id="preset-detail-protein"></span>
+                  </div>
+                  <div class="preset-detail-macro">
+                    <span class="preset-detail-macro-label">F</span>
+                    <span class="preset-detail-macro-value" id="preset-detail-fat"></span>
+                  </div>
+                  <div class="preset-detail-macro">
+                    <span class="preset-detail-macro-label">C</span>
+                    <span class="preset-detail-macro-value" id="preset-detail-carbs"></span>
+                  </div>
+                </div>
+
+                <div class="preset-detail-note" id="preset-detail-note"></div>
+              </div>
+
+              <form id="preset-detail-edit" class="preset-detail-edit" hidden>
+                <div class="preset-detail-edit-head">
+                  <div class="preset-detail-kicker">詳細編集</div>
+                  <div class="preset-detail-edit-sub">ここで名前と数値をまとめて修正できます。画像編集は従来の編集モーダルから行えます。</div>
+                </div>
+                <div class="preset-detail-edit-grid">
+                  <div class="form-group-compact preset-detail-edit-name">
+                    <label for="preset-detail-edit-name">メニュー名</label>
+                    <input type="text" id="preset-detail-edit-name" required>
+                  </div>
+                  <div class="form-group-compact">
+                    <label for="preset-detail-edit-base-amount">基準量</label>
+                    <input type="number" id="preset-detail-edit-base-amount" min="0.1" step="0.1" required>
+                  </div>
+                  <div class="form-group-compact">
+                    <label for="preset-detail-edit-serving-unit">単位</label>
+                    <select id="preset-detail-edit-serving-unit">
+                      <option value="個">個</option>
+                      <option value="g">g</option>
+                    </select>
+                  </div>
+                  <div class="form-group-compact">
+                    <label for="preset-detail-edit-calories">エネルギー (kcal)</label>
+                    <input type="number" id="preset-detail-edit-calories" min="0" step="1" required>
+                  </div>
+                  <div class="form-group-compact">
+                    <label for="preset-detail-edit-protein">タンパク質 (g)</label>
+                    <input type="number" id="preset-detail-edit-protein" min="0" step="0.1" required>
+                  </div>
+                  <div class="form-group-compact">
+                    <label for="preset-detail-edit-fat">脂質 (g)</label>
+                    <input type="number" id="preset-detail-edit-fat" min="0" step="0.1" required>
+                  </div>
+                  <div class="form-group-compact">
+                    <label for="preset-detail-edit-carbs">炭水化物 (g)</label>
+                    <input type="number" id="preset-detail-edit-carbs" min="0" step="0.1" required>
+                  </div>
+                </div>
+                <div class="preset-detail-edit-actions">
+                  <button type="submit" class="preset-detail-save-btn">保存</button>
+                  <button type="button" class="preset-detail-cancel-btn" id="preset-detail-edit-cancel">キャンセル</button>
+                  <button type="button" class="preset-detail-image-btn" id="preset-detail-edit-image-btn">画像も編集</button>
+                </div>
+              </form>
+            </section>
+          </section>
         </div>
       </section>
     </main>
@@ -667,17 +749,31 @@
 
   <div class="modal-overlay" id="preset-edit-modal" style="display: none;">
     <div class="modal-content preset-edit-modal-content">
-      <button class="modal-close-btn" id="btn-close-preset-edit-modal">✕</button>
       <div class="modal-header-fixed preset-edit-modal-header">
-        <h3 class="modal-title" id="preset-edit-modal-title">定番を編集</h3>
-        <div class="preset-edit-modal-subtitle" id="preset-edit-modal-subtitle">タップで開く編集ポップアップです。</div>
+        <h3 class="modal-title preset-edit-modal-title" id="preset-edit-modal-title">定番を編集</h3>
+        <div class="preset-edit-modal-actions">
+          <button type="button" class="preset-edit-icon-btn preset-edit-save-btn" id="btn-save-preset-edit" aria-label="保存" title="保存">
+            <svg class="preset-edit-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 4h14l2 2v14H4z"></path>
+              <path d="M7 4v6h8V4"></path>
+              <path d="M8 14h8"></path>
+              <path d="M8 18h8"></path>
+            </svg>
+          </button>
+          <button type="button" class="preset-edit-icon-btn preset-edit-delete-btn" id="btn-delete-preset-edit" aria-label="削除" title="削除">
+            <svg class="preset-edit-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 6h18"></path>
+              <path d="M8 6V4h8v2"></path>
+              <path d="M10 11v6"></path>
+              <path d="M14 11v6"></path>
+              <path d="M6 6l1 14h10l1-14"></path>
+            </svg>
+          </button>
+          <button class="preset-edit-close-btn" id="btn-close-preset-edit-modal" type="button" aria-label="閉じる" title="閉じる">×</button>
+        </div>
       </div>
       <div class="modal-body-scrollable preset-edit-modal-body">
         <form id="preset-edit-form" class="preset-edit-form">
-          <div class="preset-edit-field preset-edit-field-name">
-            <label for="preset-edit-name">メニュー名</label>
-            <input type="text" id="preset-edit-name" class="preset-edit-input">
-          </div>
           <div class="card upload-card preset-edit-upload-card">
             <div class="upload-action-buttons" id="preset-edit-drop-zone">
               <button type="button" class="btn upload-action-btn" id="btn-preset-edit-camera-trigger">
@@ -696,7 +792,11 @@
             </div>
             <div class="preset-edit-photo-note">選んだ写真はGoogle Driveに保存されます。</div>
           </div>
-          <div class="preset-edit-grid">
+          <div class="preset-edit-name-row">
+            <div class="preset-edit-field preset-edit-field-name">
+              <label for="preset-edit-name">メニュー名</label>
+              <input type="text" id="preset-edit-name" class="preset-edit-input">
+            </div>
             <div class="preset-edit-field">
               <label for="preset-edit-base-amount">基準量</label>
               <input type="number" id="preset-edit-base-amount" class="preset-edit-input" min="0.1" step="0.1">
@@ -728,11 +828,6 @@
             </div>
           </div>
         </form>
-      </div>
-      <div class="modal-footer-fixed preset-edit-modal-footer">
-        <button type="button" class="btn preset-edit-delete-btn" id="btn-delete-preset-edit">削除</button>
-        <button type="button" class="btn btn-secondary" id="btn-cancel-preset-edit">キャンセル</button>
-        <button type="button" class="btn btn-primary" id="btn-save-preset-edit">保存</button>
       </div>
     </div>
   </div>
