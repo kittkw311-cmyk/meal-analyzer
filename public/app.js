@@ -255,8 +255,7 @@
           return compareBySortMode(a, b);
         });
       }
-      const source = recentPresets.length ? recentPresets : enrichedPresets;
-      return sortItems(source);
+      return sortItems(enrichedPresets);
     };
 
     return {
