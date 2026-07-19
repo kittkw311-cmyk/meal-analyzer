@@ -7109,10 +7109,28 @@ body {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+#preset-edit-modal .preset-edit-bottom-row {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
 #preset-edit-modal .preset-edit-field-category {
   display: grid;
   gap: 4px;
-  grid-column: 1 / -1;
+  width: 100%;
+}
+
+#preset-edit-modal .preset-edit-action-row {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  justify-items: end;
+}
+
+#preset-edit-modal .preset-edit-action-row .preset-edit-modal-actions {
+  margin-top: 0;
 }
 
 #preset-edit-modal .preset-edit-input {
@@ -7207,6 +7225,15 @@ body {
   color: #ffd86f;
 }
 
+#preset-edit-modal .preset-edit-favorite-btn.is-active .preset-edit-action-icon {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+#preset-edit-modal .preset-edit-favorite-btn:not(.is-active) .preset-edit-action-icon {
+  fill: transparent;
+}
+
 #preset-edit-modal .preset-edit-delete-btn {
   background: rgba(255, 91, 91, 0.12);
   border-color: rgba(255, 91, 91, 0.36);
@@ -7251,6 +7278,34 @@ body {
 @media (max-width: 600px) {
   #tab-presets .presets-list {
     grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+  }
+
+  #tab-presets .preset-list-head {
+    align-items: center;
+    gap: 8px;
+  }
+
+  #tab-presets .preset-list-sub {
+    display: none;
+  }
+
+  #tab-presets .preset-list-count {
+    padding: 4px 8px;
+  }
+
+  #tab-presets .preset-list-table-head {
+    padding: 6px 10px;
+  }
+
+  #tab-presets .preset-list-row {
+    padding: 8px 10px;
+  }
+
+  #tab-presets .preset-list-row-name {
+    font-size: 14px;
+    line-height: 1.25;
   }
 
   #tab-presets {
@@ -7325,6 +7380,14 @@ body {
 
   #preset-edit-modal .preset-edit-grid-macro {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #preset-edit-modal .preset-edit-bottom-row {
+    grid-template-columns: 1fr;
+  }
+
+  #preset-edit-modal .preset-edit-action-row {
+    justify-items: end;
   }
 
   #preset-edit-modal.modal-overlay {
