@@ -3618,8 +3618,7 @@ body.modal-open {
   min-height: 0;
 }
 
-#tab-presets .preset-list-panel,
-#tab-presets .preset-detail-panel {
+#tab-presets .preset-list-panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -3765,7 +3764,7 @@ body.modal-open {
 }
 
 #tab-presets .preset-detail-panel {
-  display: flex;
+  display: none !important;
 }
 
 #tab-presets .preset-detail-panel[hidden] {

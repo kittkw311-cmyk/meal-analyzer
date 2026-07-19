@@ -415,19 +415,13 @@
 
   const syncPresetWorkbenchPanels = () => {
     if (!presetListPanel || !presetDetailPanel) return;
-    const hasSelection = !!getPresetById(selectedPresetId);
-    const mobile = isPresetMobileLayout();
-    const showDetailOnMobile = mobile && hasSelection && presetPanelMode === 'detail';
     if (presetWorkbench) {
-      presetWorkbench.classList.toggle('is-mobile-presets', mobile);
-      presetWorkbench.classList.toggle('is-mobile-detail', showDetailOnMobile);
-      presetWorkbench.classList.toggle('is-mobile-list', mobile && !showDetailOnMobile);
+      presetWorkbench.classList.remove('is-mobile-detail');
+      presetWorkbench.classList.add('is-mobile-list');
+      presetWorkbench.classList.remove('is-mobile-presets');
     }
-    presetListPanel.hidden = mobile ? showDetailOnMobile : false;
-    presetDetailPanel.hidden = mobile ? !showDetailOnMobile : false;
-    if (presetDetailBackBtn) {
-      presetDetailBackBtn.hidden = !mobile || !hasSelection;
-    }
+    presetListPanel.hidden = false;
+    presetDetailPanel.hidden = true;
   };
 
   const renderPresetDetailView = (preset) => {
