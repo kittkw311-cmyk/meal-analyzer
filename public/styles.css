@@ -3518,7 +3518,7 @@ body.modal-open {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: 40px 40px minmax(0, 1fr) minmax(130px, 180px);
+  grid-template-columns: 40px 64px minmax(0, 1fr) minmax(130px, 180px);
   padding: 12px;
   background: linear-gradient(180deg, #18313f, #142733);
   border: 1px solid #2a475b;
@@ -3543,7 +3543,7 @@ body.modal-open {
   width: 40px;
 }
 
-#tab-presets .preset-manual-view-btn {
+#tab-presets .preset-manual-edit-btn {
   align-items: center;
   appearance: none;
   background: rgba(0, 229, 255, 0.08);
@@ -3552,34 +3552,31 @@ body.modal-open {
   color: #b8f8ff;
   cursor: pointer;
   display: inline-flex;
+  font: 800 13px var(--font-heading);
   height: 42px;
   justify-content: center;
+  letter-spacing: 0.04em;
   line-height: 1;
-  padding: 0;
+  min-width: 64px;
+  padding: 0 12px;
   transition: all 0.2s ease;
-  width: 40px;
 }
 
 #tab-presets .preset-manual-toggle-btn:hover,
 #tab-presets .preset-manual-toggle-btn:focus-visible,
-#tab-presets .preset-manual-view-btn:hover,
-#tab-presets .preset-manual-view-btn:focus-visible {
+#tab-presets .preset-manual-edit-btn:hover,
+#tab-presets .preset-manual-edit-btn:focus-visible {
   background: rgba(0, 229, 255, 0.2);
   border-color: #00e5ff;
   color: #ffffff;
   outline: none;
 }
 
-#tab-presets .preset-manual-view-btn:hover,
-#tab-presets .preset-manual-view-btn:focus-visible {
+#tab-presets .preset-manual-edit-btn:hover,
+#tab-presets .preset-manual-edit-btn:focus-visible {
   background: rgba(255, 205, 93, 0.14);
   border-color: rgba(255, 205, 93, 0.45);
   color: #fff1bf;
-}
-
-#tab-presets .preset-manual-view-icon {
-  width: 18px;
-  height: 18px;
 }
 
 #tab-presets .preset-manual-popover {
@@ -4204,7 +4201,7 @@ body.modal-open {
 
 @media (max-width: 840px) {
   #tab-presets .presets-toolbar {
-    grid-template-columns: 40px 40px minmax(0, 1fr);
+    grid-template-columns: 40px 64px minmax(0, 1fr);
   }
 
   #tab-presets .preset-grid {
@@ -4218,7 +4215,7 @@ body.modal-open {
 
 @media (max-width: 600px) {
   #tab-presets .presets-toolbar {
-    grid-template-columns: 40px 40px minmax(0, 1fr);
+    grid-template-columns: 40px 64px minmax(0, 1fr);
   }
 
   #tab-presets .preset-view-switch {
@@ -7284,6 +7281,27 @@ body {
 #preset-edit-modal .preset-edit-close-btn:focus-visible {
   transform: translateY(-1px);
   outline: none;
+}
+
+#preset-edit-modal.is-view-mode .preset-edit-upload-card,
+#preset-edit-modal.is-view-mode .preset-edit-action-row {
+  display: none;
+}
+
+#preset-edit-modal.is-view-mode .preset-edit-input {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--design-foreground);
+  min-height: 32px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#preset-edit-modal.is-view-mode .preset-edit-input:disabled,
+#preset-edit-modal.is-view-mode .preset-edit-input[readonly] {
+  opacity: 1;
+  -webkit-text-fill-color: var(--design-foreground);
 }
 
 #preset-edit-modal .preset-edit-action-icon {

@@ -112,7 +112,7 @@
   const presetDetailEditBtn = document.getElementById('preset-detail-edit-btn');
   const presetDetailEditCancel = document.getElementById('preset-detail-edit-cancel');
   const presetDetailEditImageBtn = document.getElementById('preset-detail-edit-image-btn');
-  const presetDetailToggleBtn = document.getElementById('presets-detail-toggle');
+  const presetDetailToggleBtn = document.getElementById('presets-edit-toggle');
   const presetDetailCategory = document.getElementById('preset-detail-category');
   const presetDetailName = document.getElementById('preset-detail-name');
   const presetDetailMeta = document.getElementById('preset-detail-meta');
@@ -747,12 +747,34 @@
     if (!btnFavoritePresetEdit) return;
     const presetId = currentPresetEditTarget?.id;
     const isFavorite = !!presetId && getFavoriteSet().has(presetId);
-    const isCreateMode = currentPresetEditMode === 'create' || !presetId;
+    const isCreateMode = currentPresetEditMode === 'create' || currentPresetEditMode === 'view' || !presetId;
     btnFavoritePresetEdit.hidden = isCreateMode;
     btnFavoritePresetEdit.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
     btnFavoritePresetEdit.setAttribute('aria-label', isFavorite ? 'お気に入り解除' : 'お気に入り登録');
     btnFavoritePresetEdit.title = isFavorite ? 'お気に入り解除' : 'お気に入り登録';
     btnFavoritePresetEdit.classList.toggle('is-active', isFavorite);
+  };
+
+  const setPresetEditFieldsReadonly = (isReadonly) => {
+    const fields = [
+      presetEditNameInput,
+      presetEditBaseAmountInput,
+      presetEditCaloriesInput,
+      presetEditProteinInput,
+      presetEditFatInput,
+      presetEditCarbsInput,
+      presetEditCategoryInput
+    ];
+    fields.forEach((field) => {
+      if (!field) return;
+      field.readOnly = isReadonly;
+    });
+    if (presetEditServingUnitSelect) {
+      presetEditServingUnitSelect.disabled = isReadonly;
+    }
+    if (presetEditModal) {
+      presetEditModal.classList.toggle('is-view-mode', isReadonly);
+    }
   };
 
   const syncPresetEditPhotoPreview = () => {
@@ -812,10 +834,20 @@
     if (currentPresetEditMode === 'create') {
       presetEditModalTitle.textContent = '定番を新規登録';
       btnDeletePresetEdit.hidden = true;
+      btnSavePresetEdit.hidden = false;
+      setPresetEditFieldsReadonly(false);
+    } else if (currentPresetEditMode === 'view') {
+      const presetName = currentPresetEditTarget?.name || '定番';
+      presetEditModalTitle.textContent = `${presetName} を表示`;
+      btnDeletePresetEdit.hidden = true;
+      btnSavePresetEdit.hidden = true;
+      setPresetEditFieldsReadonly(true);
     } else {
       const presetName = currentPresetEditTarget?.name || '定番';
       presetEditModalTitle.textContent = `${presetName} を編集`;
       btnDeletePresetEdit.hidden = false;
+      btnSavePresetEdit.hidden = false;
+      setPresetEditFieldsReadonly(false);
     }
     syncPresetEditFavoriteButton();
   };
@@ -833,20 +865,22 @@
 
   const openPresetEditModal = (preset, mode = 'edit') => {
     if (!presetEditModal) return;
-    currentPresetEditMode = mode === 'create' ? 'create' : 'edit';
-    currentPresetEditTarget = currentPresetEditMode === 'edit' ? preset || null : null;
+    currentPresetEditMode = mode === 'create' ? 'create' : mode === 'view' ? 'view' : 'edit';
+    currentPresetEditTarget = currentPresetEditMode === 'create' ? null : preset || null;
     selectedPresetEditFile = null;
     presetEditImageMarkedForRemoval = false;
-    presetEditBaseImageUrl = currentPresetEditMode === 'edit' ? getPresetImageUrl(preset?.imageSource, preset?.imageId) : '';
+    presetEditBaseImageUrl = currentPresetEditMode === 'create' ? '' : getPresetImageUrl(preset?.imageSource, preset?.imageId);
     if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
     if (presetEditCameraInput) presetEditCameraInput.value = '';
     if (presetEditGalleryInput) presetEditGalleryInput.value = '';
-    fillPresetEditModalFields(currentPresetEditMode === 'edit' ? preset : null);
+    fillPresetEditModalFields(currentPresetEditMode === 'create' ? null : preset);
     syncPresetEditModalMode();
     syncPresetEditPhotoPreview();
     showModal(presetEditModal);
-    presetEditNameInput?.focus();
-    presetEditNameInput?.select();
+    if (currentPresetEditMode !== 'view') {
+      presetEditNameInput?.focus();
+      presetEditNameInput?.select();
+    }
   };
 
   const closePresetEditModal = () => {
@@ -857,12 +891,14 @@
     presetEditImageMarkedForRemoval = false;
     if (presetEditForm) presetEditForm.reset();
     if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
+    setPresetEditFieldsReadonly(false);
     syncPresetEditPhotoPreview();
     hideModal(presetEditModal);
   };
 
   const savePresetEdit = async () => {
     if (!presetEditModal) return;
+    if (currentPresetEditMode === 'view') return;
     const isCreateMode = currentPresetEditMode === 'create';
     const id = currentPresetEditTarget?.id;
     const name = presetEditNameInput?.value.trim() || '';
@@ -1155,6 +1191,7 @@
 
   if (btnFavoritePresetEdit) {
     btnFavoritePresetEdit.addEventListener('click', async () => {
+      if (currentPresetEditMode === 'view') return;
       if (!currentPresetEditTarget?.id) return;
       togglePresetFavorite(currentPresetEditTarget.id);
       syncPresetEditFavoriteButton();
@@ -1164,6 +1201,7 @@
 
   if (btnDeletePresetEdit) {
     btnDeletePresetEdit.addEventListener('click', async () => {
+      if (currentPresetEditMode === 'view') return;
       if (!currentPresetEditTarget) return;
       await deletePreset(currentPresetEditTarget);
       closePresetEditModal();
@@ -1701,7 +1739,8 @@
   if (presetDetailToggleBtn) {
     presetDetailToggleBtn.addEventListener('click', async () => {
       const preset = getPresetById(selectedPresetId) || loadedPresets[0] || null;
-      await openPresetDetailView(preset);
+      if (!preset) return;
+      await openPresetEditModal(preset, 'edit');
     });
   }
 
@@ -1716,11 +1755,7 @@
     presetDetailEditBtn.addEventListener('click', () => {
       const preset = getPresetById(selectedPresetId);
       if (!preset) return;
-      setPresetPanelMode('detail');
-      setPresetDetailMode('edit');
-      loadPresets();
-      presetDetailEditName?.focus();
-      presetDetailEditName?.select();
+      openPresetEditModal(preset, 'edit');
     });
   }
 
@@ -1745,7 +1780,11 @@
       persistLocalValue('physilog_selected_preset_id', selectedPresetId);
       const preset = getPresetById(nextId);
       if (preset) {
-        await openPresetDetailView(preset);
+        await loadPresets();
+        const refreshedPreset = getPresetById(nextId);
+        if (refreshedPreset) {
+          await openPresetEditModal(refreshedPreset, 'view');
+        }
       }
     });
 
@@ -1772,7 +1811,11 @@
       persistLocalValue('physilog_selected_preset_id', selectedPresetId);
       const preset = getPresetById(nextId);
       if (preset) {
-        await openPresetDetailView(preset);
+        await loadPresets();
+        const refreshedPreset = getPresetById(nextId);
+        if (refreshedPreset) {
+          await openPresetEditModal(refreshedPreset, 'view');
+        }
       }
     });
   }
