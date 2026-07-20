@@ -2070,16 +2070,15 @@ body.modal-open {
 }
 
 .modal-icon-btn {
-  align-items: center;
   appearance: none;
   background: #f7faf8;
   border: 1px solid rgba(0, 229, 255, 0.55);
   border-radius: 10px;
   color: #00e5ff;
   cursor: pointer;
-  display: inline-flex;
+  display: grid;
+  place-items: center;
   height: 56px;
-  justify-content: center;
   min-width: 56px;
   outline: none;
   padding: 0;
@@ -2112,7 +2111,6 @@ body.modal-open {
 
 .modal-preset-btn {
   color: #ff9900;
-  justify-content: center;
 }
 
 .modal-preset-btn:hover,
@@ -2124,7 +2122,6 @@ body.modal-open {
 
 .modal-reanalyze-btn {
   color: #00e5ff;
-  justify-content: center;
 }
 
 .modal-reanalyze-btn:hover {
@@ -2139,11 +2136,10 @@ body.modal-open {
 
 .modal-save-btn {
   color: #00e5ff;
-  justify-content: center;
 }
 
 .modal-save-btn .icon-svg {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .modal-save-btn:hover,
@@ -2155,7 +2151,6 @@ body.modal-open {
 
 .modal-delete-btn {
   color: #c94b6a;
-  justify-content: center;
   margin-left: auto;
 }
 
