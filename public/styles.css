@@ -2062,10 +2062,9 @@ body.modal-open {
 }
 
 .modal-action-row-history {
-  display: grid;
-  grid-template-columns: 56px 56px 56px 1fr 56px;
+  display: flex;
   align-items: center;
-  column-gap: 14px;
+  gap: 14px;
   margin-top: 12px;
   width: 100%;
 }
@@ -2089,7 +2088,6 @@ body.modal-open {
   width: 56px;
   box-sizing: border-box;
   flex: 0 0 56px;
-  justify-self: start;
   line-height: 0;
 }
 
@@ -2153,7 +2151,7 @@ body.modal-open {
 .modal-delete-btn {
   color: #c94b6a;
   justify-content: center;
-  justify-self: end;
+  margin-left: auto;
 }
 
 .modal-delete-btn:hover,
