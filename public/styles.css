@@ -6663,15 +6663,6 @@ body {
   overflow: hidden;
   padding: 0;
 }
-
-#tab-analyze .ai-consultation-history-card .ai-card-fixed-header {
-  padding-bottom: 8px;
-}
-
-#tab-analyze .ai-consultation-history-title {
-  font: 800 14px var(--font-heading);
-}
-
 #tab-analyze .ai-consultation-history-empty {
   background: var(--app-dark-background);
   border: 1px dashed var(--app-dark-border);
@@ -6703,6 +6694,9 @@ body {
   background: var(--app-dark-background);
   color: var(--app-dark-muted);
   font: 800 11px var(--font-heading);
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 10px 12px;
   text-align: left;
 }
