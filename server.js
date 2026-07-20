@@ -456,32 +456,86 @@ async function initDriveHistory() {
 
 // 螻･豁ｴ繝・・繧ｿ繧帝撼蜷梧悄縺ｧ繝ｭ繝ｼ繝峨☆繧矩未謨ｰ
 async function readHistory() {
-  const normalizeHistoryNutrition = (record) => {
-    if (!record || !record.nutrition) return record;
-    const nutrition = record.nutrition;
+  const normalizeHistoryRecord = (record) => {
+    if (!record || typeof record !== 'object') return { record, changed: false };
+
     const toNumber = (value, fallback = 0) => {
       const numeric = Number(value);
       return Number.isFinite(numeric) ? numeric : fallback;
     };
-    nutrition.calories = Math.round(toNumber(nutrition.calories));
-    nutrition.protein = Math.round(toNumber(nutrition.protein) * 10) / 10;
-    nutrition.fat = Math.round(toNumber(nutrition.fat) * 10) / 10;
-    nutrition.carbohydrates = Math.round(toNumber(nutrition.carbohydrates) * 10) / 10;
-    return record;
+    let changed = false;
+    const next = { ...record };
+    if (!next.mealDate && next.date) {
+      next.mealDate = next.date;
+      changed = true;
+    }
+    if (!next.nutrition || typeof next.nutrition !== 'object') {
+      return { record: next, changed };
+    }
+
+    const nutrition = { ...next.nutrition };
+    const normalizedCalories = Math.round(toNumber(nutrition.calories));
+    const normalizedProtein = Math.round(toNumber(nutrition.protein) * 10) / 10;
+    const normalizedFat = Math.round(toNumber(nutrition.fat) * 10) / 10;
+    const normalizedCarbohydrates = Math.round(toNumber(nutrition.carbohydrates) * 10) / 10;
+
+    if (nutrition.calories !== normalizedCalories) {
+      nutrition.calories = normalizedCalories;
+      changed = true;
+    }
+    if (nutrition.protein !== normalizedProtein) {
+      nutrition.protein = normalizedProtein;
+      changed = true;
+    }
+    if (nutrition.fat !== normalizedFat) {
+      nutrition.fat = normalizedFat;
+      changed = true;
+    }
+    if (nutrition.carbohydrates !== normalizedCarbohydrates) {
+      nutrition.carbohydrates = normalizedCarbohydrates;
+      changed = true;
+    }
+
+    next.nutrition = nutrition;
+    return { record: next, changed };
+  };
+
+  const normalizeHistoryCollection = (records) => {
+    if (!Array.isArray(records)) {
+      return { records, changed: false };
+    }
+    let changed = false;
+    const normalized = records.map((record) => {
+      const result = normalizeHistoryRecord(record);
+      if (result.changed) {
+        changed = true;
+      }
+      return result.record;
+    });
+    return { records: normalized, changed };
   };
 
   if (drive && driveHistoryFileId) {
     try {
       const dataText = await readDriveTextFile({ drive, fileId: driveHistoryFileId });
       const parsed = JSON.parse(dataText);
-      return Array.isArray(parsed) ? parsed.map(normalizeHistoryNutrition) : parsed;
+      const normalized = normalizeHistoryCollection(parsed);
+      if (normalized.changed) {
+        await writeHistory(normalized.records);
+      }
+      return normalized.records;
     } catch (err) {
       console.error('Error reading history from Google Drive, trying to re-initialize:', err.message);
       await initDriveHistory(); // 蜀肴､懃ｴ｢繧定ｩｦ縺ｿ繧・
       return [];
     }
   } else {
-    return readJsonFile(HISTORY_FILE, [], value => Array.isArray(value) ? value.map(normalizeHistoryNutrition) : value);
+    const history = readJsonFile(HISTORY_FILE, [], value => Array.isArray(value) ? value : value);
+    const normalized = normalizeHistoryCollection(history);
+    if (normalized.changed) {
+      writeJsonFile(HISTORY_FILE, normalized.records);
+    }
+    return normalized.records;
   }
 }
 
