@@ -501,22 +501,6 @@
       <!-- 固定ヘッダー部 -->
       <div class="modal-header-fixed" style="padding-bottom: 8px;">
         <h3 class="modal-title" id="modal-meal-title" style="margin-bottom: 6px;">食事詳細</h3>
-        
-        <!-- 基本栄養素 (PFC) サマリー (詳細モーダル用チップス) -->
-        <div class="modal-nutrition-chips-wrapper" style="margin-top: 0; margin-bottom: 0;">
-          <div class="modal-nutrition-chip protein">
-            <span class="label">P</span><span id="modal-protein" class="val">0</span>
-          </div>
-          <div class="modal-nutrition-chip fat">
-            <span class="label">F</span><span id="modal-fat" class="val">0</span>
-          </div>
-          <div class="modal-nutrition-chip carbs">
-            <span class="label">C</span><span id="modal-carbs" class="val">0</span>
-          </div>
-          <div class="modal-nutrition-chip calorie">
-            <span id="modal-calories" class="val">0</span> <span class="unit">kcal</span>
-          </div>
-        </div>
       </div>
       
       <!-- スクロール可能なコンテンツ部 -->
@@ -590,18 +574,20 @@
         </div>
 
         <!-- アクションボタン行 -->
-        <div class="modal-action-row" style="display: flex; gap: 8px; width: 100%; margin: 0;">
-          <button type="button" class="btn btn-warning modal-preset-btn" id="btn-preset-modal" style="background: var(--design-card); border: 1.5px solid var(--design-chart-fat); color: var(--design-chart-fat); padding: 10px; font-size: 13px; font-weight: 800; border-radius: 8px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; outline: none; cursor: pointer; transition: all 0.2s; margin: 0;">
-            <svg class="icon-svg" style="width: 15px; height: 15px; color: var(--design-chart-fat); vertical-align: middle; stroke-width: 2.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>定番に登録
+        <div class="modal-action-row modal-action-row-history">
+          <button type="button" class="modal-icon-btn modal-preset-btn" id="btn-preset-modal" aria-label="定番に登録" title="定番に登録">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
           </button>
-          <button type="button" class="btn btn-secondary modal-reanalyze-btn" id="btn-reanalyze-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; margin: 0;">
-            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px; vertical-align: middle;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>再計算
+          <button type="button" class="modal-icon-btn modal-reanalyze-btn" id="btn-reanalyze-modal" aria-label="再計算" title="再計算">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
           </button>
-          <button type="button" class="btn btn-primary modal-save-btn" id="btn-save-modal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; margin: 0;">
-            保存する
+          <button type="button" class="modal-icon-btn modal-save-btn" id="btn-save-modal" aria-label="保存する" title="保存する">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5"></path><path d="M16 3H5a2 2 0 0 0-2 2v16"></path><path d="M7 3v8h8"></path><path d="M9 21V13h6v8"></path></svg>
+          </button>
+          <button type="button" class="modal-icon-btn modal-delete-btn" id="btn-delete-history-modal" aria-label="この履歴を削除" title="この履歴を削除">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 15h10l1-15"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
           </button>
         </div>
-        <button type="button" class="btn modal-history-delete-btn" id="btn-delete-history-modal">この履歴を削除</button>
       </div>
     </div>
   </div>

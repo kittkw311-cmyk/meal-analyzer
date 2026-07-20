@@ -1331,10 +1331,6 @@
     const displayTitle = item.mealName || item.nutrition.mealName || (item.textInput && item.textInput.trim() ? item.textInput.trim() : '食事詳細');
     document.getElementById('modal-meal-title').textContent = displayTitle;
 
-    const caloriesEl = document.getElementById('modal-calories');
-    const proteinEl = document.getElementById('modal-protein');
-    const fatEl = document.getElementById('modal-fat');
-    const carbsEl = document.getElementById('modal-carbs');
     const nutrition = item.nutrition || {};
     const hasNutritionValues = Number.isFinite(Number(nutrition.calories))
       || Number.isFinite(Number(nutrition.protein))
@@ -1342,19 +1338,11 @@
       || Number.isFinite(Number(nutrition.carbohydrates));
 
     if (hasNutritionValues) {
-      caloriesEl.textContent = formatDetailNutritionValue(nutrition.calories, 0);
-      proteinEl.textContent = formatDetailNutritionValue(nutrition.protein, 1);
-      fatEl.textContent = formatDetailNutritionValue(nutrition.fat, 1);
-      carbsEl.textContent = formatDetailNutritionValue(nutrition.carbohydrates, 1);
       if (modalCaloriesInput) modalCaloriesInput.value = formatDetailNutritionValue(nutrition.calories, 0);
       if (modalProteinInput) modalProteinInput.value = formatDetailNutritionValue(nutrition.protein, 1);
       if (modalFatInput) modalFatInput.value = formatDetailNutritionValue(nutrition.fat, 1);
       if (modalCarbsInput) modalCarbsInput.value = formatDetailNutritionValue(nutrition.carbohydrates, 1);
     } else {
-      caloriesEl.textContent = '--';
-      proteinEl.textContent = '--';
-      fatEl.textContent = '--';
-      carbsEl.textContent = '--';
       if (modalCaloriesInput) modalCaloriesInput.value = '';
       if (modalProteinInput) modalProteinInput.value = '';
       if (modalFatInput) modalFatInput.value = '';
@@ -1363,10 +1351,10 @@
 
     if (item.status === 'failed') {
       btnReanalyzeModal.classList.add('pulse-highlight');
-      btnReanalyzeModal.innerHTML = '✨ AI解析を再実行（再計算）';
+      btnReanalyzeModal.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path><path d="M12 8v4l3 2"></path></svg>';
     } else {
       btnReanalyzeModal.classList.remove('pulse-highlight');
-      btnReanalyzeModal.innerHTML = '🔄 再計算する';
+      btnReanalyzeModal.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>';
     }
     
     const modalInference = document.getElementById('modal-inference');
@@ -2569,13 +2557,9 @@
       // モーダル内の表示値をリアルタイムで上書き（アニメーション反映）
       activeDetailMeal = updatedRecord;
       btnReanalyzeModal.classList.remove('pulse-highlight');
-      btnReanalyzeModal.innerHTML = '🔄 再計算する';
+      btnReanalyzeModal.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>';
 
       document.getElementById('modal-meal-title').textContent = updatedRecord.mealName || updatedRecord.textInput || '食事詳細';
-      document.getElementById('modal-calories').textContent = formatDetailNutritionValue(updatedRecord.nutrition.calories, 0);
-      document.getElementById('modal-protein').textContent = formatDetailNutritionValue(updatedRecord.nutrition.protein, 1);
-      document.getElementById('modal-fat').textContent = formatDetailNutritionValue(updatedRecord.nutrition.fat, 1);
-      document.getElementById('modal-carbs').textContent = formatDetailNutritionValue(updatedRecord.nutrition.carbohydrates, 1);
       if (modalCaloriesInput) modalCaloriesInput.value = formatDetailNutritionValue(updatedRecord.nutrition.calories, 0);
       if (modalProteinInput) modalProteinInput.value = formatDetailNutritionValue(updatedRecord.nutrition.protein, 1);
       if (modalFatInput) modalFatInput.value = formatDetailNutritionValue(updatedRecord.nutrition.fat, 1);
