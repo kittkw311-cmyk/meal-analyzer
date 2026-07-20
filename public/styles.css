@@ -1864,14 +1864,6 @@ body.modal-open {
   background-color: #fff;
 }
 
-.modal-save-btn {
-  margin-top: 14px;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(156, 212, 176, 0.25);
-}
-
 /* ==========================================================================
    History V3 (Image-style Inline PFC and Calorie Box Layout)
    ========================================================================== */
@@ -2073,26 +2065,27 @@ body.modal-open {
   appearance: none;
   background: #f7faf8;
   border: 1px solid rgba(0, 229, 255, 0.55);
-  border-radius: 10px;
+  border-radius: 4px;
   color: #00e5ff;
   cursor: pointer;
-  display: grid;
-  place-items: center;
-  height: 56px;
-  min-width: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
   outline: none;
   padding: 0;
   position: relative;
   transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
-  width: 56px;
+  width: 28px;
   box-sizing: border-box;
-  flex: 0 0 56px;
+  flex: 0 0 28px;
   line-height: 0;
 }
 
 .modal-icon-btn .icon-svg {
-  width: 22px;
-  height: 22px;
+  width: 14px;
+  height: 14px;
   flex: 0 0 auto;
   display: block;
 }
@@ -3588,9 +3581,9 @@ body.modal-open {
 }
 
 /* 履歴モーダル定番ボタンホバー */
-#btn-preset-modal:hover {
-  background: #fff3cd !important;
-  border-color: #ffe082 !important;
+#history-detail-modal #btn-preset-modal:hover {
+  background: #fff3cd;
+  border-color: #ffe082;
 }
 
 #tab-presets .presets-toolbar-wrap {
@@ -6320,36 +6313,37 @@ body {
   color: var(--design-accent);
 }
 
-.modal-reanalyze-btn,
-.modal-save-btn {
-  border-radius: 4px !important;
+#history-detail-modal .modal-reanalyze-btn,
+#history-detail-modal .modal-save-btn {
+  border-radius: 4px;
 }
 
-.modal-reanalyze-btn {
-  background: var(--design-background) !important;
-  border: 1px solid var(--design-accent) !important;
-  color: var(--design-accent) !important;
+#history-detail-modal .modal-reanalyze-btn {
+  background: var(--design-background);
+  border: 1px solid var(--design-accent);
+  color: var(--design-accent);
 }
 
-.modal-save-btn {
-  background: var(--design-primary) !important;
-  border: 1px solid var(--design-accent) !important;
-  color: var(--design-foreground) !important;
+#history-detail-modal .modal-save-btn {
+  background: var(--design-primary);
+  border: 1px solid var(--design-accent);
+  color: var(--design-foreground);
+  box-shadow: none;
 }
 
-.modal-history-delete-btn {
-  background: transparent !important;
-  border: 1px solid var(--design-danger) !important;
-  border-radius: 4px !important;
-  color: var(--design-danger) !important;
+#ai-consultation-modal .modal-history-delete-btn {
+  background: transparent;
+  border: 1px solid var(--design-danger);
+  border-radius: 4px;
+  color: var(--design-danger);
   font-size: 12px;
   font-weight: 800;
   min-height: 32px;
   width: 100%;
 }
 
-.modal-history-delete-btn:hover {
-  background: color-mix(in srgb, var(--design-danger) 8%, transparent) !important;
+#ai-consultation-modal .modal-history-delete-btn:hover {
+  background: color-mix(in srgb, var(--design-danger) 8%, transparent);
 }
 
 .modal-body-scrollable::-webkit-scrollbar-track {
