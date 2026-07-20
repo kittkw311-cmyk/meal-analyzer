@@ -1436,6 +1436,28 @@
     return 'snack';
   }
 
+  function getCurrentJstTimeParts() {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Tokyo',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date());
+    const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return {
+      hour: String(Number(map.hour || 0)).padStart(2, '0'),
+      minute: String(Number(map.minute || 0)).padStart(2, '0'),
+      second: String(Number(map.second || 0)).padStart(2, '0'),
+    };
+  }
+
+  function buildMealDateFromDateInput(dateValue) {
+    if (!dateValue) return new Date().toISOString();
+    const { hour, minute, second } = getCurrentJstTimeParts();
+    return `${dateValue}T${hour}:${minute}:${second}+09:00`;
+  }
+
   function validateMealInputs() {
     const hasImage = !!selectedMealFile;
     const hasText = mealTextInput && mealTextInput.value.trim().length > 0;
@@ -3326,7 +3348,7 @@
         analyzeFormData.append('image', selectedMealFile);
       }
       analyzeFormData.append('textInput', mealTextInput?.value || '');
-      analyzeFormData.append('mealDate', mealDateInput?.value || '');
+      analyzeFormData.append('mealDate', buildMealDateFromDateInput(mealDateInput?.value || ''));
       analyzeFormData.append('mealType', activeMealType || 'snack');
 
       try {

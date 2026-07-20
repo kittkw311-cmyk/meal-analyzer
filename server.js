@@ -134,6 +134,42 @@ function getJstDateParts(dateLike) {
   };
 }
 
+function getJstTimeParts(dateLike) {
+  const date = new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return { hour: 0, minute: 0, second: 0 };
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return {
+    hour: Number(map.hour || 0),
+    minute: Number(map.minute || 0),
+    second: Number(map.second || 0),
+  };
+}
+
+function buildJstDateTimeIso(dateKey, fallbackDate = new Date()) {
+  const match = typeof dateKey === 'string' ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null;
+  if (!match) return fallbackDate.toISOString();
+  const { hour, minute, second } = getJstTimeParts(fallbackDate);
+  return `${match[1]}-${match[2]}-${match[3]}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}+09:00`;
+}
+
+function normalizeMealDateInput(mealDate, fallbackDate = new Date()) {
+  if (typeof mealDate !== 'string') return fallbackDate.toISOString();
+  const trimmed = mealDate.trim();
+  if (!trimmed) return fallbackDate.toISOString();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return buildJstDateTimeIso(trimmed, fallbackDate);
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? fallbackDate.toISOString() : parsed.toISOString();
+}
+
 function formatJstDateLabel(dateKey) {
   const match = typeof dateKey === 'string' ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null;
   if (!match) return '';
@@ -801,7 +837,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: '画像か補足テキストのいずれかを入力してください。' });
     }
 
-    const mealDate = req.body.mealDate ? new Date(req.body.mealDate).toISOString() : new Date().toISOString();
+    const mealDate = normalizeMealDateInput(req.body.mealDate, new Date());
     const mealType = req.body.mealType || 'snack';
     const contents = [];
     if (req.file) {
@@ -1120,7 +1156,7 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
     let imageSource = '';
     let imageId = '';
 
-    const mealDateParsed = mealDate ? new Date(mealDate).toISOString() : new Date().toISOString();
+    const mealDateParsed = normalizeMealDateInput(mealDate, new Date());
     const actualMealType = mealType || 'snack';
     let presetMaster = null;
     if (presetId) {
