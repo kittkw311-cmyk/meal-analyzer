@@ -106,81 +106,7 @@
         </div>
       </section>
 
-      <!-- 5. 情報タブ -->
-      <section id="tab-stats" class="tab-content">
-        <div class="card profile-goal-card">
-          <div class="profile-settings-sections">
-            <section class="profile-settings-section">
-              <h3>基本情報</h3>
-              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
-                <tr><th scope="row"><label for="profile-height-input">身長 (cm)</label></th><td><input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0"></td></tr>
-                <tr><th scope="row"><label for="profile-gender-select">性別</label></th><td><select id="profile-gender-select">
-                <option value="">未設定</option>
-                <option value="male">男性</option>
-                <option value="female">女性</option>
-                <option value="other">その他</option>
-              </select></td></tr>
-                <tr><th scope="row"><label for="profile-birth-date-input">生年月日</label></th><td><div class="profile-birthdate-value"><input type="date" id="profile-birth-date-input"><output id="profile-age-output" class="profile-age-output">-- 歳</output></div></td></tr>
-              </tbody></table>
-            </section>
-
-            <section class="profile-settings-section">
-              <h3>活動情報</h3>
-              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
-                <tr><th scope="row"><label for="profile-activity-select">活動量</label></th><td><select id="profile-activity-select">
-                <option value="low">低め</option>
-                <option value="normal">標準</option>
-                <option value="high">高め</option>
-              </select></td></tr>
-                <tr class="profile-activity-notes-row"><th scope="row"><label for="profile-activity-notes-input">活動量の補足</label></th><td><textarea id="profile-activity-notes-input" rows="3" maxlength="500" placeholder="例：週3回ジム、平日はデスクワーク"></textarea></td></tr>
-              </tbody></table>
-            </section>
-
-            <section class="profile-settings-section">
-              <h3>目標設定</h3>
-              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
-                <tr><th scope="row"><label for="profile-target-weight-input">目標体重 (kg)</label></th><td><input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0"></td></tr>
-                <tr><th scope="row"><label for="profile-target-date-input">目標期限</label></th><td><input type="date" id="profile-target-date-input"></td></tr>
-              </tbody></table>
-            </section>
-          </div>
-        </div>
-      </section>
-
-      <!-- 2. AIタブ -->
-      <section id="tab-analyze" class="tab-content">
-        <div class="ai-tab-layout">
-          <div class="ai-consultation-panel">
-            <div class="ai-consultation-title-row">
-              <h3 class="overview-ai-consultation-title">AIに相談</h3>
-            </div>
-            <div class="ai-card-scroll-body">
-              <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
-              <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
-            </div>
-          </div>
-          <div class="card ai-consultation-history-card">
-            <div class="ai-card-scroll-body ai-consultation-history-scroll">
-              <div id="ai-consultation-history-empty" class="ai-consultation-history-empty">
-                まだ質問履歴がありません。
-              </div>
-              <div class="ai-consultation-history-table-wrapper">
-                <table class="ai-consultation-history-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">日時</th>
-                      <th scope="col">質問内容</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ai-consultation-history-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 4. 履歴タブ -->
+      <!-- 2. 記録タブ -->
       <section id="tab-history" class="tab-content">
         <div class="history-quick-actions">
           <button type="button" class="history-quick-action-btn" id="btn-open-meal-entry">メニュー登録</button>
@@ -200,7 +126,7 @@
         </div>
       </section>
 
-      <!-- 5. 定番タブ -->
+      <!-- 3. 定番タブ -->
       <section id="tab-presets" class="tab-content">
         <div class="preset-compare-shell">
           <div class="presets-toolbar-wrap">
@@ -358,6 +284,80 @@
           </section>
         </div>
       </section>
+
+      <!-- 4. AIタブ -->
+      <section id="tab-analyze" class="tab-content">
+        <div class="ai-tab-layout">
+          <div class="ai-consultation-panel">
+            <div class="ai-consultation-title-row">
+              <h3 class="overview-ai-consultation-title">AIに相談</h3>
+            </div>
+            <div class="ai-card-scroll-body">
+              <textarea id="overview-ai-question" class="overview-ai-question" rows="3" maxlength="500" placeholder="例：今の状況であずきバーを食べていい？"></textarea>
+              <button type="button" id="btn-overview-ai-consultation" class="btn overview-ai-consultation-button">質問する</button>
+            </div>
+          </div>
+          <div class="card ai-consultation-history-card">
+            <div class="ai-card-scroll-body ai-consultation-history-scroll">
+              <div id="ai-consultation-history-empty" class="ai-consultation-history-empty">
+                まだ質問履歴がありません。
+              </div>
+              <div class="ai-consultation-history-table-wrapper">
+                <table class="ai-consultation-history-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">日時</th>
+                      <th scope="col">質問内容</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ai-consultation-history-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. 情報タブ -->
+      <section id="tab-stats" class="tab-content">
+        <div class="card profile-goal-card">
+          <div class="profile-settings-sections">
+            <section class="profile-settings-section">
+              <h3>基本情報</h3>
+              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
+                <tr><th scope="row"><label for="profile-height-input">身長 (cm)</label></th><td><input type="number" step="0.1" min="0" id="profile-height-input" placeholder="170.0"></td></tr>
+                <tr><th scope="row"><label for="profile-gender-select">性別</label></th><td><select id="profile-gender-select">
+                <option value="">未設定</option>
+                <option value="male">男性</option>
+                <option value="female">女性</option>
+                <option value="other">その他</option>
+              </select></td></tr>
+                <tr><th scope="row"><label for="profile-birth-date-input">生年月日</label></th><td><div class="profile-birthdate-value"><input type="date" id="profile-birth-date-input"><output id="profile-age-output" class="profile-age-output">-- 歳</output></div></td></tr>
+              </tbody></table>
+            </section>
+
+            <section class="profile-settings-section">
+              <h3>活動情報</h3>
+              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
+                <tr><th scope="row"><label for="profile-activity-select">活動量</label></th><td><select id="profile-activity-select">
+                <option value="low">低め</option>
+                <option value="normal">標準</option>
+                <option value="high">高め</option>
+              </select></td></tr>
+                <tr class="profile-activity-notes-row"><th scope="row"><label for="profile-activity-notes-input">活動量の補足</label></th><td><textarea id="profile-activity-notes-input" rows="3" maxlength="500" placeholder="例：週3回ジム、平日はデスクワーク"></textarea></td></tr>
+              </tbody></table>
+            </section>
+
+            <section class="profile-settings-section">
+              <h3>目標設定</h3>
+              <table class="profile-settings-table"><thead><tr><th>項目名</th><th>設定値</th></tr></thead><tbody>
+                <tr><th scope="row"><label for="profile-target-weight-input">目標体重 (kg)</label></th><td><input type="number" step="0.1" min="0" id="profile-target-weight-input" placeholder="65.0"></td></tr>
+                <tr><th scope="row"><label for="profile-target-date-input">目標期限</label></th><td><input type="date" id="profile-target-date-input"></td></tr>
+              </tbody></table>
+            </section>
+          </div>
+        </div>
+      </section>
     </main>
 
     <div class="modal-overlay" id="meal-analysis-modal" style="display: none;">
@@ -471,21 +471,21 @@
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg></span>
         <span class="nav-label">総合</span>
       </button>
-      <button class="nav-item" data-tab="tab-analyze">
-        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
-        <span class="nav-label">AI</span>
-      </button>
       <button class="nav-item" data-tab="tab-history">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v8c0 1.1.9 2 2 2h3Zm0 0v5"/></svg></span>
-        <span class="nav-label">食事</span>
-      </button>
-      <button class="nav-item" data-tab="tab-stats">
-        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
-        <span class="nav-label">情報</span>
+        <span class="nav-label">記録</span>
       </button>
       <button class="nav-item" data-tab="tab-presets">
         <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
         <span class="nav-label">定番</span>
+      </button>
+      <button class="nav-item" data-tab="tab-analyze">
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l1.2 3.2L13 8.4l-2.8 1.2L9 13l-1.2-3.4L5 8.4l2.8-1.2L9 4Z"/><path d="M17 7l.9 2.1L20 10l-2.1.9L17 13l-.9-2.1L14 10l2.1-.9L17 7Z"/><path d="M14 14l1.1 2.9L18 18l-2.9 1.1L14 22l-1.1-2.9L10 18l2.9-1.1L14 14Z"/></svg></span>
+        <span class="nav-label">AI</span>
+      </button>
+      <button class="nav-item" data-tab="tab-stats">
+        <span class="nav-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+        <span class="nav-label">情報</span>
       </button>
     </nav>
   </div>

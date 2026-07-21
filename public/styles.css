@@ -1969,10 +1969,10 @@ body.modal-open {
   padding: 8px 10px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: var(--design-background);
   font-family: var(--font-sans);
   font-size: 12px;
-  color: var(--text-main);
+  color: var(--design-foreground);
   outline: none;
   transition: var(--transition);
   resize: none;
@@ -1980,9 +1980,8 @@ body.modal-open {
 
 .modal-text-edit-block .modal-textarea:focus {
   border-color: var(--primary);
-  background-color: #fff;
+  background-color: var(--design-background);
 }
-
 .modal-nutrition-edit-block {
   display: flex;
   flex-direction: column;
@@ -5410,6 +5409,12 @@ body {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  width: 100%;
+}
+#tab-history .history-summary-load-more-sentinel {
+  height: 1px;
+  min-height: 1px;
+  pointer-events: none;
   width: 100%;
 }
 
