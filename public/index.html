@@ -132,7 +132,9 @@
           <div class="presets-toolbar-wrap">
             <div class="presets-toolbar card">
               <button type="button" id="presets-manual-toggle" class="preset-manual-toggle-btn" aria-label="定番を新規登録">＋</button>
-              <input type="search" id="preset-search-input" class="preset-search-input" placeholder="定番を検索">
+              <select id="preset-category-filter" class="preset-category-filter" aria-label="カテゴリで絞り込み">
+                <option value="all">すべてのカテゴリ</option>
+              </select>
               <select id="preset-sort-select" class="preset-sort-select" aria-label="定番の並び替え">
                 <option value="newest">登録が新しい順</option>
                 <option value="recent">最近使った順</option>

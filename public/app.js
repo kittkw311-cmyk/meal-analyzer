@@ -99,7 +99,7 @@
   const btnCloseMealAnalysisModal = document.getElementById('btn-close-meal-analysis-modal');
   
   // Presets Elements
-  const presetSearchInput = document.getElementById('preset-search-input');
+  const presetCategoryFilter = document.getElementById('preset-category-filter');
   const presetSortSelect = document.getElementById('preset-sort-select');
   const presetViewChips = document.querySelectorAll('.preset-view-chip');
   const presetWorkbench = document.querySelector('.preset-workbench');
@@ -168,6 +168,7 @@
   let currentPresetEditTarget = null;
   let currentPresetEditMode = 'edit';
   let presetViewMode = localStorage.getItem('preset_view_mode') || 'recent';
+  let presetCategoryFilterValue = localStorage.getItem('physilog_preset_category_filter') || 'all';
   let selectedPresetId = localStorage.getItem('physilog_selected_preset_id') || '';
   let presetDetailMode = localStorage.getItem('physilog_preset_detail_mode') === 'edit' ? 'edit' : 'view';
   let presetPanelMode = localStorage.getItem('physilog_preset_panel_mode') === 'detail' ? 'detail' : 'list';
@@ -175,6 +176,7 @@
   const PRESET_USAGE_KEY = 'physilog_preset_usage';
   const PRESET_LAST_USED_KEY = 'physilog_preset_last_used';
   const PRESET_EXPANDED_KEY = 'physilog_preset_expanded_cards';
+  const PRESET_CATEGORY_FILTER_KEY = 'physilog_preset_category_filter';
   const PRESET_DETAIL_MODE_KEY = 'physilog_preset_detail_mode';
   const PRESET_PANEL_MODE_KEY = 'physilog_preset_panel_mode';
 
@@ -194,7 +196,7 @@
   }
 
   const getPresetViewModel = (presets) => {
-    const searchTerm = (presetSearchInput?.value || '').trim().toLowerCase();
+    const categoryFilter = `${presetCategoryFilter?.value || presetCategoryFilterValue || 'all'}`.trim() || 'all';
     const sortMode = presetSortSelect?.value || 'newest';
     const favoriteSet = getFavoriteSet();
     const usageMap = getUsageMap();
@@ -209,20 +211,7 @@
       usageCount: Number(usageMap[preset.id] || 0),
       lastUsedAt: Number(lastUsedMap[preset.id] || 0),
       registrationKey: getPresetRegistrationKey(preset, index),
-    })).filter(preset => {
-      if (!searchTerm) return true;
-      const haystack = [
-        preset.name,
-        preset.category,
-        preset.calories,
-        preset.protein,
-        preset.fat,
-        preset.carbohydrates,
-        preset.baseAmount,
-        preset.servingUnit,
-      ].join(' ').toLowerCase();
-      return haystack.includes(searchTerm);
-    });
+    })).filter((preset) => categoryFilter === 'all' || preset.category === categoryFilter);
 
     const compareBySortMode = (a, b) => {
       if (sortMode === 'name') {
@@ -263,7 +252,7 @@
 
     return {
       enrichedPresets,
-      searchTerm,
+      categoryFilter,
       sortMode,
       expandedSet,
       compareBySortMode,
@@ -1541,6 +1530,12 @@
   const getUsageMap = () => storageJson(PRESET_USAGE_KEY, {});
   const getLastUsedMap = () => storageJson(PRESET_LAST_USED_KEY, {});
   const getExpandedSet = () => new Set(storageJson(PRESET_EXPANDED_KEY, []));
+  const escapeHtml = (value) => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 
   const togglePresetFavorite = (id) => {
     const favoriteSet = getFavoriteSet();
@@ -1733,8 +1728,10 @@
   const getPresetLastUsedAt = (id) => Number(getLastUsedMap()[id] || 0);
   const isPresetFavorite = (id) => getFavoriteSet().has(id);
 
-  if (presetSearchInput) {
-    presetSearchInput.addEventListener('input', () => {
+  if (presetCategoryFilter) {
+    presetCategoryFilter.addEventListener('change', () => {
+      presetCategoryFilterValue = presetCategoryFilter.value || 'all';
+      persistLocalValue(PRESET_CATEGORY_FILTER_KEY, presetCategoryFilterValue);
       loadPresets();
     });
   }
@@ -2011,8 +2008,37 @@
       const presets = await response.json();
       loadedPresets = Array.isArray(presets) ? presets : [];
 
+      const basePresetCategories = loadedPresets
+        .map((preset) => `${preset.category || ''}`.trim() || inferPresetCategory(preset))
+        .filter(Boolean);
+      const categorySet = new Set(basePresetCategories);
+      const categoryItems = Array.from(categorySet).sort((a, b) => {
+        const aRank = categoryOrder.indexOf(a);
+        const bRank = categoryOrder.indexOf(b);
+        if (aRank !== -1 || bRank !== -1) {
+          if (aRank === -1) return 1;
+          if (bRank === -1) return -1;
+          if (aRank !== bRank) return aRank - bRank;
+        }
+        return `${a}`.localeCompare(`${b}`, 'ja');
+      });
+
+      if (presetCategoryFilter) {
+        const normalizedFilter = categorySet.has(presetCategoryFilterValue) ? presetCategoryFilterValue : 'all';
+        if (normalizedFilter !== presetCategoryFilterValue) {
+          presetCategoryFilterValue = normalizedFilter;
+          persistLocalValue(PRESET_CATEGORY_FILTER_KEY, presetCategoryFilterValue);
+        }
+        const categoryOptions = [
+          '<option value="all">すべてのカテゴリ</option>',
+          ...categoryItems.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`),
+        ];
+        presetCategoryFilter.innerHTML = categoryOptions.join('');
+        presetCategoryFilter.value = presetCategoryFilterValue;
+      }
+
       const viewModel = getPresetViewModel(loadedPresets);
-      const { enrichedPresets, viewItems, searchTerm } = viewModel;
+      const { enrichedPresets, viewItems, categoryFilter } = viewModel;
 
       if (presetViewChips.length) {
         presetViewChips.forEach(chip => {
@@ -2026,8 +2052,8 @@
 
       const emptyMessage = presetViewMode === 'favorites'
         ? 'お気に入りの定番はまだありません。星を付けるとここに集まります。'
-        : searchTerm
-          ? '検索条件に一致する定番メニューがありません。'
+        : categoryFilter && categoryFilter !== 'all'
+          ? '選択したカテゴリに一致する定番メニューがありません。'
           : '条件に合う定番メニューがありません。';
 
       const selectedPreset = viewItems.length

@@ -3599,7 +3599,7 @@ body.modal-open {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: 40px minmax(0, 1fr) minmax(130px, 180px);
+  grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr);
   padding: 12px;
   background: linear-gradient(180deg, #18313f, #142733);
   border: 1px solid #2a475b;
@@ -3643,7 +3643,7 @@ body.modal-open {
   height: 18px;
 }
 
-#tab-presets .preset-search-input,
+#tab-presets .preset-category-filter,
 #tab-presets .preset-sort-select {
   background: #10202c;
   border: 1px solid #2b4558;
@@ -3657,10 +3657,7 @@ body.modal-open {
   box-sizing: border-box;
 }
 
-#tab-presets .preset-search-input::placeholder {
-  color: #aab9c6;
-  font-weight: 700;
-}
+
 
 #tab-presets .preset-view-switch {
   display: none;
@@ -4294,8 +4291,9 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
 
+  #tab-presets .preset-category-filter,
   #tab-presets .preset-sort-select {
-    grid-column: 3;
+    grid-column: 2;
   }
 }
 
