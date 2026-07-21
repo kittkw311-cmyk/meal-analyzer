@@ -2108,6 +2108,9 @@
     if (historySummaryState?.observer) {
       historySummaryState.observer.disconnect();
     }
+    if (historySummaryState?.scrollRoot && historySummaryState?.scrollHandler) {
+      historySummaryState.scrollRoot.removeEventListener('scroll', historySummaryState.scrollHandler);
+    }
     historySummaryState = null;
   }
 
@@ -2361,6 +2364,9 @@
 
     if (!state.hasMore) {
       state.observer?.disconnect();
+      if (state.scrollRoot && state.scrollHandler) {
+        state.scrollRoot.removeEventListener('scroll', state.scrollHandler);
+      }
       state.sentinel?.remove();
       state.sentinel = null;
     }
@@ -2369,6 +2375,18 @@
   function observeHistorySummaryLoadMore() {
     const state = historySummaryState;
     if (!state || !state.hasMore || !state.sentinel || !state.scrollRoot) return;
+
+    const handleScroll = () => {
+      if (!historySummaryState || historySummaryState.isLoading || !historySummaryState.hasMore) return;
+      const scrollRoot = historySummaryState.scrollRoot;
+      const remaining = scrollRoot.scrollHeight - scrollRoot.scrollTop - scrollRoot.clientHeight;
+      if (remaining <= 160) {
+        appendNextHistorySummaryBatch();
+      }
+    };
+
+    state.scrollHandler = handleScroll;
+    state.scrollRoot.addEventListener('scroll', handleScroll, { passive: true });
 
     state.observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) {
@@ -2379,6 +2397,8 @@
       rootMargin: '160px 0px',
     });
     state.observer.observe(state.sentinel);
+
+    handleScroll();
   }
 
   // ==========================================================================
