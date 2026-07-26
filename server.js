@@ -792,7 +792,8 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
 縲径dvice縲阪↓縺ｯ縲∫ｮ｡逅・・､雁｣ｫ縺ｨ縺励※縺ｮ蜆ｪ縺励￥荳∝ｯｧ縺ｪ譌･譛ｬ隱槭い繝峨ヰ繧､繧ｹ・育ｮ・擅譖ｸ縺阪・菴ｿ繧上★縲∬・辟ｶ縺ｪ譁・ｫ縺ｧ驕ｩ蠎ｦ縺ｫ謾ｹ陦後ｒ蜈･繧後◆繧ゅ・・峨ｒ蛻・屬縺励※蜃ｺ蜉帙＠縺ｦ縺上□縺輔＞縲・
 `;
 
-    const contents = [];
+    let imageBuffer = null;
+    let imageMimeType = 'image/jpeg';
     if (record.imageId) {
       try {
         if (record.imageSource === 'drive') {
@@ -805,16 +806,11 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
           localDir: UPLOADS_DIR,
         });
         if (storedImage) {
-          const imageMimeType = storedImage.mimeType || 'image/jpeg';
+          imageBuffer = storedImage.buffer;
+          imageMimeType = storedImage.mimeType || 'image/jpeg';
           if (record.imageSource === 'drive') {
             console.log('Successfully downloaded image from Google Drive.');
           }
-          contents.push({
-            inlineData: {
-              mimeType: imageMimeType,
-              data: storedImage.buffer.toString('base64'),
-            },
-          });
         }
       } catch (err) {
         if (record.imageSource === 'drive') {
@@ -823,7 +819,11 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
       }
     }
 
-    contents.push(promptInstruction);
+    const contents = buildGeminiUserContents({
+      text: promptInstruction,
+      imageBuffer,
+      mimeType: imageMimeType,
+    });
 
     // Gemini 2.5 Flash 縺ｧ隗｣譫撰ｼ域ｧ矩蛹褒SON蜃ｺ蜉幢ｼ・
     const response = await ai.models.generateContent({
@@ -893,19 +893,10 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
     const mealDate = normalizeMealDateInput(req.body.mealDate, new Date());
     const mealType = req.body.mealType || 'snack';
-    const contents = [];
-    if (req.file) {
-      contents.push({
-        inlineData: {
-          mimeType: req.file.mimetype,
-          data: req.file.buffer.toString('base64'),
-        },
-      });
-    }
-    contents.push(`画像${req.file ? 'と補足メモ' : 'なしの補足メモ'}をもとに、食事名と栄養推定を日本語でJSONのみで返してください。
+    const promptText = `画像${req.file ? 'と補足メモ' : 'なしの補足メモ'}をもとに、食事名と栄養推定を日本語でJSONのみで返してください。
 ${req.file ? '画像から読み取れる範囲で、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。' : '補足メモから料理内容を推定し、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。'}
 推定は見た目の量や一般的なレシピを基にして構いません。
-${textInput ? `補足メモ: ${textInput}` : ''}`);
+${textInput ? `補足メモ: ${textInput}` : ''}`;
 
     let nutritionData = null;
     let isFailed = false;
@@ -914,7 +905,11 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`);
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents,
+        contents: buildGeminiUserContents({
+          text: promptText,
+          imageBuffer: req.file?.buffer || null,
+          mimeType: req.file?.mimetype || 'image/jpeg',
+        }),
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -1546,16 +1541,11 @@ app.post('/api/body-composition/analyze', upload.single('image'), async (req, re
 - 縺ｩ縺・＠縺ｦ繧ら判蜒上ｄ繝・く繧ｹ繝医°繧芽ｪｭ縺ｿ蜿悶ｌ縺ｪ縺・・岼縺後≠繧句ｴ蜷医・縲√◎縺ｮ鬆・岼繧・null 縺ｨ縺励※縺上□縺輔＞縲・
 `;
     
-    const contents = [];
-    if (req.file) {
-      contents.push({
-        inlineData: {
-          mimeType: req.file.mimetype,
-          data: req.file.buffer.toString('base64'),
-        }
-      });
-    }
-    contents.push(promptInstruction);
+    const contents = buildGeminiUserContents({
+      text: promptInstruction,
+      imageBuffer: req.file?.buffer || null,
+      mimeType: req.file?.mimetype || 'image/jpeg',
+    });
     
     const result = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -1924,6 +1914,22 @@ function sortBodyCompositionRecords(weightHistory) {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
       return dateDiff || (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
     });
+}
+
+function buildGeminiUserContents({ text, imageBuffer, mimeType }) {
+  const parts = [];
+  if (typeof text === 'string' && text.trim()) {
+    parts.push({ text });
+  }
+  if (imageBuffer) {
+    parts.push({
+      inlineData: {
+        mimeType: mimeType || 'image/jpeg',
+        data: imageBuffer.toString('base64'),
+      },
+    });
+  }
+  return [{ role: 'user', parts }];
 }
 
 function groupMealEntriesByType(meals) {
