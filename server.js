@@ -38,6 +38,14 @@ const INDEX_HTML_TEMPLATE = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
 // JSON繝代・繧ｵ繝ｼ縺ｨ髱咏噪繝輔ぃ繧､繝ｫ驟堺ｿ｡縺ｮ險ｭ螳・
 app.use(express.json());
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on('finish', () => {
+    const durationMs = Date.now() - startedAt;
+    console.log(`[HTTP] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${durationMs}ms)`);
+  });
+  next();
+});
 app.use('/api', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Pragma', 'no-cache');
