@@ -519,6 +519,10 @@ async function ensureDriveHistoryInitialized() {
 
 // 螻･豁ｴ繝・・繧ｿ繧帝撼蜷梧悄縺ｧ繝ｭ繝ｼ繝峨☆繧矩未謨ｰ
 async function readHistory() {
+  if (drive && folderId && !driveHistoryFileId) {
+    await ensureDriveHistoryInitialized();
+  }
+
   const normalizeHistoryRecord = (record) => {
     if (!record || typeof record !== 'object') return { record, changed: false };
 
