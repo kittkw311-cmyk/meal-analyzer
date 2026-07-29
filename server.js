@@ -55,6 +55,13 @@ app.use((req, res, next) => {
 app.get(['/', '/index.html'], (req, res) => {
   res.type('html').send(INDEX_HTML_TEMPLATE.replaceAll('__ASSET_VERSION__', ASSET_VERSION));
 });
+app.get('/healthz', (req, res) => {
+  res.status(200).json({
+    ok: true,
+    status: 'healthy',
+    uptimeSeconds: Math.round(process.uptime()),
+  });
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 繝・・繧ｿ菫晏ｭ倡畑繝・ぅ繝ｬ繧ｯ繝医Μ縺ｮ蛻晄悄蛹・(繝ｭ繝ｼ繧ｫ繝ｫ逕ｨ)
@@ -316,6 +323,12 @@ let drivePresetsFileId = null;
 let driveProfileFileId = null;
 let driveAiConsultationsFileId = null;
 let driveConsultationPromptFileId = null;
+let driveProfileInitPromise = null;
+let driveWeightInitPromise = null;
+let driveHistoryInitPromise = null;
+let drivePresetsInitPromise = null;
+let driveAiConsultationsInitPromise = null;
+let driveConsultationPromptInitPromise = null;
 
 async function initDriveProfile() {
   if (!drive || !folderId) return;
@@ -341,7 +354,21 @@ async function initDriveProfile() {
   }
 }
 
+async function ensureDriveProfileInitialized() {
+  if (!drive || !folderId) return;
+  if (driveProfileFileId) return;
+  if (!driveProfileInitPromise) {
+    driveProfileInitPromise = initDriveProfile().finally(() => {
+      driveProfileInitPromise = null;
+    });
+  }
+  await driveProfileInitPromise;
+}
+
 async function readProfile() {
+  if (drive && folderId && !driveProfileFileId) {
+    await ensureDriveProfileInitialized();
+  }
   if (drive && driveProfileFileId) {
     try {
       const res = await drive.files.get(
@@ -364,8 +391,8 @@ async function writeProfile(profile) {
   const next = { ...DEFAULT_PROFILE, ...profile };
   writeLocalProfile(next);
 
-  if (drive && !driveProfileFileId) {
-    await initDriveProfile();
+  if (drive && folderId && !driveProfileFileId) {
+    await ensureDriveProfileInitialized();
   }
 
   if (drive && driveProfileFileId) {
@@ -401,15 +428,29 @@ async function initDriveWeight() {
   }
 }
 
+async function ensureDriveWeightInitialized() {
+  if (!drive || !folderId) return;
+  if (driveWeightFileId) return;
+  if (!driveWeightInitPromise) {
+    driveWeightInitPromise = initDriveWeight().finally(() => {
+      driveWeightInitPromise = null;
+    });
+  }
+  await driveWeightInitPromise;
+}
+
 // 菴鍋ｵ・・繝・・繧ｿ繧偵Ο繝ｼ繝峨☆繧矩未謨ｰ
 async function readWeight() {
+  if (drive && folderId && !driveWeightFileId) {
+    await ensureDriveWeightInitialized();
+  }
   if (drive && driveWeightFileId) {
     try {
       const dataText = await readDriveTextFile({ drive, fileId: driveWeightFileId });
       return JSON.parse(dataText);
     } catch (err) {
       console.error('Error reading weight history from Google Drive, trying to re-initialize:', err.message);
-      await initDriveWeight();
+      await ensureDriveWeightInitialized();
       return [];
     }
   } else {
@@ -419,6 +460,9 @@ async function readWeight() {
 
 // 菴鍋ｵ・・繝・・繧ｿ繧呈嶌縺崎ｾｼ繧髢｢謨ｰ
 async function writeWeight(weightHistory) {
+  if (drive && folderId && !driveWeightFileId) {
+    await ensureDriveWeightInitialized();
+  }
   if (drive && driveWeightFileId) {
     try {
       await writeDriveTextFile({
@@ -452,6 +496,17 @@ async function initDriveHistory() {
   } catch (err) {
     console.error('Failed to initialize Google Drive history file:', err.message);
   }
+}
+
+async function ensureDriveHistoryInitialized() {
+  if (!drive || !folderId) return;
+  if (driveHistoryFileId) return;
+  if (!driveHistoryInitPromise) {
+    driveHistoryInitPromise = initDriveHistory().finally(() => {
+      driveHistoryInitPromise = null;
+    });
+  }
+  await driveHistoryInitPromise;
 }
 
 // 螻･豁ｴ繝・・繧ｿ繧帝撼蜷梧悄縺ｧ繝ｭ繝ｼ繝峨☆繧矩未謨ｰ
@@ -526,7 +581,7 @@ async function readHistory() {
       return normalized.records;
     } catch (err) {
       console.error('Error reading history from Google Drive, trying to re-initialize:', err.message);
-      await initDriveHistory(); // 蜀肴､懃ｴ｢繧定ｩｦ縺ｿ繧・
+      await ensureDriveHistoryInitialized();
       return [];
     }
   } else {
@@ -540,6 +595,9 @@ async function readHistory() {
 }
 
 async function writeHistory(history) {
+  if (drive && folderId && !driveHistoryFileId) {
+    await ensureDriveHistoryInitialized();
+  }
   if (drive && driveHistoryFileId) {
     try {
       await writeDriveTextFile({
@@ -575,15 +633,29 @@ async function initDrivePresets() {
   }
 }
 
+async function ensureDrivePresetsInitialized() {
+  if (!drive || !folderId) return;
+  if (drivePresetsFileId) return;
+  if (!drivePresetsInitPromise) {
+    drivePresetsInitPromise = initDrivePresets().finally(() => {
+      drivePresetsInitPromise = null;
+    });
+  }
+  await drivePresetsInitPromise;
+}
+
 // 螳夂分繝｡繝九Η繝ｼ繝・・繧ｿ繧偵Ο繝ｼ繝峨☆繧矩未謨ｰ
 async function readPresets() {
+  if (drive && folderId && !drivePresetsFileId) {
+    await ensureDrivePresetsInitialized();
+  }
   if (drive && drivePresetsFileId) {
     try {
       const dataText = await readDriveTextFile({ drive, fileId: drivePresetsFileId });
       return JSON.parse(dataText);
     } catch (err) {
       console.error('Error reading presets from Google Drive, trying to re-initialize:', err.message);
-      await initDrivePresets();
+      await ensureDrivePresetsInitialized();
       return [];
     }
   } else {
@@ -593,6 +665,9 @@ async function readPresets() {
 
 // 螳夂分繝｡繝九Η繝ｼ繝・・繧ｿ繧呈嶌縺崎ｾｼ繧髢｢謨ｰ
 async function writePresets(presets) {
+  if (drive && folderId && !drivePresetsFileId) {
+    await ensureDrivePresetsInitialized();
+  }
   if (drive && drivePresetsFileId) {
     try {
       await writeDriveTextFile({
@@ -1791,7 +1866,21 @@ async function initDriveAiConsultations() {
   }
 }
 
+async function ensureDriveAiConsultationsInitialized() {
+  if (!drive || !folderId) return;
+  if (driveAiConsultationsFileId) return;
+  if (!driveAiConsultationsInitPromise) {
+    driveAiConsultationsInitPromise = initDriveAiConsultations().finally(() => {
+      driveAiConsultationsInitPromise = null;
+    });
+  }
+  await driveAiConsultationsInitPromise;
+}
+
 async function readAiConsultations() {
+  if (drive && folderId && !driveAiConsultationsFileId) {
+    await ensureDriveAiConsultationsInitialized();
+  }
   if (drive && driveAiConsultationsFileId) {
     const text = await readDriveTextFile({ drive, fileId: driveAiConsultationsFileId });
     return JSON.parse(text || '[]');
@@ -1801,7 +1890,7 @@ async function readAiConsultations() {
 
 async function writeAiConsultations(data) {
   const json = JSON.stringify(data, null, 2);
-  if (drive && folderId && !driveAiConsultationsFileId) await initDriveAiConsultations();
+  if (drive && folderId && !driveAiConsultationsFileId) await ensureDriveAiConsultationsInitialized();
   if (drive && driveAiConsultationsFileId) {
     await writeDriveTextFile({
       drive,
@@ -1871,7 +1960,21 @@ async function initDriveConsultationPrompt() {
   }
 }
 
+async function ensureDriveConsultationPromptInitialized() {
+  if (!drive || !folderId) return;
+  if (driveConsultationPromptFileId) return;
+  if (!driveConsultationPromptInitPromise) {
+    driveConsultationPromptInitPromise = initDriveConsultationPrompt().finally(() => {
+      driveConsultationPromptInitPromise = null;
+    });
+  }
+  await driveConsultationPromptInitPromise;
+}
+
 async function readConsultationPromptTemplate() {
+  if (drive && folderId && !driveConsultationPromptFileId) {
+    await ensureDriveConsultationPromptInitialized();
+  }
   if (drive && driveConsultationPromptFileId) {
     try {
       const text = await readDriveTextFile({ drive, fileId: driveConsultationPromptFileId });
@@ -2236,18 +2339,18 @@ app.post('/api/ai-consultation', async (req, res) => {
   }
 });
 
+async function bootstrapDriveResources() {
+  return;
+}
+
 // 繧ｵ繝ｼ繝舌・襍ｷ蜍募・逅・
 (async () => {
-  if (drive && folderId) {
-    await initDriveProfile();
-    await initDriveHistory();
-    await initDriveWeight();
-    await initDrivePresets();
-    await initDriveConsultationPrompt();
-    await initDriveAiConsultations();
-  }
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
+  });
+
+  bootstrapDriveResources().catch(err => {
+    console.error('Drive resource bootstrap failed:', err);
   });
 })();
 
