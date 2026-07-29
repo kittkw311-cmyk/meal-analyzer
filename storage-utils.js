@@ -2,6 +2,27 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
+const DEFAULT_DRIVE_TIMEOUT_MS = 15000;
+
+function getDriveTimeoutMs() {
+  const parsed = Number(process.env.GOOGLE_DRIVE_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DRIVE_TIMEOUT_MS;
+}
+
+function withTimeout(promise, label, timeoutMs = getDriveTimeoutMs()) {
+  let timerId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([
+    Promise.resolve(promise).finally(() => clearTimeout(timerId)),
+    timeoutPromise,
+  ]);
+}
+
 function cloneValue(value) {
   if (value === undefined) return undefined;
   return JSON.parse(JSON.stringify(value));
@@ -69,16 +90,16 @@ function toReadableBody(content) {
 
 export async function findDriveFileByName({ drive, folderId, fileName }) {
   if (!drive || !folderId) return null;
-  const result = await drive.files.list({
+  const result = await withTimeout(drive.files.list({
     q: `name = '${escapeDriveQueryValue(fileName)}' and '${folderId}' in parents and trashed = false`,
     fields: 'files(id)',
     spaces: 'drive',
-  });
+  }), `Drive lookup for ${fileName}`);
   return result.data.files?.[0]?.id || null;
 }
 
 export async function createDriveFile({ drive, folderId, fileName, mimeType, body }) {
-  const result = await drive.files.create({
+  const result = await withTimeout(drive.files.create({
     requestBody: {
       name: fileName,
       parents: [folderId],
@@ -89,7 +110,7 @@ export async function createDriveFile({ drive, folderId, fileName, mimeType, bod
       body: toReadableBody(body),
     },
     fields: 'id',
-  });
+  }), `Drive create for ${fileName}`);
   return result.data.id;
 }
 
@@ -103,21 +124,21 @@ export async function ensureDriveFileByName({ drive, folderId, fileName, mimeTyp
 }
 
 export async function readDriveTextFile({ drive, fileId }) {
-  const result = await drive.files.get(
+  const result = await withTimeout(drive.files.get(
     { fileId, alt: 'media' },
     { responseType: 'text' }
-  );
+  ), `Drive read for ${fileId}`);
   return typeof result.data === 'string' ? result.data : String(result.data || '');
 }
 
 export async function writeDriveTextFile({ drive, fileId, mimeType, body }) {
-  await drive.files.update({
+  await withTimeout(drive.files.update({
     fileId,
     media: {
       mimeType,
       body: toReadableBody(body),
     },
-  });
+  }), `Drive write for ${fileId}`);
 }
 
 export function getMimeTypeFromFilePath(filePath, fallback = 'image/jpeg') {
@@ -132,12 +153,12 @@ export async function readStoredImage({ drive, imageSource, imageId, localDir })
   if (!imageSource || !imageId) return null;
 
   if (imageSource === 'drive' && drive) {
-    const meta = await drive.files.get({ fileId: imageId, fields: 'mimeType' });
+    const meta = await withTimeout(drive.files.get({ fileId: imageId, fields: 'mimeType' }), `Drive image meta for ${imageId}`);
     const mimeType = meta.data.mimeType || 'image/jpeg';
-    const driveResponse = await drive.files.get(
+    const driveResponse = await withTimeout(drive.files.get(
       { fileId: imageId, alt: 'media' },
       { responseType: 'stream' }
-    );
+    ), `Drive image read for ${imageId}`);
     const chunks = [];
     for await (const chunk of driveResponse.data) {
       chunks.push(chunk);
@@ -202,7 +223,7 @@ export async function deleteStoredFile({
   if (!imageSource || !imageId) return false;
 
   if (imageSource === 'drive' && drive) {
-    await drive.files.delete({ fileId: imageId });
+    await withTimeout(drive.files.delete({ fileId: imageId }), `Drive delete for ${imageId}`);
     return true;
   }
 

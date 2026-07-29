@@ -455,11 +455,13 @@ async function readWeight() {
   if (drive && driveWeightFileId) {
     try {
       const dataText = await readDriveTextFile({ drive, fileId: driveWeightFileId });
-      return JSON.parse(dataText);
+      const weightHistory = JSON.parse(dataText);
+      writeJsonFile(WEIGHT_FILE, weightHistory);
+      return weightHistory;
     } catch (err) {
       console.error('Error reading weight history from Google Drive, trying to re-initialize:', err.message);
       await ensureDriveWeightInitialized();
-      return [];
+      return readJsonFile(WEIGHT_FILE, []);
     }
   } else {
     return readJsonFile(WEIGHT_FILE, []);
@@ -468,6 +470,7 @@ async function readWeight() {
 
 // 菴鍋ｵ・・繝・・繧ｿ繧呈嶌縺崎ｾｼ繧髢｢謨ｰ
 async function writeWeight(weightHistory) {
+  writeJsonFile(WEIGHT_FILE, weightHistory);
   if (drive && folderId && !driveWeightFileId) {
     await ensureDriveWeightInitialized();
   }
@@ -590,11 +593,17 @@ async function readHistory() {
       if (normalized.changed) {
         await writeHistory(normalized.records);
       }
+      writeJsonFile(HISTORY_FILE, normalized.records);
       return normalized.records;
     } catch (err) {
       console.error('Error reading history from Google Drive, trying to re-initialize:', err.message);
       await ensureDriveHistoryInitialized();
-      return [];
+      const localHistory = readJsonFile(HISTORY_FILE, [], value => Array.isArray(value) ? value : value);
+      const normalized = normalizeHistoryCollection(localHistory);
+      if (normalized.changed) {
+        writeJsonFile(HISTORY_FILE, normalized.records);
+      }
+      return normalized.records;
     }
   } else {
     const history = readJsonFile(HISTORY_FILE, [], value => Array.isArray(value) ? value : value);
@@ -607,6 +616,7 @@ async function readHistory() {
 }
 
 async function writeHistory(history) {
+  writeJsonFile(HISTORY_FILE, history);
   if (drive && folderId && !driveHistoryFileId) {
     await ensureDriveHistoryInitialized();
   }
@@ -664,11 +674,13 @@ async function readPresets() {
   if (drive && drivePresetsFileId) {
     try {
       const dataText = await readDriveTextFile({ drive, fileId: drivePresetsFileId });
-      return JSON.parse(dataText);
+      const presets = JSON.parse(dataText);
+      writeJsonFile(PRESETS_FILE, presets);
+      return presets;
     } catch (err) {
       console.error('Error reading presets from Google Drive, trying to re-initialize:', err.message);
       await ensureDrivePresetsInitialized();
-      return [];
+      return readJsonFile(PRESETS_FILE, []);
     }
   } else {
     return readJsonFile(PRESETS_FILE, []);
@@ -677,6 +689,7 @@ async function readPresets() {
 
 // 螳夂分繝｡繝九Η繝ｼ繝・・繧ｿ繧呈嶌縺崎ｾｼ繧髢｢謨ｰ
 async function writePresets(presets) {
+  writeJsonFile(PRESETS_FILE, presets);
   if (drive && folderId && !drivePresetsFileId) {
     await ensureDrivePresetsInitialized();
   }
@@ -1895,13 +1908,16 @@ async function readAiConsultations() {
   }
   if (drive && driveAiConsultationsFileId) {
     const text = await readDriveTextFile({ drive, fileId: driveAiConsultationsFileId });
-    return JSON.parse(text || '[]');
+    const consultations = JSON.parse(text || '[]');
+    writeJsonFile(AI_CONSULTATIONS_FILE, consultations);
+    return consultations;
   }
   return readJsonFile(AI_CONSULTATIONS_FILE, []);
 }
 
 async function writeAiConsultations(data) {
   const json = JSON.stringify(data, null, 2);
+  writeJsonFile(AI_CONSULTATIONS_FILE, data);
   if (drive && folderId && !driveAiConsultationsFileId) await ensureDriveAiConsultationsInitialized();
   if (drive && driveAiConsultationsFileId) {
     await writeDriveTextFile({
@@ -1990,6 +2006,7 @@ async function readConsultationPromptTemplate() {
   if (drive && driveConsultationPromptFileId) {
     try {
       const text = await readDriveTextFile({ drive, fileId: driveConsultationPromptFileId });
+      writeTextFile(AI_PROMPT_FILE, text);
       return text.trim() || DEFAULT_CONSULTATION_PROMPT_TEMPLATE;
     } catch (err) {
       console.error('Error reading ai_prompt.txt from Drive:', err.message);
