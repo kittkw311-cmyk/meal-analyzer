@@ -744,6 +744,39 @@ async function storePresetImage(file, filenamePrefix) {
   });
 }
 
+function normalizePresetNutritionExtractionResult(rawResult) {
+  const toText = (value, fallback = '') => {
+    if (typeof value === 'string') return value.trim();
+    if (value === null || value === undefined) return fallback;
+    return String(value).trim();
+  };
+  const toPositiveNumber = (value, fallback, decimals = 1) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue) || numericValue <= 0) return fallback;
+    const factor = 10 ** decimals;
+    return Math.round(numericValue * factor) / factor;
+  };
+  const toNonNegativeNumber = (value, fallback, decimals = 1) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue) || numericValue < 0) return fallback;
+    const factor = 10 ** decimals;
+    return Math.round(numericValue * factor) / factor;
+  };
+
+  const servingUnit = toText(rawResult?.servingUnit, 'g') === '個' ? '個' : 'g';
+  return {
+    name: toText(rawResult?.name, '成分表から自動入力した定番').slice(0, 25),
+    baseAmount: toPositiveNumber(rawResult?.baseAmount, 100, 1),
+    servingUnit,
+    calories: Math.round(toNonNegativeNumber(rawResult?.calories, 0, 0)),
+    protein: toNonNegativeNumber(rawResult?.protein, 0, 1),
+    fat: toNonNegativeNumber(rawResult?.fat, 0, 1),
+    carbohydrates: toNonNegativeNumber(rawResult?.carbohydrates, 0, 1),
+    category: toText(rawResult?.category, '').slice(0, 30),
+    inference: toText(rawResult?.inference, ''),
+  };
+}
+
 async function deletePresetImage(imageSource, imageId) {
   if (!imageSource || !imageId) return;
   try {
@@ -1201,6 +1234,66 @@ app.post('/api/presets', upload.single('image'), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: '定番メニューの保存に失敗しました。' });
+  }
+});
+
+app.post('/api/presets/extract-nutrition', upload.single('file'), async (req, res) => {
+  try {
+    if (!ai) {
+      return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: '成分表の画像またはファイルを選択してください。' });
+    }
+
+    const fileMimeType = req.file.mimetype || 'image/jpeg';
+    const promptText = `
+商品の成分表示、栄養成分表、またはその写り込みから、定番メニュー登録用の値をJSONのみで返してください。
+画像に書かれている内容をできるだけ正確に読み取り、推測は最小限にしてください。
+読み取れた場合は、商品名やメニュー名を name に入れてください。登録しやすいように25文字以内に要約して構いません。
+栄養値は表示されている基準量あたりの値をそのまま返してください。
+基準量が読める場合は baseAmount と servingUnit に反映してください。読めない場合は baseAmount=100、servingUnit="g" を既定値にしてください。
+カテゴリが推測できる場合は category に入れてください。なければ空文字で構いません。
+根拠は inference に短くまとめてください。
+文字が小さい場合も拡大して読み取ってください。
+`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: buildGeminiUserContents({
+        text: promptText,
+        imageBuffer: req.file.buffer,
+        mimeType: fileMimeType,
+      }),
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING, description: '商品名またはメニュー名。25文字以内で要約してください。' },
+            baseAmount: { type: Type.NUMBER, description: '基準量。' },
+            servingUnit: { type: Type.STRING, description: '基準量の単位。g または 個。' },
+            calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
+            protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
+            fat: { type: Type.NUMBER, description: '脂質 (g)' },
+            carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
+            category: { type: Type.STRING, description: 'カテゴリ' },
+            inference: { type: Type.STRING, description: '読み取った根拠。短く具体的に。' },
+          },
+          required: ['name', 'baseAmount', 'servingUnit', 'calories', 'protein', 'fat', 'carbohydrates', 'category', 'inference'],
+        },
+      },
+    });
+
+    const rawText = response.text;
+    console.log('Preset nutrition extraction raw response:', rawText);
+    const parsed = JSON.parse(rawText);
+    const normalized = normalizePresetNutritionExtractionResult(parsed);
+    res.json(normalized);
+  } catch (err) {
+    console.error('Preset nutrition extraction error:', err);
+    const statusCode = err.status || err.statusCode || 500;
+    res.status(statusCode).json({ error: '成分表の読み取りに失敗しました。' + (err.message ? ` ${err.message}` : '') });
   }
 });
 

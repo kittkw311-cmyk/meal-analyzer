@@ -628,11 +628,13 @@
   const presetEditGalleryInput = document.getElementById('preset-edit-gallery-input');
   const btnPresetEditCameraTrigger = document.getElementById('btn-preset-edit-camera-trigger');
   const btnPresetEditGalleryTrigger = document.getElementById('btn-preset-edit-gallery-trigger');
+  const btnPresetEditImportTrigger = document.getElementById('btn-preset-edit-import-trigger');
   const presetEditPreviewContainer = document.getElementById('preset-edit-preview-container');
   const presetEditPhotoPreviewImage = document.getElementById('preset-edit-photo-preview-image');
   const btnRemovePresetEditImage = document.getElementById('btn-remove-preset-edit-image');
   const presetEditUploadBadge = document.getElementById('preset-edit-upload-badge');
   const btnClearPresetEditBadge = document.getElementById('btn-clear-preset-edit-badge');
+  const presetEditImportInput = document.getElementById('preset-edit-import-input');
   const presetEditBaseAmountInput = document.getElementById('preset-edit-base-amount');
   const presetEditServingUnitSelect = document.getElementById('preset-edit-serving-unit');
   const presetEditCaloriesInput = document.getElementById('preset-edit-calories');
@@ -797,6 +799,7 @@
 
     selectedPresetEditFile = file;
     presetEditImageMarkedForRemoval = false;
+    if (presetEditImportInput) presetEditImportInput.value = '';
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -813,6 +816,7 @@
     presetEditImageMarkedForRemoval = removeExisting;
     if (presetEditCameraInput) presetEditCameraInput.value = '';
     if (presetEditGalleryInput) presetEditGalleryInput.value = '';
+    if (presetEditImportInput) presetEditImportInput.value = '';
     if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
     if (presetEditImageMarkedForRemoval) {
       updatePresetEditPhotoPreview('');
@@ -858,6 +862,98 @@
     if (presetEditCategoryInput) presetEditCategoryInput.value = getPresetEditCategoryValue(preset);
   };
 
+  const applyPresetEditExtractionResult = (result) => {
+    if (!result || typeof result !== 'object') return;
+    if (presetEditNameInput && typeof result.name === 'string' && result.name.trim()) {
+      presetEditNameInput.value = result.name.trim();
+    }
+    if (presetEditBaseAmountInput && Number.isFinite(Number(result.baseAmount)) && Number(result.baseAmount) > 0) {
+      presetEditBaseAmountInput.value = getPresetEditDisplayValue(result.baseAmount, 1) || '1.0';
+    }
+    if (presetEditServingUnitSelect && (result.servingUnit === 'g' || result.servingUnit === '個')) {
+      presetEditServingUnitSelect.value = result.servingUnit;
+    }
+    if (presetEditCaloriesInput && Number.isFinite(Number(result.calories)) && Number(result.calories) >= 0) {
+      presetEditCaloriesInput.value = getPresetEditDisplayValue(result.calories, 0) || '0';
+    }
+    if (presetEditProteinInput && Number.isFinite(Number(result.protein)) && Number(result.protein) >= 0) {
+      presetEditProteinInput.value = getPresetEditDisplayValue(result.protein, 1) || '0.0';
+    }
+    if (presetEditFatInput && Number.isFinite(Number(result.fat)) && Number(result.fat) >= 0) {
+      presetEditFatInput.value = getPresetEditDisplayValue(result.fat, 1) || '0.0';
+    }
+    if (presetEditCarbsInput && Number.isFinite(Number(result.carbohydrates)) && Number(result.carbohydrates) >= 0) {
+      presetEditCarbsInput.value = getPresetEditDisplayValue(result.carbohydrates, 1) || '0.0';
+    }
+    if (presetEditCategoryInput && typeof result.category === 'string' && result.category.trim()) {
+      presetEditCategoryInput.value = result.category.trim();
+    }
+  };
+
+  const analyzePresetNutritionFile = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください。');
+      return;
+    }
+
+    const loadingTextEl = loadingOverlay.querySelector('p');
+    const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
+    const previousLoadingText = loadingTextEl.textContent;
+    const previousLoadingSubText = loadingSubTextEl.textContent;
+    loadingTextEl.textContent = '成分表を読み取っています...';
+    loadingSubTextEl.textContent = '数値欄へ反映中';
+    loadingOverlay.style.display = 'flex';
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/presets/extract-nutrition', {
+        method: 'POST',
+        body: formData,
+      });
+      const contentType = response.headers.get('content-type') || '';
+      const payload = contentType.includes('application/json') ? await response.json() : {};
+      if (!response.ok) {
+        throw new Error(payload.error || '成分表の読み取りに失敗しました。');
+      }
+
+      applyPresetEditExtractionResult(payload);
+
+      if (file.type.startsWith('image/')) {
+        selectedPresetEditFile = file;
+        presetEditImageMarkedForRemoval = false;
+        if (presetEditCameraInput) presetEditCameraInput.value = '';
+        if (presetEditGalleryInput) presetEditGalleryInput.value = '';
+        if (presetEditImportInput) presetEditImportInput.value = '';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            updatePresetEditPhotoPreview(String(e.target.result));
+          }
+          if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'inline-flex';
+        };
+        reader.readAsDataURL(file);
+      } else if (presetEditImportInput) {
+        presetEditImportInput.value = '';
+      }
+
+      if (payload?.inference) {
+        alert(`成分表を読み取りました。\n${payload.inference}`);
+      } else {
+        alert('成分表を読み取りました。');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('成分表の読み取りに失敗しました。\n詳細: ' + (err.message || ''));
+    } finally {
+      loadingTextEl.textContent = previousLoadingText;
+      loadingSubTextEl.textContent = previousLoadingSubText;
+      loadingOverlay.style.display = 'none';
+    }
+  };
+
   const openPresetEditModal = (preset, mode = 'edit') => {
     if (!presetEditModal) return;
     currentPresetEditMode = mode === 'create' ? 'create' : mode === 'view' ? 'view' : 'edit';
@@ -868,6 +964,7 @@
     if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
     if (presetEditCameraInput) presetEditCameraInput.value = '';
     if (presetEditGalleryInput) presetEditGalleryInput.value = '';
+    if (presetEditImportInput) presetEditImportInput.value = '';
     fillPresetEditModalFields(currentPresetEditMode === 'create' ? null : preset);
     syncPresetEditModalMode();
     syncPresetEditPhotoPreview();
@@ -886,6 +983,7 @@
     presetEditImageMarkedForRemoval = false;
     if (presetEditForm) presetEditForm.reset();
     if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'none';
+    if (presetEditImportInput) presetEditImportInput.value = '';
     setPresetEditFieldsReadonly(false);
     syncPresetEditPhotoPreview();
     hideModal(presetEditModal);
@@ -1222,12 +1320,30 @@
     btnPresetEditGalleryTrigger.addEventListener('click', () => presetEditGalleryInput.click());
   }
 
+  if (btnPresetEditImportTrigger && presetEditImportInput) {
+    btnPresetEditImportTrigger.addEventListener('click', () => {
+      if (selectedPresetEditFile) {
+        analyzePresetNutritionFile(selectedPresetEditFile);
+        return;
+      }
+      presetEditImportInput.click();
+    });
+  }
+
   if (presetEditCameraInput) {
     presetEditCameraInput.addEventListener('change', (event) => handlePresetEditFileSelect(event.target.files[0]));
   }
 
   if (presetEditGalleryInput) {
     presetEditGalleryInput.addEventListener('change', (event) => handlePresetEditFileSelect(event.target.files[0]));
+  }
+
+  if (presetEditImportInput) {
+    presetEditImportInput.addEventListener('change', async () => {
+      const file = presetEditImportInput.files?.[0];
+      if (!file) return;
+      await analyzePresetNutritionFile(file);
+    });
   }
 
   if (btnRemovePresetEditImage) {
