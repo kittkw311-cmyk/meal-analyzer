@@ -809,6 +809,8 @@
       if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'inline-flex';
     };
     reader.readAsDataURL(file);
+
+    void analyzePresetNutritionFile(file);
   };
 
   const clearPresetEditSelectedPhoto = ({ removeExisting = false } = {}) => {
@@ -862,6 +864,28 @@
     if (presetEditCategoryInput) presetEditCategoryInput.value = getPresetEditCategoryValue(preset);
   };
 
+  const hasPresetEditOverwriteCandidate = () => {
+    const name = presetEditNameInput?.value.trim() || '';
+    const baseAmount = presetEditBaseAmountInput?.value?.trim() || '';
+    const servingUnit = presetEditServingUnitSelect?.value || '個';
+    const calories = presetEditCaloriesInput?.value?.trim() || '';
+    const protein = presetEditProteinInput?.value?.trim() || '';
+    const fat = presetEditFatInput?.value?.trim() || '';
+    const carbohydrates = presetEditCarbsInput?.value?.trim() || '';
+    const category = presetEditCategoryInput?.value.trim() || '';
+
+    return !!(
+      (name && name !== (currentPresetEditTarget?.name || '')) ||
+      (baseAmount && baseAmount !== '1.0') ||
+      servingUnit !== '個' ||
+      (calories && calories !== '0') ||
+      (protein && protein !== '0.0') ||
+      (fat && fat !== '0.0') ||
+      (carbohydrates && carbohydrates !== '0.0') ||
+      category
+    );
+  };
+
   const applyPresetEditExtractionResult = (result) => {
     if (!result || typeof result !== 'object') return;
     if (presetEditNameInput && typeof result.name === 'string' && result.name.trim()) {
@@ -890,6 +914,12 @@
     }
   };
 
+  const confirmPresetEditOverwrite = () => {
+    const targetName = currentPresetEditTarget?.name || '定番メニュー';
+    if (!hasPresetEditOverwriteCandidate()) return true;
+    return confirm(`「${targetName}」の入力内容を成分表の読み取り結果で上書きしますか？`);
+  };
+
   const analyzePresetNutritionFile = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -916,6 +946,10 @@
       const payload = contentType.includes('application/json') ? await response.json() : {};
       if (!response.ok) {
         throw new Error(payload.error || '成分表の読み取りに失敗しました。');
+      }
+
+      if (!confirmPresetEditOverwrite()) {
+        return;
       }
 
       applyPresetEditExtractionResult(payload);
