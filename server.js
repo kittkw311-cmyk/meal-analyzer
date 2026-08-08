@@ -1026,46 +1026,70 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
     const mealDate = normalizeMealDateInput(req.body.mealDate, new Date());
     const mealType = req.body.mealType || 'snack';
-    const promptText = `画像${req.file ? 'と補足メモ' : 'なしの補足メモ'}をもとに、食事名と栄養推定を日本語でJSONのみで返してください。
-${req.file ? '画像から読み取れる範囲で、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。' : '補足メモから料理内容を推定し、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。'}
-推定は見た目の量や一般的なレシピを基にして構いません。
-${textInput ? `補足メモ: ${textInput}` : ''}`;
-
     let nutritionData = null;
     let isFailed = false;
     let analysisErrorMsg = '';
 
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: buildGeminiUserContents({
-          text: promptText,
-          imageBuffer: req.file?.buffer || null,
-          mimeType: req.file?.mimetype || 'image/jpeg',
-        }),
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              mealName: { type: Type.STRING, description: '食事のメニュー名。25文字以内で要約してください。' },
-              calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
-              protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
-              fat: { type: Type.NUMBER, description: '脂質 (g)' },
-              carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
-              inference: { type: Type.STRING, description: '食事画像の解析結果と栄養計算の根拠。短く具体的に。' },
-              advice: { type: Type.STRING, description: '食事内容に基づく、簡潔で実行しやすいアドバイス。' }
-            },
-            required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
-          }
+    if (!req.file && textInput) {
+      try {
+        const officialMeal = await resolveMealNutritionFromOfficialSources(textInput);
+        if (officialMeal) {
+          nutritionData = {
+            mealName: officialMeal.mealName,
+            calories: officialMeal.calories,
+            protein: officialMeal.protein,
+            fat: officialMeal.fat,
+            carbohydrates: officialMeal.carbohydrates,
+            inference: officialMeal.inference,
+            advice: '公式サイトの栄養情報を優先して記録しました。',
+            sourceTitle: officialMeal.sourceTitle,
+            sourceUrl: officialMeal.sourceUrl,
+            lookupMode: 'official',
+          };
         }
-      });
+      } catch (err) {
+        console.error('Official meal lookup failed, falling back to Gemini estimate:', err);
+      }
+    }
 
-      nutritionData = JSON.parse(response.text);
-    } catch (err) {
-      console.error('Gemini analysis error during meal analyze:', err);
-      analysisErrorMsg = err.message || 'AI解析中にエラーが発生しました。';
-      isFailed = true;
+    if (!nutritionData) {
+      const promptText = `画像${req.file ? 'と補足メモ' : 'なしの補足メモ'}をもとに、食事名と栄養推定を日本語でJSONのみで返してください。
+${req.file ? '画像から読み取れる範囲で、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。' : '補足メモから料理内容を推定し、料理名、カロリー、タンパク質、脂質、炭水化物、根拠、ひとことアドバイスを出力してください。'}
+推定は見た目の量や一般的なレシピを基にして構いません。
+${textInput ? `補足メモ: ${textInput}` : ''}`;
+
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: buildGeminiUserContents({
+            text: promptText,
+            imageBuffer: req.file?.buffer || null,
+            mimeType: req.file?.mimetype || 'image/jpeg',
+          }),
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                mealName: { type: Type.STRING, description: '食事のメニュー名。25文字以内で要約してください。' },
+                calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
+                protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
+                fat: { type: Type.NUMBER, description: '脂質 (g)' },
+                carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
+                inference: { type: Type.STRING, description: '食事画像の解析結果と栄養計算の根拠。短く具体的に。' },
+                advice: { type: Type.STRING, description: '食事内容に基づく、簡潔で実行しやすいアドバイス。' }
+              },
+              required: ['mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'inference', 'advice']
+            }
+          }
+        });
+
+        nutritionData = JSON.parse(response.text);
+      } catch (err) {
+        console.error('Gemini analysis error during meal analyze:', err);
+        analysisErrorMsg = err.message || 'AI解析中にエラーが発生しました。';
+        isFailed = true;
+      }
     }
 
     let imageSource = '';
@@ -1119,6 +1143,9 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`;
           ? `AI解析に失敗しました。\n\n詳細: ${analysisErrorMsg}\n\n画像を見直してもう一度お試しください。`
           : nutritionData.inference,
         advice: isFailed ? 'AI解析に失敗したため、画像を見直して再度お試しください。' : nutritionData.advice,
+        sourceTitle: nutritionData?.sourceTitle || '',
+        sourceUrl: nutritionData?.sourceUrl || '',
+        lookupMode: nutritionData?.lookupMode || (req.file ? 'image-ai' : 'text-ai'),
       }
     };
 
@@ -2155,6 +2182,361 @@ function buildGeminiUserContents({ text, imageBuffer, mimeType }) {
     });
   }
   return [{ role: 'user', parts }];
+}
+
+function decodeHtmlEntities(text) {
+  if (typeof text !== 'string' || !text) return '';
+  const namedEntities = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    apos: '\'',
+    nbsp: ' ',
+  };
+  return text
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(Number.parseInt(hex, 16)))
+    .replace(/&([a-zA-Z]+);/g, (_, entity) => namedEntities[entity] || `&${entity};`);
+}
+
+function stripHtmlToText(html) {
+  if (typeof html !== 'string') return '';
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+}
+
+function truncateText(text, maxLength) {
+  if (typeof text !== 'string') return '';
+  if (!Number.isFinite(maxLength) || maxLength <= 0 || text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}…`;
+}
+
+function extractDuckDuckGoResults(html, limit = 5) {
+  if (typeof html !== 'string' || !html) return [];
+  const results = [];
+  const seen = new Set();
+  const regex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null && results.length < limit) {
+    const href = match[1] || '';
+    let url = href;
+    try {
+      const parsed = new URL(href, 'https://duckduckgo.com');
+      const redirectTarget = parsed.searchParams.get('uddg');
+      url = redirectTarget ? decodeURIComponent(redirectTarget) : parsed.toString();
+    } catch (err) {
+      url = href;
+    }
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    const title = stripHtmlToText(match[2]).trim();
+    if (!title) continue;
+    results.push({ title, url });
+  }
+  return results;
+}
+
+function isLikelyThirdPartyDomain(hostname) {
+  if (typeof hostname !== 'string' || !hostname) return false;
+  const blockedFragments = [
+    'tabelog',
+    'hotpepper',
+    'retty',
+    'kakaku',
+    'navitime',
+    'gnavi',
+    'logmi',
+    'cookpad',
+    'delishkitchen',
+    'matome',
+    'epark',
+    'tripadvisor',
+    'google.com',
+    'wikipedia.org',
+  ];
+  return blockedFragments.some(fragment => hostname.includes(fragment));
+}
+
+function normalizeDomainHint(domain) {
+  if (typeof domain !== 'string') return '';
+  return domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^site:/, '').replace(/\/.*$/, '');
+}
+
+function matchesDomainHint(url, domainHint) {
+  if (!domainHint) return false;
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return hostname === domainHint || hostname.endsWith(`.${domainHint}`);
+  } catch (err) {
+    return false;
+  }
+}
+
+function scoreOfficialSearchResult(result, lookupHint) {
+  const title = `${result.title || ''} ${result.snippet || ''}`.toLowerCase();
+  let score = 0;
+  const hostname = (() => {
+    try {
+      return new URL(result.url).hostname.toLowerCase();
+    } catch (err) {
+      return '';
+    }
+  })();
+
+  if (!hostname) return score;
+  if (lookupHint?.officialDomainHint1 && matchesDomainHint(result.url, lookupHint.officialDomainHint1)) score += 100;
+  if (lookupHint?.officialDomainHint2 && matchesDomainHint(result.url, lookupHint.officialDomainHint2)) score += 90;
+  if (lookupHint?.storeName && title.includes(lookupHint.storeName.toLowerCase())) score += 15;
+  if (lookupHint?.menuName && title.includes(lookupHint.menuName.toLowerCase())) score += 15;
+  if (hostname.endsWith('.jp')) score += 5;
+  if (isLikelyThirdPartyDomain(hostname)) score -= 100;
+  return score;
+}
+
+async function fetchPageText(url) {
+  const response = await fetch(url, {
+    headers: {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    },
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch page: ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
+    throw new Error(`Unsupported content type: ${contentType || 'unknown'}`);
+  }
+
+  const html = await response.text();
+  return stripHtmlToText(html);
+}
+
+async function searchDuckDuckGo(query) {
+  const url = new URL('https://duckduckgo.com/html/');
+  url.searchParams.set('q', query);
+  url.searchParams.set('kl', 'jp-jp');
+  const response = await fetch(url.toString(), {
+    headers: {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    },
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Search request failed: ${response.status}`);
+  }
+
+  const html = await response.text();
+  return extractDuckDuckGoResults(html, 8);
+}
+
+async function classifyChainMenuText(textInput) {
+  if (!ai || typeof textInput !== 'string' || !textInput.trim()) return null;
+
+  const promptText = `次の自由記述がチェーン店のメニュー名や注文内容かを判定し、公式栄養情報を探すためのJSONだけを返してください。
+ユーザー入力: ${textInput}
+
+ルール:
+- 店名やブランド名が入っている場合は、できるだけ正確に店舗名とメニュー名を分けてください。
+- 単なる一般料理なら isChainMenu は "no" にしてください。
+- 公式サイトで栄養情報を探すときに役立つ searchQuery を短く具体的に作ってください。
+- 公式サイトの候補が思い浮かぶ場合のみ officialDomainHint1 と officialDomainHint2 を入れてください。確信がなければ空文字にしてください。
+- 推測に自信がないときは無理に断定せず、confidence を低めにしてください。
+
+出力はJSONのみで、次のキーを必ず含めてください:
+isChainMenu, storeName, menuName, menuModifiers, searchQuery, officialDomainHint1, officialDomainHint2, confidence, reason
+`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [{ role: 'user', parts: [{ text: promptText }] }],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          isChainMenu: { type: Type.STRING, description: 'yes または no' },
+          storeName: { type: Type.STRING, description: '店舗やブランド名' },
+          menuName: { type: Type.STRING, description: 'メニュー名' },
+          menuModifiers: { type: Type.STRING, description: 'サイズやセットなどの補足' },
+          searchQuery: { type: Type.STRING, description: '公式栄養情報を探すための検索語' },
+          officialDomainHint1: { type: Type.STRING, description: '公式サイト候補のドメイン1' },
+          officialDomainHint2: { type: Type.STRING, description: '公式サイト候補のドメイン2' },
+          confidence: { type: Type.NUMBER, description: '確信度 0-1' },
+          reason: { type: Type.STRING, description: '判定理由' },
+        },
+        required: ['isChainMenu', 'storeName', 'menuName', 'menuModifiers', 'searchQuery', 'officialDomainHint1', 'officialDomainHint2', 'confidence', 'reason'],
+      },
+    },
+  });
+
+  const parsed = JSON.parse(response.text);
+  const isChainMenu = typeof parsed.isChainMenu === 'string' && parsed.isChainMenu.trim().toLowerCase() === 'yes';
+  const confidence = Number(parsed.confidence);
+  return {
+    isChainMenu,
+    storeName: typeof parsed.storeName === 'string' ? parsed.storeName.trim() : '',
+    menuName: typeof parsed.menuName === 'string' ? parsed.menuName.trim() : '',
+    menuModifiers: typeof parsed.menuModifiers === 'string' ? parsed.menuModifiers.trim() : '',
+    searchQuery: typeof parsed.searchQuery === 'string' ? parsed.searchQuery.trim() : '',
+    officialDomainHint1: normalizeDomainHint(parsed.officialDomainHint1 || ''),
+    officialDomainHint2: normalizeDomainHint(parsed.officialDomainHint2 || ''),
+    confidence: Number.isFinite(confidence) ? confidence : 0,
+    reason: typeof parsed.reason === 'string' ? parsed.reason.trim() : '',
+  };
+}
+
+async function resolveMealNutritionFromOfficialSources(textInput) {
+  const classification = await classifyChainMenuText(textInput);
+  if (!classification || !classification.isChainMenu || classification.confidence < 0.45) {
+    return null;
+  }
+
+  const queryBase = classification.searchQuery || [classification.storeName, classification.menuName, classification.menuModifiers].filter(Boolean).join(' ');
+  if (!queryBase) return null;
+
+  const searchQueries = [];
+  if (classification.officialDomainHint1) {
+    searchQueries.push(`site:${classification.officialDomainHint1} ${queryBase}`);
+  }
+  if (classification.officialDomainHint2) {
+    searchQueries.push(`site:${classification.officialDomainHint2} ${queryBase}`);
+  }
+  searchQueries.push(`${queryBase} 栄養成分 公式`);
+
+  const searchResults = [];
+  for (const query of searchQueries) {
+    try {
+      const results = await searchDuckDuckGo(query);
+      for (const result of results) {
+        searchResults.push({
+          ...result,
+          query,
+          score: scoreOfficialSearchResult(result, classification),
+        });
+      }
+    } catch (err) {
+      console.error('Official nutrition search failed:', err.message);
+    }
+  }
+
+  const dedupedResults = [];
+  const seenUrls = new Set();
+  for (const result of searchResults.sort((a, b) => b.score - a.score)) {
+    if (seenUrls.has(result.url)) continue;
+    seenUrls.add(result.url);
+    dedupedResults.push(result);
+    if (dedupedResults.length >= 4) break;
+  }
+
+  if (!dedupedResults.length) return null;
+
+  const candidatePages = [];
+  for (const result of dedupedResults) {
+    try {
+      const pageText = await fetchPageText(result.url);
+      candidatePages.push({
+        title: result.title,
+        url: result.url,
+        pageText: truncateText(pageText, 9000),
+      });
+    } catch (err) {
+      console.error('Failed to fetch official candidate page:', err.message);
+    }
+  }
+
+  if (!candidatePages.length) return null;
+
+  const promptText = `次のユーザー入力に対して、掲載されている公式情報だけを使ってメニューを特定し、栄養値をJSONのみで返してください。
+ユーザー入力: ${textInput}
+
+判定メモ:
+- これはチェーン店メニュー候補です。
+- 公式ページ以外の数値は使わないでください。
+- 候補ページに目的のメニューが見つからない場合は matched を "no" にしてください。
+- 同じメニューでもサイズやセット違いがあれば、ユーザー入力に最も合うものを選んでください。
+- 値が見つからない、または表が一致しない場合は無理に埋めずに fallback にしてください。
+
+候補ページ:
+${candidatePages.map((page, index) => `### 候補${index + 1}\nタイトル: ${page.title}\nURL: ${page.url}\n本文: ${page.pageText}`).join('\n\n')}
+
+出力キー:
+matched, mealName, calories, protein, fat, carbohydrates, sourceTitle, sourceUrl, inference, confidence
+`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [{ role: 'user', parts: [{ text: promptText }] }],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          matched: { type: Type.STRING, description: 'yes または no' },
+          mealName: { type: Type.STRING, description: '公式ページ上のメニュー名' },
+          calories: { type: Type.INTEGER, description: 'カロリー (kcal)' },
+          protein: { type: Type.NUMBER, description: 'タンパク質 (g)' },
+          fat: { type: Type.NUMBER, description: '脂質 (g)' },
+          carbohydrates: { type: Type.NUMBER, description: '炭水化物 (g)' },
+          sourceTitle: { type: Type.STRING, description: '参照ページのタイトル' },
+          sourceUrl: { type: Type.STRING, description: '参照ページのURL' },
+          inference: { type: Type.STRING, description: '公式情報からの特定根拠' },
+          confidence: { type: Type.NUMBER, description: '確信度 0-1' },
+        },
+        required: ['matched', 'mealName', 'calories', 'protein', 'fat', 'carbohydrates', 'sourceTitle', 'sourceUrl', 'inference', 'confidence'],
+      },
+    },
+  });
+
+  const parsed = JSON.parse(response.text);
+  const matched = typeof parsed.matched === 'string' && parsed.matched.trim().toLowerCase() === 'yes';
+  const confidence = Number(parsed.confidence);
+  if (!matched || !Number.isFinite(confidence) || confidence < 0.45) return null;
+
+  const mealName = typeof parsed.mealName === 'string' ? parsed.mealName.trim() : '';
+  const sourceTitle = typeof parsed.sourceTitle === 'string' ? parsed.sourceTitle.trim() : '';
+  const sourceUrl = typeof parsed.sourceUrl === 'string' ? parsed.sourceUrl.trim() : '';
+
+  if (!mealName || !sourceUrl) return null;
+
+  const calories = Math.round(Number(parsed.calories));
+  const protein = Math.round(Number(parsed.protein) * 10) / 10;
+  const fat = Math.round(Number(parsed.fat) * 10) / 10;
+  const carbohydrates = Math.round(Number(parsed.carbohydrates) * 10) / 10;
+  if (![calories, protein, fat, carbohydrates].every(Number.isFinite)) return null;
+
+  const inferenceParts = [
+    `公式情報で特定: ${mealName}`,
+    sourceTitle ? `参照元: ${sourceTitle}` : '',
+    sourceUrl ? `URL: ${sourceUrl}` : '',
+    typeof parsed.inference === 'string' ? parsed.inference.trim() : '',
+    classification.reason ? `判定メモ: ${classification.reason}` : '',
+  ].filter(Boolean);
+
+  return {
+    mealName,
+    calories,
+    protein,
+    fat,
+    carbohydrates,
+    sourceTitle,
+    sourceUrl,
+    inference: inferenceParts.join('\n'),
+    confidence,
+  };
 }
 
 function groupMealEntriesByType(meals) {
