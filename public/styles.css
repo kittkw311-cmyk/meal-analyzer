@@ -7687,3 +7687,69 @@ body {
   background-color: var(--design-accent);
   color: var(--design-background);
 }
+/* Focus must not restore the legacy white select background. */
+.modal-type-select:focus,
+#weight-modal-type-select:focus {
+  background-color: var(--design-background);
+  color: var(--design-foreground);
+}
+/* Keep date and time fields dark while focused, like the meal-type field. */
+.modal-date-input,
+.modal-time-input {
+  color-scheme: dark;
+}
+
+.modal-date-input:focus,
+.modal-time-input:focus {
+  background-color: var(--design-background);
+  color: var(--design-foreground);
+}
+/* Apply the dark focus and option treatment across the other dark screens. */
+#meal-analysis-modal .meal-textarea:focus,
+#weight-entry-modal .meal-textarea:focus,
+#meal-analysis-modal .date-input:focus,
+#weight-entry-modal .date-input:focus,
+#tab-analyze input:focus,
+#tab-analyze textarea:focus,
+#tab-analyze select:focus,
+#tab-weight input:focus,
+#tab-weight textarea:focus,
+#tab-weight select:focus,
+#tab-stats input:focus,
+#tab-stats textarea:focus,
+#tab-stats select:focus {
+  background: var(--app-dark-background);
+  background-color: var(--app-dark-background);
+  color: var(--app-dark-foreground);
+}
+
+#meal-analysis-modal input,
+#meal-analysis-modal select,
+#weight-entry-modal input,
+#weight-entry-modal select,
+#tab-analyze input,
+#tab-analyze select,
+#tab-weight input,
+#tab-weight select,
+#tab-stats input,
+#tab-stats select {
+  color-scheme: dark;
+}
+
+#meal-analysis-modal select option,
+#weight-entry-modal select option,
+#tab-analyze select option,
+#tab-weight select option,
+#tab-stats select option {
+  background-color: var(--app-dark-card);
+  color: var(--app-dark-foreground);
+}
+
+#meal-analysis-modal select option:checked,
+#weight-entry-modal select option:checked,
+#tab-analyze select option:checked,
+#tab-weight select option:checked,
+#tab-stats select option:checked {
+  background-color: var(--app-dark-accent);
+  color: var(--app-dark-background);
+}
