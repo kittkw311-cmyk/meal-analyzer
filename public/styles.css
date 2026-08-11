@@ -1857,6 +1857,22 @@ body.modal-open {
   transition: var(--transition);
 }
 
+.modal-type-select,
+#weight-modal-type-select {
+  color-scheme: dark;
+}
+
+.modal-type-select option,
+#weight-modal-type-select option {
+  background: var(--design-card);
+  color: var(--design-foreground);
+}
+
+.modal-type-select option:checked,
+#weight-modal-type-select option:checked {
+  background: var(--design-accent);
+  color: var(--design-background);
+}
 .modal-date-input:focus,
 .modal-time-input:focus,
 .modal-type-select:focus {
@@ -7614,3 +7630,60 @@ body {
   }
 }
 
+
+/* Plain inference text without a card or table frame. */
+.modal-inference-plain {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 12px 0 0;
+  overflow: visible;
+  padding: 0;
+}
+
+.modal-inference-plain .modal-inference-title {
+  color: var(--design-accent);
+  font-size: 12px;
+  font-weight: 700;
+  gap: 7px;
+  padding: 0;
+}
+
+.modal-inference-plain .modal-inference-text {
+  color: var(--design-foreground);
+  font-size: 12.5px;
+  line-height: 1.7;
+  margin: 8px 0 0;
+  padding: 0;
+  white-space: pre-wrap;
+}
+.modal-type-select,
+#weight-modal-type-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--design-background);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--design-foreground) 50%),
+    linear-gradient(135deg, var(--design-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 8px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px, 4px 4px;
+  color: var(--design-foreground);
+  padding-right: 22px;
+}
+/* Keep the native option popup aligned with the dark modal palette. */
+#modal-type-select option,
+#weight-modal-type-select option {
+  background-color: var(--design-card);
+  color: var(--design-foreground);
+  color-scheme: dark;
+}
+
+#modal-type-select option:checked,
+#weight-modal-type-select option:checked {
+  background-color: var(--design-accent);
+  color: var(--design-background);
+}

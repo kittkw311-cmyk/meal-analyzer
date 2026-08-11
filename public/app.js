@@ -167,7 +167,7 @@
   let aiConsultationRecords = [];
   let currentPresetEditTarget = null;
   let currentPresetEditMode = 'edit';
-  let presetViewMode = localStorage.getItem('preset_view_mode') || 'recent';
+  let presetViewMode = localStorage.getItem('preset_view_mode') || 'categories';
   let presetCategoryFilterValue = localStorage.getItem('physilog_preset_category_filter') || 'all';
   let selectedPresetId = localStorage.getItem('physilog_selected_preset_id') || '';
   let presetDetailMode = localStorage.getItem('physilog_preset_detail_mode') === 'edit' ? 'edit' : 'view';
@@ -1451,10 +1451,6 @@
       modalImage.style.display = 'none';
     }
     
-    // 根拠アコーディオンの表示状態を閉じた状態(初期状態)にリセット
-    const inferenceBody = document.getElementById('modal-inference-body');
-    if (inferenceBody) inferenceBody.style.display = 'block';
-    
     // モーダル編集インプットのバインド処理
     const dateObj = new Date(item.mealDate || item.date);
     const yyyy = dateObj.getFullYear();
@@ -1498,13 +1494,13 @@
       btnReanalyzeModal.classList.remove('pulse-highlight');
       btnReanalyzeModal.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>';
     }
-    
+
     const modalInference = document.getElementById('modal-inference');
     const modalInferenceCard = document.getElementById('modal-inference-card');
-    if (item.nutrition.inference) {
+    if (modalInference && modalInferenceCard && item.nutrition?.inference) {
       modalInference.textContent = item.nutrition.inference;
       modalInferenceCard.style.display = 'block';
-    } else {
+    } else if (modalInferenceCard) {
       modalInferenceCard.style.display = 'none';
     }
 
@@ -2703,9 +2699,6 @@
     }
   });
   
-  const inferenceBody = document.getElementById('modal-inference-body');
-  if (inferenceBody) inferenceBody.style.display = 'block';
-  
   // モーダルの背景（黒枠）をクリックした際も閉じる
   historyDetailModal.addEventListener('click', (e) => {
     if (e.target === historyDetailModal) {
@@ -2859,14 +2852,12 @@
       if (modalProteinInput) modalProteinInput.value = formatDetailNutritionValue(updatedRecord.nutrition.protein, 1);
       if (modalFatInput) modalFatInput.value = formatDetailNutritionValue(updatedRecord.nutrition.fat, 1);
       if (modalCarbsInput) modalCarbsInput.value = formatDetailNutritionValue(updatedRecord.nutrition.carbohydrates, 1);
-      
+
       const modalInference = document.getElementById('modal-inference');
       const modalInferenceCard = document.getElementById('modal-inference-card');
-      if (updatedRecord.nutrition.inference) {
+      if (modalInference && modalInferenceCard && updatedRecord.nutrition?.inference) {
         modalInference.textContent = updatedRecord.nutrition.inference;
         modalInferenceCard.style.display = 'block';
-      } else {
-        modalInferenceCard.style.display = 'none';
       }
 
       // 履歴一覧と今日の合計を非同期でリロード
