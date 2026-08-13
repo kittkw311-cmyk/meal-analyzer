@@ -1,7 +1,12 @@
+import express from 'express';
+
 const originalFetch = globalThis.fetch?.bind(globalThis);
+const originalExpressJson = express.response.json;
 
 const TRANSIENT_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 const RETRY_DELAYS_MS = [2000, 4000, 8000];
+const TRANSIENT_ERROR_PATTERN = /(?:\b429\b|\b503\b|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|temporar(?:y|ily)|try again later)/i;
+const FRIENDLY_TRANSIENT_MESSAGE = '現在AIが混雑しています。少し時間をおいて、もう一度お試しください。';
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -34,6 +39,39 @@ function getRetryAfterMs(response) {
   const retryDate = Date.parse(retryAfter);
   return Number.isNaN(retryDate) ? 0 : Math.max(0, retryDate - Date.now());
 }
+
+function containsTransientAiError(value) {
+  if (typeof value === 'string') return TRANSIENT_ERROR_PATTERN.test(value);
+  if (!value || typeof value !== 'object') return false;
+
+  try {
+    return TRANSIENT_ERROR_PATTERN.test(JSON.stringify(value));
+  } catch {
+    return false;
+  }
+}
+
+function sanitizeTransientAiErrorBody(body) {
+  if (!body || typeof body !== 'object' || !containsTransientAiError(body)) return body;
+
+  const sanitized = Array.isArray(body) ? [...body] : { ...body };
+  for (const key of ['detail', 'details', 'message']) {
+    if (key in sanitized && containsTransientAiError(sanitized[key])) {
+      sanitized[key] = FRIENDLY_TRANSIENT_MESSAGE;
+    }
+  }
+
+  if ('error' in sanitized && containsTransientAiError(sanitized.error)) {
+    sanitized.error = FRIENDLY_TRANSIENT_MESSAGE;
+  }
+
+  return sanitized;
+}
+
+express.response.json = function jsonWithFriendlyTransientErrors(body) {
+  const responseBody = this.statusCode >= 400 ? sanitizeTransientAiErrorBody(body) : body;
+  return originalExpressJson.call(this, responseBody);
+};
 
 if (originalFetch) {
   globalThis.fetch = async function fetchWithGeminiRetry(input, init) {
