@@ -194,3 +194,124 @@ export function daysBetweenJstDateKeys(targetDateKey, referenceDateLike = new Da
   const referenceUtc = Date.UTC(Number(referenceMatch[1]), Number(referenceMatch[2]) - 1, Number(referenceMatch[3]));
   return Math.round((targetUtc - referenceUtc) / DAY_MS);
 }
+
+// AI解析に失敗した食事でも、写真と手動入力を主役にするフォールバックUI。
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('history-detail-modal');
+    if (!modal) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .meal-ai-failed-status {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin: 8px 0 0;
+        padding: 10px 12px;
+        border: 1px solid rgba(245, 158, 11, 0.42);
+        border-radius: 10px;
+        background: rgba(245, 158, 11, 0.08);
+        color: var(--text-main, #f8fafc);
+      }
+      .meal-ai-failed-status[hidden] { display: none !important; }
+      .meal-ai-failed-icon {
+        flex: 0 0 auto;
+        font-size: 18px;
+        line-height: 1.2;
+      }
+      .meal-ai-failed-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+      .meal-ai-failed-title {
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .meal-ai-failed-help {
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--design-muted, #94a3b8);
+      }
+    `;
+    document.head.appendChild(style);
+
+    const ensureStatus = () => {
+      let status = document.getElementById('modal-ai-analysis-status');
+      if (status) return status;
+
+      const header = modal.querySelector('.modal-header-fixed');
+      if (!header) return null;
+      status = document.createElement('div');
+      status.id = 'modal-ai-analysis-status';
+      status.className = 'meal-ai-failed-status';
+      status.hidden = true;
+      status.setAttribute('role', 'status');
+      status.innerHTML = `
+        <span class="meal-ai-failed-icon" aria-hidden="true">⚠️</span>
+        <span class="meal-ai-failed-copy">
+          <span class="meal-ai-failed-title">AI分析できませんでした</span>
+          <span class="meal-ai-failed-help">写真は保存されています。カロリー・P・F・Cを手動入力して保存できます。</span>
+        </span>
+      `;
+      header.appendChild(status);
+      return status;
+    };
+
+    const syncFailedMealUi = () => {
+      const reanalyzeButton = document.getElementById('btn-reanalyze-modal');
+      const inferenceCard = document.getElementById('modal-inference-card');
+      const inferenceText = document.getElementById('modal-inference');
+      const status = ensureStatus();
+      if (!reanalyzeButton || !status) return;
+
+      const isFailed = reanalyzeButton.classList.contains('pulse-highlight')
+        || (inferenceText?.textContent || '').startsWith('AI解析に失敗しました。');
+
+      status.hidden = !isFailed;
+
+      if (!isFailed) return;
+
+      // 生のAPIエラー詳細は画面に出さず、短い状態表示だけにする。
+      if (inferenceCard && inferenceCard.style.display !== 'none') {
+        inferenceCard.style.display = 'none';
+      }
+
+      // AI失敗時に保存された 0 値は「未入力」として扱う。
+      // 手動入力後の実値は消さない。
+      const inputs = [
+        document.getElementById('modal-calories-input'),
+        document.getElementById('modal-protein-input'),
+        document.getElementById('modal-fat-input'),
+        document.getElementById('modal-carbs-input'),
+      ].filter(Boolean);
+      if (inputs.length === 4) {
+        const values = inputs.map(input => Number(input.value));
+        const allZero = values.every(value => Number.isFinite(value) && value === 0);
+        if (allZero) {
+          inputs.forEach(input => { input.value = ''; });
+        }
+      }
+    };
+
+    let syncQueued = false;
+    const queueSync = () => {
+      if (syncQueued) return;
+      syncQueued = true;
+      queueMicrotask(() => {
+        syncQueued = false;
+        syncFailedMealUi();
+      });
+    };
+
+    const observer = new MutationObserver(queueSync);
+    observer.observe(modal, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
+
+    queueSync();
+  });
+}
