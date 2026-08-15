@@ -759,20 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    selectedPresetEditFile = file;
-    presetEditImageMarkedForRemoval = false;
-    if (presetEditImportInput) presetEditImportInput.value = '';
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        updatePresetEditPhotoPreview(String(e.target.result));
-      }
-      if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'inline-flex';
-    };
-    reader.readAsDataURL(file);
-
-    void analyzePresetNutritionFile(file);
+    setPresetEditSelectedPhoto(file);
   };
 
   const clearPresetEditSelectedPhoto = ({ removeExisting = false } = {}) => {
@@ -882,6 +869,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return confirm(`「${targetName}」の入力内容を成分表の読み取り結果で上書きしますか？`);
   };
 
+  const setPresetEditSelectedPhoto = (file, { clearImportInput = true } = {}) => {
+    if (!file) return;
+    selectedPresetEditFile = file;
+    presetEditImageMarkedForRemoval = false;
+    if (clearImportInput && presetEditImportInput) presetEditImportInput.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        updatePresetEditPhotoPreview(String(e.target.result));
+      }
+      if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+  };
+
   const analyzePresetNutritionFile = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -917,20 +920,10 @@ document.addEventListener('DOMContentLoaded', () => {
       applyPresetEditExtractionResult(payload);
 
       if (file.type.startsWith('image/')) {
-        selectedPresetEditFile = file;
-        presetEditImageMarkedForRemoval = false;
+        setPresetEditSelectedPhoto(file);
         if (presetEditCameraInput) presetEditCameraInput.value = '';
         if (presetEditGalleryInput) presetEditGalleryInput.value = '';
         if (presetEditImportInput) presetEditImportInput.value = '';
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            updatePresetEditPhotoPreview(String(e.target.result));
-          }
-          if (presetEditUploadBadge) presetEditUploadBadge.style.display = 'inline-flex';
-        };
-        reader.readAsDataURL(file);
       } else if (presetEditImportInput) {
         presetEditImportInput.value = '';
       }
@@ -1318,10 +1311,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnPresetEditImportTrigger && presetEditImportInput) {
     btnPresetEditImportTrigger.addEventListener('click', () => {
-      if (selectedPresetEditFile) {
-        analyzePresetNutritionFile(selectedPresetEditFile);
-        return;
-      }
       presetEditImportInput.click();
     });
   }
