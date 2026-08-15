@@ -20,6 +20,20 @@ import {
   writeDriveTextFile,
   writeJsonFile,
 } from './storage-utils.js';
+import {
+  addDaysToJstDateKey as sharedAddDaysToJstDateKey,
+  buildJstDateTimeIso as sharedBuildJstDateTimeIso,
+  compareWeightRecords as sharedCompareWeightRecords,
+  formatJstDateKey as sharedFormatJstDateKey,
+  formatJstDateLabel as sharedFormatJstDateLabel,
+  getJstDateParts as sharedGetJstDateParts,
+  getJstTimeParts as sharedGetJstTimeParts,
+  getMeasurementTypePriority as sharedGetMeasurementTypePriority,
+  normalizeDateInputToIso as sharedNormalizeDateInputToIso,
+  roundToDecimals as sharedRoundToDecimals,
+  sortWeightRecords as sharedSortWeightRecords,
+  toFiniteNumber as sharedToFiniteNumber,
+} from './public/shared-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -121,91 +135,13 @@ const DEFAULT_PROFILE = {
   targetDate: ''
 };
 
-function getJstDateKey(dateLike) {
-  const date = new Date(dateLike);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
-}
-
-function getJstDateParts(dateLike) {
-  const date = new Date(dateLike);
-  if (Number.isNaN(date.getTime())) return { year: 0, month: 0, day: 0 };
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  return {
-    year: Number(map.year || 0),
-    month: Number(map.month || 0),
-    day: Number(map.day || 0),
-  };
-}
-
-function getJstTimeParts(dateLike) {
-  const date = new Date(dateLike);
-  if (Number.isNaN(date.getTime())) return { hour: 0, minute: 0, second: 0 };
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Tokyo',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(date);
-  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  return {
-    hour: Number(map.hour || 0),
-    minute: Number(map.minute || 0),
-    second: Number(map.second || 0),
-  };
-}
-
-function buildJstDateTimeIso(dateKey, fallbackDate = new Date()) {
-  const match = typeof dateKey === 'string' ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null;
-  if (!match) return fallbackDate.toISOString();
-  const { hour, minute, second } = getJstTimeParts(fallbackDate);
-  return `${match[1]}-${match[2]}-${match[3]}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}+09:00`;
-}
-
-function normalizeMealDateInput(mealDate, fallbackDate = new Date()) {
-  if (typeof mealDate !== 'string') return fallbackDate.toISOString();
-  const trimmed = mealDate.trim();
-  if (!trimmed) return fallbackDate.toISOString();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return buildJstDateTimeIso(trimmed, fallbackDate);
-  }
-  const parsed = new Date(trimmed);
-  return Number.isNaN(parsed.getTime()) ? fallbackDate.toISOString() : parsed.toISOString();
-}
-
-function formatJstDateLabel(dateKey) {
-  const match = typeof dateKey === 'string' ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null;
-  if (!match) return '';
-  const [, year, month, day] = match;
-  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-  return new Intl.DateTimeFormat('ja-JP', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-  }).format(date).replace(/\s+/g, '');
-}
-
-function addDaysToJstDateKey(dateLike, offsetDays) {
-  const { year, month, day } = getJstDateParts(dateLike);
-  if (!year || !month || !day) return '';
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + offsetDays);
-  return getJstDateKey(date);
-}
+const getJstDateKey = sharedFormatJstDateKey;
+const getJstDateParts = sharedGetJstDateParts;
+const getJstTimeParts = sharedGetJstTimeParts;
+const buildJstDateTimeIso = sharedBuildJstDateTimeIso;
+const normalizeMealDateInput = sharedNormalizeDateInputToIso;
+const formatJstDateLabel = sharedFormatJstDateLabel;
+const addDaysToJstDateKey = sharedAddDaysToJstDateKey;
 
 function parseConsultationTargetDateKey(question, fallbackDate = new Date()) {
   const reference = getJstDateParts(fallbackDate);
@@ -248,14 +184,10 @@ function parseConsultationTargetDateKey(question, fallbackDate = new Date()) {
 
 function getLatestBodyCompositionAtOrBefore(weightHistory, targetDateKey) {
   if (!Array.isArray(weightHistory) || !targetDateKey) return null;
-  const priority = { night: 3, morning: 2, other: 1 };
-  return weightHistory
-    .filter(item => getJstDateKey(item.date) <= targetDateKey)
-    .slice()
-    .sort((a, b) => {
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-      return dateDiff || (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
-    })[0] || null;
+  return sharedSortWeightRecords(
+    weightHistory.filter(item => getJstDateKey(item.date) <= targetDateKey),
+    { dateOrder: 'desc' },
+  )[0] || null;
 }
 
 function readLocalProfile() {
@@ -545,9 +477,9 @@ async function readHistory() {
 
     const nutrition = { ...next.nutrition };
     const normalizedCalories = Math.round(toNumber(nutrition.calories));
-    const normalizedProtein = Math.round(toNumber(nutrition.protein) * 10) / 10;
-    const normalizedFat = Math.round(toNumber(nutrition.fat) * 10) / 10;
-    const normalizedCarbohydrates = Math.round(toNumber(nutrition.carbohydrates) * 10) / 10;
+    const normalizedProtein = sharedRoundToDecimals(toNumber(nutrition.protein), 1, 0);
+    const normalizedFat = sharedRoundToDecimals(toNumber(nutrition.fat), 1, 0);
+    const normalizedCarbohydrates = sharedRoundToDecimals(toNumber(nutrition.carbohydrates), 1, 0);
 
     if (nutrition.calories !== normalizedCalories) {
       nutrition.calories = normalizedCalories;
@@ -835,7 +767,7 @@ app.put('/api/history/:id', async (req, res) => {
         if (!Number.isFinite(numericProtein) || numericProtein < 0) {
           return res.status(400).json({ error: 'タンパク質の値が不正です。' });
         }
-        nutrition.protein = Math.round(numericProtein * 10) / 10;
+        nutrition.protein = sharedRoundToDecimals(numericProtein, 1, 0);
         nutritionChanged = true;
       }
 
@@ -844,7 +776,7 @@ app.put('/api/history/:id', async (req, res) => {
         if (!Number.isFinite(numericFat) || numericFat < 0) {
           return res.status(400).json({ error: '脂質の値が不正です。' });
         }
-        nutrition.fat = Math.round(numericFat * 10) / 10;
+        nutrition.fat = sharedRoundToDecimals(numericFat, 1, 0);
         nutritionChanged = true;
       }
 
@@ -853,7 +785,7 @@ app.put('/api/history/:id', async (req, res) => {
         if (!Number.isFinite(numericCarbohydrates) || numericCarbohydrates < 0) {
           return res.status(400).json({ error: '炭水化物の値が不正です。' });
         }
-        nutrition.carbohydrates = Math.round(numericCarbohydrates * 10) / 10;
+        nutrition.carbohydrates = sharedRoundToDecimals(numericCarbohydrates, 1, 0);
         nutritionChanged = true;
       }
 
@@ -1119,9 +1051,9 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`;
       return Number.isFinite(numeric) ? numeric : fallback;
     };
     const calories = isFailed ? 0 : Math.round(safeNumber(nutritionData?.calories, 0));
-    const protein = isFailed ? 0 : Math.round(safeNumber(nutritionData?.protein, 0) * 10) / 10;
-    const fat = isFailed ? 0 : Math.round(safeNumber(nutritionData?.fat, 0) * 10) / 10;
-    const carbohydrates = isFailed ? 0 : Math.round(safeNumber(nutritionData?.carbohydrates, 0) * 10) / 10;
+    const protein = isFailed ? 0 : sharedRoundToDecimals(safeNumber(nutritionData?.protein, 0), 1, 0);
+    const fat = isFailed ? 0 : sharedRoundToDecimals(safeNumber(nutritionData?.fat, 0), 1, 0);
+    const carbohydrates = isFailed ? 0 : sharedRoundToDecimals(safeNumber(nutritionData?.carbohydrates, 0), 1, 0);
 
     const newRecord = {
       id: `rec_${Date.now()}`,
@@ -1182,7 +1114,7 @@ app.patch('/api/profile', async (req, res) => {
 
     if (Object.prototype.hasOwnProperty.call(req.body, 'height')) {
       const value = req.body.height === '' || req.body.height === null ? null : Number(req.body.height);
-      next.height = Number.isFinite(value) && value > 0 ? Math.round(value * 10) / 10 : null;
+      next.height = Number.isFinite(value) && value > 0 ? sharedRoundToDecimals(value, 1, 0) : null;
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'gender')) {
       const allowed = ['male', 'female', 'other', ''];
@@ -1202,7 +1134,7 @@ app.patch('/api/profile', async (req, res) => {
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'targetWeight')) {
       const value = req.body.targetWeight === '' || req.body.targetWeight === null ? null : Number(req.body.targetWeight);
-      next.targetWeight = Number.isFinite(value) && value > 0 ? Math.round(value * 10) / 10 : null;
+      next.targetWeight = Number.isFinite(value) && value > 0 ? sharedRoundToDecimals(value, 1, 0) : null;
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'targetDate')) {
       next.targetDate = typeof req.body.targetDate === 'string' ? req.body.targetDate : '';
@@ -1244,10 +1176,10 @@ app.post('/api/presets', upload.single('image'), async (req, res) => {
       id: `preset_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       name: name.substring(0, 25),
       calories: Math.round(Number(calories)),
-      protein: Math.round(Number(protein) * 10) / 10,
-      fat: Math.round(Number(fat) * 10) / 10,
-      carbohydrates: Math.round(Number(carbohydrates) * 10) / 10,
-      baseAmount: Number.isFinite(normalizedBaseAmount) && normalizedBaseAmount > 0 ? Math.round(normalizedBaseAmount * 10) / 10 : 1,
+      protein: sharedRoundToDecimals(protein, 1, 0),
+      fat: sharedRoundToDecimals(fat, 1, 0),
+      carbohydrates: sharedRoundToDecimals(carbohydrates, 1, 0),
+      baseAmount: Number.isFinite(normalizedBaseAmount) && normalizedBaseAmount > 0 ? sharedRoundToDecimals(normalizedBaseAmount, 1, 0) : 1,
       servingUnit: servingUnit === 'g' ? 'g' : '個',
       category: normalizedCategory,
       imageSource: normalizedImageMeta.imageSource,
@@ -1468,7 +1400,7 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
 
     const normalizePositiveDecimal = (value, fallback) => {
       const numericValue = Number(value);
-      return Number.isFinite(numericValue) && numericValue > 0 ? Math.round(numericValue * 10) / 10 : fallback;
+      return Number.isFinite(numericValue) && numericValue > 0 ? sharedRoundToDecimals(numericValue, 1, 0) : fallback;
     };
     const normalizedBaseAmount = normalizePositiveDecimal(presetMaster?.baseAmount ?? baseServingAmount, 1);
     const normalizedServingAmount = normalizePositiveDecimal(servingAmount, normalizedBaseAmount);
@@ -1480,9 +1412,9 @@ app.post('/api/history/preset', upload.single('image'), async (req, res) => {
     const servingRatio = normalizedBaseAmount > 0 ? normalizedServingAmount / normalizedBaseAmount : 1;
     const sourceNutrition = presetMaster || { calories, protein, fat, carbohydrates };
     const calculatedCalories = Math.round(Number(sourceNutrition.calories) * servingRatio);
-    const calculatedProtein = Math.round(Number(sourceNutrition.protein) * servingRatio * 10) / 10;
-    const calculatedFat = Math.round(Number(sourceNutrition.fat) * servingRatio * 10) / 10;
-    const calculatedCarbohydrates = Math.round(Number(sourceNutrition.carbohydrates) * servingRatio * 10) / 10;
+    const calculatedProtein = sharedRoundToDecimals(Number(sourceNutrition.protein) * servingRatio, 1, 0);
+    const calculatedFat = sharedRoundToDecimals(Number(sourceNutrition.fat) * servingRatio, 1, 0);
+    const calculatedCarbohydrates = sharedRoundToDecimals(Number(sourceNutrition.carbohydrates) * servingRatio, 1, 0);
 
     const history = await readHistory();
     const newRecord = {
@@ -1574,9 +1506,9 @@ app.get('/api/stats', async (req, res) => {
   const stats = {
     dailyCalories: last7Days.map(d => ({ label: d.dateLabel, calories: d.calories })),
     pfcAverage: mealCount > 0 ? {
-      protein: Math.round((totalProtein / mealCount) * 10) / 10,
-      fat: Math.round((totalFat / mealCount) * 10) / 10,
-      carbohydrates: Math.round((totalCarbs / mealCount) * 10) / 10
+      protein: sharedRoundToDecimals(totalProtein / mealCount, 1, 0),
+      fat: sharedRoundToDecimals(totalFat / mealCount, 1, 0),
+      carbohydrates: sharedRoundToDecimals(totalCarbs / mealCount, 1, 0)
     } : { protein: 0, fat: 0, carbohydrates: 0 },
     averageCalories: mealCount > 0 ? Math.round(totalCalories / mealCount) : 0,
     totalMeals: mealCount
@@ -1694,17 +1626,7 @@ app.get('/api/body-composition', async (req, res) => {
   try {
     const weightHistory = await readWeight();
     // 譌･莉・(YYYY-MM-DD) 縺ｮ髯埼・√♀繧医・蛹ｺ蛻・・髯埼・(螟・-> 譛・-> 莉・ 縺ｧ繧ｽ繝ｼ繝・
-    const priority = { night: 3, morning: 2, other: 1 };
-    weightHistory.sort((a, b) => {
-      const dateA = getJstDateKey(a.date);
-      const dateB = getJstDateKey(b.date);
-      if (dateA !== dateB) {
-        return dateB.localeCompare(dateA); // 譌･莉倬剄鬆・
-      }
-      const pA = priority[a.measurementType] || 0;
-      const pB = priority[b.measurementType] || 0;
-      return pB - pA; // 蛹ｺ蛻・剄鬆・(螟・-> 譛・-> 莉・
-    });
+    weightHistory.sort((a, b) => compareWeightRecords(a, b, { dateOrder: 'desc' }));
     res.json(weightHistory);
   } catch (err) {
     console.error('Failed to load weight history:', err);
@@ -2158,14 +2080,10 @@ function buildConsultationPrompt(template, values) {
 }
 
 function sortBodyCompositionRecords(weightHistory) {
-  const priority = { night: 3, morning: 2, other: 1 };
-  return weightHistory
-    .filter(item => Number.isFinite(Number(item.weight)))
-    .slice()
-    .sort((a, b) => {
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-      return dateDiff || (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
-    });
+  return sharedSortWeightRecords(
+    weightHistory.filter(item => Number.isFinite(Number(item.weight))),
+    { dateOrder: 'desc' },
+  );
 }
 
 function buildGeminiUserContents({ text, imageBuffer, mimeType }) {
@@ -2513,9 +2431,9 @@ matched, mealName, calories, protein, fat, carbohydrates, sourceTitle, sourceUrl
   if (!mealName || !sourceUrl) return null;
 
   const calories = Math.round(Number(parsed.calories));
-  const protein = Math.round(Number(parsed.protein) * 10) / 10;
-  const fat = Math.round(Number(parsed.fat) * 10) / 10;
-  const carbohydrates = Math.round(Number(parsed.carbohydrates) * 10) / 10;
+  const protein = sharedRoundToDecimals(parsed.protein, 1, 0);
+  const fat = sharedRoundToDecimals(parsed.fat, 1, 0);
+  const carbohydrates = sharedRoundToDecimals(parsed.carbohydrates, 1, 0);
   if (![calories, protein, fat, carbohydrates].every(Number.isFinite)) return null;
 
   const inferenceParts = [
@@ -2630,7 +2548,6 @@ function formatBodyCompositionTrend(records, referenceDate = new Date()) {
     return '直近7日間の体組成記録はありません。';
   }
 
-  const priority = { night: 3, morning: 2, other: 1 };
   const endDate = new Date(referenceDate);
   const startDate = new Date(referenceDate);
   startDate.setDate(startDate.getDate() - 6);
@@ -2646,7 +2563,7 @@ function formatBodyCompositionTrend(records, referenceDate = new Date()) {
     const dateKey = getJstDateKey(record.date);
     if (!dateKey || dateKey < startKey || dateKey > endKey) return;
     const current = dailyRecords.get(dateKey);
-    if (!current || (priority[record.measurementType] || 0) > (priority[current.measurementType] || 0)) {
+    if (!current || sharedGetMeasurementTypePriority(record.measurementType) > sharedGetMeasurementTypePriority(current.measurementType)) {
       dailyRecords.set(dateKey, record);
     }
   });
@@ -2730,7 +2647,7 @@ function formatMealGroups(mealGroups) {
   return mealGroups.map(group => {
     const entries = group.items.map(item => {
       const name = item.mealName || item.nutrition?.mealName || item.textInput || '未設定';
-      return `- ${name} (${Math.round(Number(item.nutrition?.calories || 0))}kcal / P:${Math.round(Number(item.nutrition?.protein || 0) * 10) / 10}g / F:${Math.round(Number(item.nutrition?.fat || 0) * 10) / 10}g / C:${Math.round(Number(item.nutrition?.carbohydrates || 0) * 10) / 10}g)`;
+      return `- ${name} (${Math.round(Number(item.nutrition?.calories || 0))}kcal / P:${sharedRoundToDecimals(item.nutrition?.protein || 0, 1, 0)}g / F:${sharedRoundToDecimals(item.nutrition?.fat || 0, 1, 0)}g / C:${sharedRoundToDecimals(item.nutrition?.carbohydrates || 0, 1, 0)}g)`;
     }).join('\n');
     return `${group.mealTypeLabel}\n${entries}`;
   }).join('\n\n');
@@ -2773,9 +2690,9 @@ app.post('/api/ai-consultation', async (req, res) => {
       weightMeasuredAt: currentBodyComposition?.date || null,
       targetNutrition: {
         calories: Math.round(totals.calories),
-        proteinG: Math.round(totals.protein * 10) / 10,
-        fatG: Math.round(totals.fat * 10) / 10,
-        carbohydratesG: Math.round(totals.carbohydrates * 10) / 10,
+        proteinG: sharedRoundToDecimals(totals.protein, 1, 0),
+        fatG: sharedRoundToDecimals(totals.fat, 1, 0),
+        carbohydratesG: sharedRoundToDecimals(totals.carbohydrates, 1, 0),
         recordedEntryCount: targetMeals.length,
         mealTypeCount: mealGroups.length,
       },

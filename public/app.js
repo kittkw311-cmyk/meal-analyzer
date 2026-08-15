@@ -1,58 +1,21 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-  const jstDateKey = (dateLike) => {
-    const date = new Date(dateLike);
-    if (Number.isNaN(date.getTime())) return '';
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Tokyo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
-  };
+﻿import {
+  addDaysToJstDateKey as shiftJstDateKey,
+  buildJstDateTimeIso,
+  calculateAgeFromBirthDate as calculateAge,
+  compareWeightRecords,
+  daysBetweenJstDateKeys,
+  formatJstDateKey as jstDateKey,
+  formatJstDateLabel as formatDisplayDate,
+  formatJstDateTimeDisplay as formatDateTimeDisplay,
+  getCurrentJstTimeParts,
+  getMeasurementTypePriority,
+  roundToDecimals,
+  sortWeightRecords,
+  toFiniteNumber,
+} from '/shared-utils.js';
 
-  const formatDisplayDate = (dateLike) => {
-    const dateKey = jstDateKey(dateLike);
-    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!match) return '';
-    const [, year, month, day] = match;
-    const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
-    const weekday = weekdayLabels[new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay()];
-    return `${year}/${month}/${day}(${weekday})`;
-  };
-
-  const formatDateTimeDisplay = (dateLike) => {
-    const date = new Date(dateLike);
-    if (Number.isNaN(date.getTime())) return '';
-    return new Intl.DateTimeFormat('ja-JP', {
-      timeZone: 'Asia/Tokyo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(date).replace(/\s+/g, ' ');
-  };
-
-  const formatJstDateKeyFromDate = (date) => new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
-
-  const shiftJstDateKey = (dateKey, deltaDays) => {
-    const match = typeof dateKey === 'string'
-      ? dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      : null;
-    if (!match) return '';
-    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
-    date.setUTCDate(date.getUTCDate() + deltaDays);
-    return formatJstDateKeyFromDate(date);
-  };
-
-  const formatOverviewWeightLabel = (dateLike, measurementType) => {
+document.addEventListener('DOMContentLoaded', () => {
+  const formatOverviewWeightLabel = (dateLike) => {
     const dateKey = jstDateKey(dateLike);
     const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!match) return '';
@@ -61,8 +24,7 @@
     return `${month}/${day}`;
   };
 
-  // ==========================================================================
-  // DOM Elements
+// DOM Elements
   // ==========================================================================
   const navItems = document.querySelectorAll('.nav-item');
   const tabContents = document.querySelectorAll('.tab-content');
@@ -347,9 +309,9 @@
     const servingUnit = preset?.servingUnit || '個';
     const servingRatio = baseAmount > 0 ? actualServingAmount / baseAmount : 1;
     const calories = Math.round(Number(preset?.calories || 0) * servingRatio);
-    const protein = Math.round(Number(preset?.protein || 0) * servingRatio * 10) / 10;
-    const fat = Math.round(Number(preset?.fat || 0) * servingRatio * 10) / 10;
-    const carbohydrates = Math.round(Number(preset?.carbohydrates || 0) * servingRatio * 10) / 10;
+    const protein = roundTo1(Number(preset?.protein || 0) * servingRatio);
+    const fat = roundTo1(Number(preset?.fat || 0) * servingRatio);
+    const carbohydrates = roundTo1(Number(preset?.carbohydrates || 0) * servingRatio);
     return {
       baseAmount,
       servingAmount: actualServingAmount,
@@ -507,20 +469,19 @@
   let currentAiConsultation = null;
 
   const formatDetailNutritionValue = (value, decimals) => {
-    const numericValue = Number(value);
-    if (!Number.isFinite(numericValue)) return '';
+    const numericValue = roundToDecimals(value, decimals, null);
+    if (numericValue === null) return '';
     return decimals === 0 ? String(Math.round(numericValue)) : numericValue.toFixed(decimals);
   };
 
   const toNutritionNumber = (value, fallback = 0) => {
-    const numericValue = Number(value);
-    return Number.isFinite(numericValue) ? numericValue : fallback;
+    return toFiniteNumber(value, fallback);
   };
 
   const parseDetailNutritionValue = (value, decimals) => {
-    const numericValue = Number(value);
-    if (!Number.isFinite(numericValue) || numericValue < 0) return null;
-    return decimals === 0 ? Math.round(numericValue) : Math.round(numericValue * 10) / 10;
+    const numericValue = roundToDecimals(value, decimals, null);
+    if (numericValue === null || numericValue < 0) return null;
+    return decimals === 0 ? Math.round(numericValue) : numericValue;
   };
 
   // 体組成 (Weight / Body Comp) Elements
@@ -1543,8 +1504,8 @@
     });
   });
 
-  const roundTo1 = (value) => Math.round(Number(value) * 10) / 10;
-  const roundCalories = (value) => Math.round(Number(value));
+  const roundTo1 = (value) => roundToDecimals(value, 1, 0);
+  const roundCalories = (value) => roundToDecimals(value, 0, 0);
 
   function validateWeightInputs() {
     const hasImage = !!selectedWeightFile;
@@ -1562,26 +1523,8 @@
     return 'snack';
   }
 
-  function getCurrentJstTimeParts() {
-    const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Tokyo',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    }).formatToParts(new Date());
-    const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-    return {
-      hour: String(Number(map.hour || 0)).padStart(2, '0'),
-      minute: String(Number(map.minute || 0)).padStart(2, '0'),
-      second: String(Number(map.second || 0)).padStart(2, '0'),
-    };
-  }
-
   function buildMealDateFromDateInput(dateValue) {
-    if (!dateValue) return new Date().toISOString();
-    const { hour, minute, second } = getCurrentJstTimeParts();
-    return `${dateValue}T${hour}:${minute}:${second}+09:00`;
+    return buildJstDateTimeIso(dateValue, new Date());
   }
 
   function validateMealInputs() {
@@ -2412,10 +2355,7 @@
     });
 
     const previousWeightByPeriod = { morning: null, night: null };
-    weightHistory
-      .filter(item => Number.isFinite(Number(item.weight)))
-      .slice()
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    sortWeightRecords(weightHistory.filter(item => Number.isFinite(Number(item.weight))), { dateOrder: 'asc' })
       .forEach((item) => {
         const period = item.measurementType === 'night' ? 'night' : 'morning';
         const currentWeight = Number(item.weight);
@@ -2898,15 +2838,10 @@
       syncOverviewWeightRangeButtons();
 
       // 古い順にソート（時系列）
-      const validHistory = [...weightHistory]
-        .filter(d => d.weight !== null && d.weight > 0)
-        .sort((a, b) => {
-          const dateA = jstDateKey(a.date);
-          const dateB = jstDateKey(b.date);
-          if (dateA !== dateB) return dateA.localeCompare(dateB);
-          const priority = { night: 3, morning: 2, other: 1 };
-          return (priority[a.measurementType] || 0) - (priority[b.measurementType] || 0);
-        });
+      const validHistory = sortWeightRecords(
+        weightHistory.filter(d => d.weight !== null && d.weight > 0),
+        { dateOrder: 'asc' },
+      );
 
       const rangeConfig = OVERVIEW_WEIGHT_RANGE_CONFIG[overviewWeightRange] || OVERVIEW_WEIGHT_RANGE_CONFIG.month;
       const todayKey = jstDateKey(new Date());
@@ -3018,19 +2953,6 @@
   ];
   let currentProfile = null;
 
-  const calculateAge = (birthDateValue) => {
-    if (!birthDateValue) return null;
-    const birthDate = new Date(`${birthDateValue}T00:00:00`);
-    if (Number.isNaN(birthDate.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age -= 1;
-    }
-    return age >= 0 ? age : null;
-  };
-
   const renderProfileAge = (birthDateValue) => {
     if (!profileAgeOutput) return;
     const age = calculateAge(birthDateValue);
@@ -3103,10 +3025,10 @@
     if (rawValue === previousValue) return;
 
     const nextValue = config.type === 'number'
-      ? (rawValue === '' ? null : Math.round(Number(rawValue) * 10) / 10)
+      ? (rawValue === '' ? null : roundToDecimals(rawValue, 1, null))
       : rawValue;
 
-    if (config.type === 'number' && rawValue !== '' && !Number.isFinite(nextValue)) {
+    if (config.type === 'number' && rawValue !== '' && nextValue === null) {
       config.input.value = previousValue;
       return;
     }
@@ -3200,9 +3122,9 @@
   const calculateTargetPfcGrams = (targetCalories) => {
     if (!Number.isFinite(targetCalories) || targetCalories <= 0) return null;
     return {
-      protein: Math.round(((targetCalories * 0.2) / 4) * 10) / 10,
-      fat: Math.round(((targetCalories * 0.25) / 9) * 10) / 10,
-      carbs: Math.round(((targetCalories * 0.55) / 4) * 10) / 10
+      protein: roundTo1((targetCalories * 0.2) / 4),
+      fat: roundTo1((targetCalories * 0.25) / 9),
+      carbs: roundTo1((targetCalories * 0.55) / 4)
     };
   };
 
@@ -3235,7 +3157,7 @@
 
     const targetWeight = Number(currentProfile?.targetWeight);
     if (Number.isFinite(latestWeight) && Number.isFinite(targetWeight) && targetWeight > 0) {
-      const difference = Math.round((latestWeight - targetWeight) * 10) / 10;
+      const difference = roundTo1(latestWeight - targetWeight);
       if (difference > 0) {
         summaryWeightGoalDiff.textContent = `目標まで ${difference.toFixed(1)} kg`;
       } else if (difference < 0) {
@@ -3248,14 +3170,8 @@
     }
 
     const targetDate = currentProfile?.targetDate;
-    const dateMatch = typeof targetDate === 'string'
-      ? targetDate.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      : null;
-    const todayMatch = jstDateKey(new Date()).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (dateMatch && todayMatch) {
-      const targetUtc = Date.UTC(Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]));
-      const todayUtc = Date.UTC(Number(todayMatch[1]), Number(todayMatch[2]) - 1, Number(todayMatch[3]));
-      const days = Math.round((targetUtc - todayUtc) / 86400000);
+    const days = daysBetweenJstDateKeys(targetDate, new Date());
+    if (days !== null) {
       summaryWeightGoalDays.textContent = days > 0
         ? `期日まで ${days} 日`
         : days === 0
@@ -3274,19 +3190,10 @@
       const weightHistory = await response.json();
       
       // 体重データが存在する全測定記録を日付の昇順（古い順）、および区分の昇順（朝 -> 夜）にソート
-      const validHistory = [...weightHistory]
-        .filter(item => item.weight !== null)
-        .sort((a, b) => {
-          const dateA = jstDateKey(a.date);
-          const dateB = jstDateKey(b.date);
-          if (dateA !== dateB) {
-            return dateA.localeCompare(dateB);
-          }
-          const priority = { night: 3, morning: 2, other: 1 };
-          const pA = priority[a.measurementType] || 0;
-          const pB = priority[b.measurementType] || 0;
-          return pA - pB;
-        });
+      const validHistory = sortWeightRecords(
+        weightHistory.filter(item => item.weight !== null),
+        { dateOrder: 'asc' },
+      );
 
       if (validHistory.length > 0) {
         // 一番最後の要素が最も新しい測定データ
@@ -4145,13 +4052,7 @@
       if (response.ok) {
         const weightHistory = await response.json();
         // 日付順 (新しい順) にソート
-        const sortedHistory = [...weightHistory].sort((a, b) => {
-          const dateA = jstDateKey(a.date);
-          const dateB = jstDateKey(b.date);
-          if (dateA !== dateB) return dateB.localeCompare(dateA);
-          const priority = { night: 3, morning: 2, other: 1 };
-          return (priority[b.measurementType] || 0) - (priority[a.measurementType] || 0);
-        });
+        const sortedHistory = sortWeightRecords(weightHistory, { dateOrder: 'desc' });
         // 今回のレコードの位置を探す
         const currentIdx = sortedHistory.findIndex(r => r.id === item.id);
         if (currentIdx !== -1 && currentIdx < sortedHistory.length - 1) {
