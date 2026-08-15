@@ -1626,7 +1626,7 @@ app.get('/api/body-composition', async (req, res) => {
   try {
     const weightHistory = await readWeight();
     // 譌･莉・(YYYY-MM-DD) 縺ｮ髯埼・√♀繧医・蛹ｺ蛻・・髯埼・(螟・-> 譛・-> 莉・ 縺ｧ繧ｽ繝ｼ繝・
-    weightHistory.sort((a, b) => compareWeightRecords(a, b, { dateOrder: 'desc' }));
+    weightHistory.sort((a, b) => sharedCompareWeightRecords(a, b, { dateOrder: 'desc' }));
     res.json(weightHistory);
   } catch (err) {
     console.error('Failed to load weight history:', err);

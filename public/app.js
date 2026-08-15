@@ -5,7 +5,7 @@
   compareWeightRecords,
   daysBetweenJstDateKeys,
   formatJstDateKey as jstDateKey,
-  formatJstDateLabel as formatDisplayDate,
+  formatJstDateLabel as sharedFormatDisplayDate,
   formatJstDateTimeDisplay as formatDateTimeDisplay,
   getCurrentJstTimeParts,
   getMeasurementTypePriority,
@@ -15,6 +15,7 @@
 } from '/shared-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  const formatDisplayDate = (dateLike) => sharedFormatDisplayDate(jstDateKey(dateLike));
   const formatOverviewWeightLabel = (dateLike) => {
     const dateKey = jstDateKey(dateLike);
     const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
