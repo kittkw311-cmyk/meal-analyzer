@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalDateInput = document.getElementById('modal-date-input');
   const modalTimeInput = document.getElementById('modal-time-input');
   const modalTypeSelect = document.getElementById('modal-type-select');
+  const modalMealNameInput = document.getElementById('modal-meal-name-input');
   const modalTextInput = document.getElementById('modal-text-input');
   const modalCaloriesInput = document.getElementById('modal-calories-input');
   const modalProteinInput = document.getElementById('modal-protein-input');
@@ -468,6 +469,26 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentEditingHistoryId = null;
   let activeDetailMeal = null; // 現在詳細モーダルに表示されている食事レコードを保持
   let currentAiConsultation = null;
+
+  const getHistoryMealNameValue = (item) => {
+    const directMealName = typeof item?.mealName === 'string' ? item.mealName.trim() : '';
+    const textInput = typeof item?.textInput === 'string' ? item.textInput.trim() : '';
+    const nutritionMealName = typeof item?.nutrition?.mealName === 'string' ? item.nutrition.mealName.trim() : '';
+    return directMealName || textInput || nutritionMealName || '';
+  };
+
+  const hasManualNutritionValues = (nutrition) => {
+    const values = [nutrition?.calories, nutrition?.protein, nutrition?.fat, nutrition?.carbohydrates];
+    return values.some(value => Number.isFinite(Number(value)) && Number(value) > 0);
+  };
+
+  const getHistoryDisplayMealName = (item) => {
+    const baseName = getHistoryMealNameValue(item) || '食事詳細';
+    if (item?.status === 'failed' && !hasManualNutritionValues(item?.nutrition)) {
+      return `⚠️ ${baseName} (解析未完了)`;
+    }
+    return baseName;
+  };
 
   const formatDetailNutritionValue = (value, decimals) => {
     const numericValue = roundToDecimals(value, decimals, null);
@@ -1415,10 +1436,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalTypeSelect.value = item.mealType || 'snack';
     modalTextInput.value = item.textInput || '';
-
-    // モーダル表示用料理名タイトル
-    const displayTitle = item.mealName || item.nutrition.mealName || (item.textInput && item.textInput.trim() ? item.textInput.trim() : '食事詳細');
-    document.getElementById('modal-meal-title').textContent = displayTitle;
+    if (modalMealNameInput) {
+      modalMealNameInput.value = getHistoryMealNameValue(item);
+    }
 
     const nutrition = item.nutrition || {};
     const hasNutritionValues = Number.isFinite(Number(nutrition.calories))
@@ -2169,7 +2189,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnPresetModal.addEventListener('click', async () => {
       if (!activeDetailMeal) return;
 
-      const displayTitle = document.getElementById('modal-meal-title').textContent || '定番メニュー';
+      const displayTitle = modalMealNameInput?.value.trim()
+        || getHistoryMealNameValue(activeDetailMeal)
+        || '定番メニュー';
       const cVal = activeDetailMeal.nutrition.calories;
       const pVal = activeDetailMeal.nutrition.protein;
       const fVal = activeDetailMeal.nutrition.fat;
@@ -2279,11 +2301,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const displayText = item.textInput && item.textInput.trim()
         ? item.textInput.trim()
         : (item.imageId ? '📸 画像付き記録' : '🍽️ 食事データ');
-      let displayMealName = item.mealName || (item.nutrition && item.nutrition.mealName) || displayText;
-
-      if (item.status === 'failed') {
-        displayMealName = `⚠️ ${displayMealName} (解析未完了)`;
-      }
+      const displayMealName = getHistoryDisplayMealName({
+        ...item,
+        mealName: item.mealName || (item.nutrition && item.nutrition.mealName) || displayText,
+      });
 
       const formatHistoryNutritionValue = (value, decimals) => {
         const formattedValue = formatDetailNutritionValue(value, decimals);
@@ -2656,6 +2677,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newDateTimeStr = `${selectedDate}T${selectedTime}:00`;
     const newMealDate = new Date(newDateTimeStr).toISOString();
     const newMealType = modalTypeSelect.value;
+    const newMealName = modalMealNameInput?.value.trim() || '';
     const newTextInput = modalTextInput.value.trim();
     const rawNutritionValues = [
       modalCaloriesInput?.value.trim() || '',
@@ -2699,6 +2721,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({
           mealDate: newMealDate,
           mealType: newMealType,
+          mealName: newMealName,
           textInput: newTextInput,
           ...(hasNutritionUpdate ? {
             calories: newCalories,
@@ -2782,7 +2805,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnReanalyzeModal.classList.remove('pulse-highlight');
       btnReanalyzeModal.innerHTML = '<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>';
 
-      document.getElementById('modal-meal-title').textContent = updatedRecord.mealName || updatedRecord.textInput || '食事詳細';
+      if (modalMealNameInput) modalMealNameInput.value = getHistoryMealNameValue(updatedRecord);
       if (modalCaloriesInput) modalCaloriesInput.value = formatDetailNutritionValue(updatedRecord.nutrition.calories, 0);
       if (modalProteinInput) modalProteinInput.value = formatDetailNutritionValue(updatedRecord.nutrition.protein, 1);
       if (modalFatInput) modalFatInput.value = formatDetailNutritionValue(updatedRecord.nutrition.fat, 1);

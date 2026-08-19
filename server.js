@@ -735,7 +735,7 @@ async function deletePresetImage(imageSource, imageId) {
 // 螻･豁ｴ邱ｨ髮・API (譌･莉倥・鬟滉ｺ句玄蛻・・譖ｴ譁ｰ)
 app.put('/api/history/:id', async (req, res) => {
   const { id } = req.params;
-  const { mealDate, mealType, textInput, calories, protein, fat, carbohydrates } = req.body;
+  const { mealDate, mealType, mealName, textInput, calories, protein, fat, carbohydrates } = req.body;
   try {
     const history = await readHistory();
     const recordIndex = history.findIndex(r => r.id === id);
@@ -747,6 +747,7 @@ app.put('/api/history/:id', async (req, res) => {
     // mealDate 縺ｨ mealType 縺ｨ textInput 繧呈峩譁ｰ
     if (mealDate) history[recordIndex].mealDate = mealDate;
     if (mealType) history[recordIndex].mealType = mealType;
+    if (mealName !== undefined) history[recordIndex].mealName = mealName;
     if (textInput !== undefined) history[recordIndex].textInput = textInput;
 
     if (history[recordIndex].nutrition) {
@@ -812,7 +813,7 @@ app.put('/api/history/:id', async (req, res) => {
 // 螻･豁ｴ蜀榊・譫・API (菫ｮ豁｣繝・く繧ｹ繝亥・蜉帙→蜈・判蜒上ｒ逕ｨ縺・◆蜀崎ｨ育ｮ・
 app.post('/api/history/:id/reanalyze', async (req, res) => {
   const { id } = req.params;
-  const { textInput, mealDate, mealType } = req.body;
+  const { textInput, mealName, mealDate, mealType } = req.body;
 
   try {
     const history = await readHistory();
@@ -920,7 +921,9 @@ app.post('/api/history/:id/reanalyze', async (req, res) => {
     record.mealDate = mealDate || record.mealDate;
     record.mealType = mealType || record.mealType;
     record.textInput = textInput !== undefined ? textInput : record.textInput;
-    record.mealName = nutritionData.mealName;
+    record.mealName = typeof mealName === 'string' && mealName.trim()
+      ? mealName.trim()
+      : nutritionData.mealName;
     record.status = 'success'; // 繧ｹ繝・・繧ｿ繧ｹ繧痴uccess縺ｫ譖ｴ譁ｰ・・
     record.nutrition = {
       calories: Number(nutritionData.calories),
