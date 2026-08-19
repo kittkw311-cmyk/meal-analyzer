@@ -2285,10 +2285,15 @@ document.addEventListener('DOMContentLoaded', () => {
         displayMealName = `⚠️ ${displayMealName} (解析未完了)`;
       }
 
-      const proteinValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.protein, 1);
-      const fatValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.fat, 1);
-      const carbValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.carbohydrates, 1);
-      const calorieValue = item.status === 'failed' ? '--' : formatDetailNutritionValue(item.nutrition.calories, 0);
+      const formatHistoryNutritionValue = (value, decimals) => {
+        const formattedValue = formatDetailNutritionValue(value, decimals);
+        return formattedValue || '--';
+      };
+
+      const proteinValue = formatHistoryNutritionValue(item.nutrition?.protein, 1);
+      const fatValue = formatHistoryNutritionValue(item.nutrition?.fat, 1);
+      const carbValue = formatHistoryNutritionValue(item.nutrition?.carbohydrates, 1);
+      const calorieValue = formatHistoryNutritionValue(item.nutrition?.calories, 0);
 
       card.innerHTML = `
         <td class="history-detail-row-number">${index + 1}</td>
