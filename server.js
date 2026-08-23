@@ -569,6 +569,23 @@ async function writeHistory(history) {
   }
 }
 
+let mealHistoryAppendQueue = Promise.resolve();
+
+function appendMealHistoryOnce(record, requestId = '') {
+  const operation = mealHistoryAppendQueue.then(async () => {
+    const history = await readHistory();
+    if (requestId) {
+      const existingRecord = history.find(item => item?.analysisRequestId === requestId);
+      if (existingRecord) return existingRecord;
+    }
+    history.unshift(record);
+    await writeHistory(history);
+    return record;
+  });
+  mealHistoryAppendQueue = operation.catch(() => undefined);
+  return operation;
+}
+
 async function initDrivePresets() {
   if (!drive || !folderId) return;
   try {
@@ -955,8 +972,20 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     }
 
     const textInput = typeof req.body.textInput === 'string' ? req.body.textInput.trim() : '';
+    const analysisMode = req.body.analysisMode === 'official' ? 'official' : 'ai';
+    const analysisRequestId = typeof req.body.analysisRequestId === 'string'
+      ? req.body.analysisRequestId.trim().slice(0, 100)
+      : '';
     if (!req.file && !textInput) {
       return res.status(400).json({ error: '画像か補足テキストのいずれかを入力してください。' });
+    }
+    if (analysisMode === 'official' && !textInput) {
+      return res.status(400).json({ error: '公式情報を検索するには、メニュー名や注文内容のテキストが必要です。' });
+    }
+    if (analysisRequestId) {
+      const history = await readHistory();
+      const existingRecord = history.find(item => item?.analysisRequestId === analysisRequestId);
+      if (existingRecord) return res.json(existingRecord);
     }
 
     const mealDate = normalizeMealDateInput(req.body.mealDate, new Date());
@@ -965,9 +994,16 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     let isFailed = false;
     let analysisErrorMsg = '';
 
-    if (!req.file && textInput) {
+    if (analysisMode === 'official') {
       try {
-        const officialMeal = await resolveMealNutritionFromOfficialSources(textInput);
+        const officialMeal = await withTimeout(
+          resolveMealNutritionFromOfficialSources(textInput),
+          8000,
+          'Official nutrition lookup timed out.',
+        ).catch(err => {
+          console.warn('Official meal lookup skipped or timed out:', err.message);
+          return null;
+        });
         if (officialMeal) {
           nutritionData = {
             mealName: officialMeal.mealName,
@@ -981,9 +1017,12 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
             sourceUrl: officialMeal.sourceUrl,
             lookupMode: 'official',
           };
+        } else {
+          return res.status(422).json({ error: '公式サイトで一致する栄養情報を見つけられませんでした。メニュー名や店舗名を具体的に入力してください。' });
         }
       } catch (err) {
-        console.error('Official meal lookup failed, falling back to Gemini estimate:', err);
+        console.error('Official meal lookup failed:', err);
+        return res.status(502).json({ error: '公式情報の検索に失敗しました。時間をおいて再度お試しください。' });
       }
     }
 
@@ -1067,6 +1106,7 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`;
       textInput,
       imageSource,
       imageId,
+      analysisRequestId,
       status: isFailed ? 'failed' : 'success',
       nutrition: {
         calories,
@@ -1084,11 +1124,8 @@ ${textInput ? `補足メモ: ${textInput}` : ''}`;
       }
     };
 
-    const history = await readHistory();
-    history.unshift(newRecord);
-    await writeHistory(history);
-
-    res.json(newRecord);
+    const savedRecord = await appendMealHistoryOnce(newRecord, analysisRequestId);
+    res.json(savedRecord);
   } catch (error) {
     console.error('Meal analyze error:', error);
     const statusCode = error.status || error.statusCode || 500;
@@ -2105,6 +2142,16 @@ function buildGeminiUserContents({ text, imageBuffer, mimeType }) {
   return [{ role: 'user', parts }];
 }
 
+function withTimeout(promise, timeoutMs, timeoutMessage) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(timeoutMessage || 'Operation timed out.')), timeoutMs);
+    }),
+  ]);
+}
+
 function decodeHtmlEntities(text) {
   if (typeof text !== 'string' || !text) return '';
   const namedEntities = {
@@ -2514,6 +2561,22 @@ function formatBodyCompositionRecord(record) {
     : 'データなし';
 }
 
+function formatBodyCompositionRecordForConsultation(record) {
+  if (!record) return 'データなし';
+  const items = [
+    ['日付', record.date || null],
+    ['区分', record.measurementType || null],
+    ['体重', formatBodyCompositionValue(record.weight, 'kg')],
+    ['体脂肪率', formatBodyCompositionValue(record.fatRate, '%')],
+    ['筋肉量', formatBodyCompositionValue(record.muscleMass, 'kg')],
+    ['内臓脂肪', formatBodyCompositionValue(record.visceralFat)],
+    ['体年齢', formatBodyCompositionValue(record.bodyAge, '歳')],
+  ].filter(([, value]) => value !== null);
+  return items.length
+    ? items.map(([label, value]) => `${label}: ${value}`).join(' / ')
+    : 'データなし';
+}
+
 function formatBodyCompositionDelta(current, previous) {
   if (!current || !previous) return '比較できるデータがありません。';
   const fields = [
@@ -2579,6 +2642,8 @@ function formatBodyCompositionTrend(records, referenceDate = new Date()) {
     return `直近7日間（${startKey}〜${endKey}）の体組成記録はありません。`;
   }
 
+  const recentRecords = selectedRecords.slice(-4);
+
   const formatDateLabel = dateKey => {
     const [year, month, day] = dateKey.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
@@ -2609,9 +2674,9 @@ function formatBodyCompositionTrend(records, referenceDate = new Date()) {
   ];
 
   const trendParts = [];
-  if (selectedRecords.length >= 2) {
-    const first = selectedRecords[0];
-    const last = selectedRecords[selectedRecords.length - 1];
+  if (recentRecords.length >= 2) {
+    const first = recentRecords[0];
+    const last = recentRecords[recentRecords.length - 1];
     trendFields.forEach(([label, key, unit]) => {
       const firstValue = Number(first[key]);
       const lastValue = Number(last[key]);
@@ -2625,7 +2690,7 @@ function formatBodyCompositionTrend(records, referenceDate = new Date()) {
 
   const lines = [
     `対象期間: ${formatDateLabel(startKey)}〜${formatDateLabel(endKey)}`,
-    ...selectedRecords.map(record => {
+    ...recentRecords.map(record => {
       const dateLabel = formatDateLabel(getJstDateKey(record.date));
       const typeLabel = record.measurementType === 'night'
         ? '夜'
@@ -2662,7 +2727,12 @@ app.post('/api/ai-consultation', async (req, res) => {
     if (question.length > 500) return res.status(400).json({ error: '質問は500文字以内で入力してください。' });
     if (!ai) return res.status(500).json({ error: 'Gemini APIキーが設定されていません。' });
 
-    const [history, weights, profile] = await Promise.all([readHistory(), readWeight(), readProfile()]);
+    const [history, weights, profile, consultationPromptTemplate] = await Promise.all([
+      readHistory(),
+      readWeight(),
+      readProfile(),
+      readConsultationPromptTemplate(),
+    ]);
     const targetDateKey = parseConsultationTargetDateKey(question, new Date());
     const targetDateLabel = formatJstDateLabel(targetDateKey) || targetDateKey;
     const targetDate = new Date(`${targetDateKey}T00:00:00+09:00`);
@@ -2728,12 +2798,43 @@ app.post('/api/ai-consultation', async (req, res) => {
         : null,
     };
 
-    const consultationPromptTemplate = await readConsultationPromptTemplate();
+    const compactContext = {
+      date: context.date,
+      dateLabel: context.dateLabel,
+      requestedDate: context.requestedDate,
+      requestedDateLabel: context.requestedDateLabel,
+      targetNutrition: context.targetNutrition,
+      targetWeightKg: context.targetWeightKg,
+      targetDate: context.targetDate,
+      heightCm: context.heightCm,
+      activityLevel: context.activityLevel,
+      activityNotes: context.activityNotes,
+      currentBodyComposition: currentBodyComposition ? {
+        date: currentBodyComposition.date || null,
+        measurementType: currentBodyComposition.measurementType || null,
+        weight: currentBodyComposition.weight ?? null,
+        fatRate: currentBodyComposition.fatRate ?? null,
+        muscleMass: currentBodyComposition.muscleMass ?? null,
+        visceralFat: currentBodyComposition.visceralFat ?? null,
+        bodyAge: currentBodyComposition.bodyAge ?? null,
+      } : null,
+      previousBodyComposition: previousBodyComposition ? {
+        date: previousBodyComposition.date || null,
+        measurementType: previousBodyComposition.measurementType || null,
+        weight: previousBodyComposition.weight ?? null,
+        fatRate: previousBodyComposition.fatRate ?? null,
+        muscleMass: previousBodyComposition.muscleMass ?? null,
+        visceralFat: previousBodyComposition.visceralFat ?? null,
+        bodyAge: previousBodyComposition.bodyAge ?? null,
+      } : null,
+      bodyCompositionDelta: context.bodyCompositionDelta,
+      weeklyBodyCompositionTrend: weeklyBodyCompositionTrend,
+    };
     const prompt = buildConsultationPrompt(consultationPromptTemplate, {
-      contextJson: JSON.stringify(context, null, 2),
+      contextJson: JSON.stringify(compactContext),
       mealGroupsText: formatMealGroups(mealGroups),
-      currentBodyCompositionText: formatBodyCompositionRecord(currentBodyComposition),
-      previousBodyCompositionText: formatBodyCompositionRecord(previousBodyComposition),
+      currentBodyCompositionText: formatBodyCompositionRecordForConsultation(currentBodyComposition),
+      previousBodyCompositionText: formatBodyCompositionRecordForConsultation(previousBodyComposition),
       bodyCompositionDeltaText: formatBodyCompositionDelta(currentBodyComposition, previousBodyComposition),
       weeklyBodyCompositionTrendText: weeklyBodyCompositionTrend,
       question,

@@ -551,6 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const mealDateInput = document.getElementById('meal-date-input');
   const mealTypeChips = document.querySelectorAll('#meal-type-chips .chip');
   const btnAnalyzeMeal = document.getElementById('btn-analyze');
+  const btnAnalyzeOfficialMeal = document.getElementById('btn-analyze-official');
   const btnOpenMealEntry = document.getElementById('btn-open-meal-entry');
 
   const btnSaveWeight = document.getElementById('btn-save-weight');
@@ -652,6 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedWeightFile = null;
   let selectedMealFile = null;
+  let mealAnalysisInProgress = false;
   let selectedPresetEditFile = null;
   let presetEditBaseImageUrl = '';
   let presetEditImageMarkedForRemoval = false;
@@ -1542,6 +1544,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasText = mealTextInput && mealTextInput.value.trim().length > 0;
     if (btnAnalyzeMeal) {
       btnAnalyzeMeal.disabled = !(hasImage || hasText);
+    }
+    if (btnAnalyzeOfficialMeal) {
+      btnAnalyzeOfficialMeal.disabled = !hasText;
     }
   }
 
@@ -3523,26 +3528,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  if (btnAnalyzeMeal) {
-    btnAnalyzeMeal.addEventListener('click', async () => {
+  const analyzeMeal = async (analysisMode = 'ai') => {
+      if (mealAnalysisInProgress) return;
       const hasMealText = mealTextInput && mealTextInput.value.trim().length > 0;
       if (!selectedMealFile && !hasMealText) {
         alert('写真か補足テキストを入力してください。');
         return;
       }
+      if (analysisMode === 'official' && !hasMealText) {
+        alert('公式情報を検索するには、メニュー名や注文内容をテキストで入力してください。');
+        return;
+      }
+      mealAnalysisInProgress = true;
 
       const loadingTextEl = loadingOverlay.querySelector('p');
       const loadingSubTextEl = loadingOverlay.querySelector('.loading-subtext');
-      loadingTextEl.textContent = 'AIがメニューを解析しています...';
-      loadingSubTextEl.textContent = '料理名と栄養を読み取り中';
+      loadingTextEl.textContent = analysisMode === 'official' ? '公式情報を検索しています...' : 'AIがメニューを解析しています...';
+      loadingSubTextEl.textContent = analysisMode === 'official' ? '公式サイトの栄養情報を確認中' : '料理名と栄養を読み取り中';
       loadingOverlay.style.display = 'flex';
       btnAnalyzeMeal.disabled = true;
+      if (btnAnalyzeOfficialMeal) btnAnalyzeOfficialMeal.disabled = true;
 
       const analyzeFormData = new FormData();
       if (selectedMealFile) {
         analyzeFormData.append('image', selectedMealFile);
       }
       analyzeFormData.append('textInput', mealTextInput?.value || '');
+      analyzeFormData.append('analysisMode', analysisMode);
+      analyzeFormData.append(
+        'analysisRequestId',
+        typeof globalThis.crypto?.randomUUID === 'function'
+          ? globalThis.crypto.randomUUID()
+          : `meal_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      );
       analyzeFormData.append('mealDate', buildMealDateFromDateInput(mealDateInput?.value || ''));
       analyzeFormData.append('mealType', activeMealType || 'snack');
 
@@ -3577,9 +3595,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } finally {
         loadingOverlay.style.display = 'none';
-        btnAnalyzeMeal.disabled = false;
+        mealAnalysisInProgress = false;
+        validateMealInputs();
       }
-    });
+  };
+
+  if (btnAnalyzeMeal) {
+    btnAnalyzeMeal.addEventListener('click', () => analyzeMeal('ai'));
+  }
+  if (btnAnalyzeOfficialMeal) {
+    btnAnalyzeOfficialMeal.addEventListener('click', () => analyzeMeal('official'));
   }
 
   // 3. 解析結果の保存処理
