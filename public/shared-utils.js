@@ -1,3 +1,5 @@
+import './body-ocr.js';
+
 const JST_TIME_ZONE = 'Asia/Tokyo';
 const DAY_MS = 86400000;
 const MEASUREMENT_TYPE_PRIORITY = {
