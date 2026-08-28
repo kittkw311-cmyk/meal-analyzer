@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.0.2';
+const APP_VERSION = 'v1.0.3';
 const BODY_OCR_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 let tesseractLoader = null;
@@ -23,7 +23,6 @@ const SMART_SCALE_FIELDS = [
   { id:'input-bodyage-val', row:7, col:0, decimals:0, min:10, max:100, key:'bodyAge', previousKey:'bodyAge', tolerance:10 },
 ];
 
-// Smart Scaleの固定レイアウト。数値部分だけを狙い、上の色線・下の評価文字をOCR対象から外す。
 const VALUE_LAYOUT = {
   leftX0: 0.080,
   leftX1: 0.405,
@@ -441,7 +440,6 @@ async function saveBodyCompositionFromConfirmation(event) {
     return;
   }
 
-  // ボディタイプはOCR精度が安定しないため任意項目として扱う。
   const bodyType = normalizeBodyTypeBeforeSave();
 
   bodySaveInProgress = true;
@@ -555,7 +553,17 @@ function ensureBodyCompositionStyles() {
     #weight-result-edit-container .input-number-v2::placeholder{color:#758b97!important;opacity:1!important;font-weight:600!important}
     #input-bodytype-val:not(:placeholder-shown){border-color:#38d996!important}
     #btn-save-weight{background:linear-gradient(135deg,#168f5c,#1fbf78)!important;border:1px solid #42d995!important;color:#fff!important;font-weight:800!important;box-shadow:0 8px 22px rgba(31,191,120,.22)!important;opacity:1!important}
-    #btn-save-weight:disabled{background:#29414d!important;border-color:#3e5965!important;color:#9eb0b8!important;box-shadow:none!important;opacity:.72!important}`;
+    #btn-save-weight:disabled{background:#29414d!important;border-color:#3e5965!important;color:#9eb0b8!important;box-shadow:none!important;opacity:.72!important}
+    .floating-entry-actions{position:absolute;left:14px;bottom:76px;z-index:7000;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+    .floating-entry-btn{pointer-events:auto;width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.32);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .16s ease,filter .16s ease;background:#173445}
+    .floating-entry-btn.meal{background:linear-gradient(135deg,#148866,#20b981)}
+    .floating-entry-btn.body{background:linear-gradient(135deg,#17677e,#20a4bf)}
+    .floating-entry-btn:active{transform:scale(.92)}
+    .floating-entry-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .floating-entry-btn .fab-label{position:absolute;left:64px;white-space:nowrap;background:#0c1e29;color:#fff;border:1px solid #294759;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;opacity:0;transform:translateX(-4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+    .floating-entry-btn:focus-visible .fab-label,.floating-entry-btn:hover .fab-label{opacity:1;transform:translateX(0)}
+    @media(max-width:480px){.floating-entry-actions{left:12px;bottom:72px}.floating-entry-btn{width:50px;height:50px}.floating-entry-btn svg{width:22px;height:22px}}
+  `;
   document.head.appendChild(style);
 }
 
@@ -572,10 +580,37 @@ function ensureOcrHint(button) {
   hint.textContent = 'Smart Scale固定レイアウト専用OCR（Tesseract.js）。数値を読み取り、ボディタイプは任意項目として扱います。AIは使用しません。';
 }
 
+function ensureFloatingEntryActions() {
+  if (document.getElementById('floating-entry-actions')) return;
+  const host = document.querySelector('.app-container') || document.body;
+  const wrap = document.createElement('div');
+  wrap.id = 'floating-entry-actions';
+  wrap.className = 'floating-entry-actions';
+  wrap.setAttribute('aria-label', 'クイック登録');
+  wrap.innerHTML = `
+    <button type="button" class="floating-entry-btn meal" id="floating-open-meal" aria-label="メニュー登録" title="メニュー登録">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v8c0 1.1.9 2 2 2h3v3"/></svg>
+      <span class="fab-label">メニュー登録</span>
+    </button>
+    <button type="button" class="floating-entry-btn body" id="floating-open-weight" aria-label="体組成登録" title="体組成登録">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8a4 4 0 0 1 8 0"/><path d="M12 8l2-2"/></svg>
+      <span class="fab-label">体組成登録</span>
+    </button>`;
+  host.appendChild(wrap);
+
+  document.getElementById('floating-open-meal')?.addEventListener('click', () => {
+    document.getElementById('btn-open-meal-entry')?.click();
+  });
+  document.getElementById('floating-open-weight')?.addEventListener('click', () => {
+    document.getElementById('btn-open-weight-entry')?.click();
+  });
+}
+
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     ensureAppVersion();
     ensureBodyCompositionStyles();
+    ensureFloatingEntryActions();
 
     const bodyTypeInput = document.getElementById('input-bodytype-val');
     if (bodyTypeInput) bodyTypeInput.placeholder = '任意（読み取れなくても保存できます）';
