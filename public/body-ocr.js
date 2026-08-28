@@ -13,7 +13,6 @@ function loadTesseract() {
       existing.addEventListener('error', () => reject(new Error('OCRライブラリを読み込めませんでした。')), { once: true });
       return;
     }
-
     const script = document.createElement('script');
     script.src = BODY_OCR_SCRIPT_URL;
     script.async = true;
@@ -26,214 +25,65 @@ function loadTesseract() {
   return tesseractLoader;
 }
 
-// Smart Scale の体組成結果画面専用レイアウト。
-// ユーザーが毎回同じ2列 x 8段の結果画面をアップロードする前提で、
-// 日本語ラベルの認識には依存せず、数値が表示される固定位置から値を取得する。
-// 座標は画像サイズに対する比率なので、端末の解像度が変わっても追従する。
+// Smart Scale の2列×8段レイアウト専用。
+// 日本語ラベルではなく、各カードの「大きな数値」がある位置だけを切り出してOCRする。
+// アップロード画像の縦横サイズが変わっても比率で追従する。
 const SMART_SCALE_FIELDS = [
-  { id: 'input-weight-val',          row: 0, col: 0, decimals: 2, min: 30,  max: 250 },
-  { id: 'input-bmi-val',             row: 0, col: 1, decimals: 1, min: 10,  max: 60 },
-  { id: 'input-fat-val',             row: 1, col: 0, decimals: 1, min: 3,   max: 70 },
-  { id: 'input-heart-val',           row: 1, col: 1, decimals: 0, min: 30,  max: 220 },
-  { id: 'input-muscle-val',          row: 2, col: 0, decimals: 2, min: 10,  max: 150 },
-  { id: 'input-bmr-val',             row: 2, col: 1, decimals: 0, min: 500, max: 4000 },
-  { id: 'input-water-val',           row: 3, col: 0, decimals: 1, min: 20,  max: 80 },
-  { id: 'input-fatmass-val',         row: 3, col: 1, decimals: 2, min: 1,   max: 100 },
-  { id: 'input-leanbody-val',        row: 4, col: 0, decimals: 2, min: 20,  max: 200 },
-  { id: 'input-bone-val',            row: 4, col: 1, decimals: 2, min: 1,   max: 10 },
-  { id: 'input-visceralfat-val',     row: 5, col: 0, decimals: 1, min: 1,   max: 30 },
-  { id: 'input-proteinrate-val',     row: 5, col: 1, decimals: 1, min: 5,   max: 40 },
-  { id: 'input-skeletalmuscle-val',  row: 6, col: 0, decimals: 2, min: 10,  max: 100 },
-  { id: 'input-subcutaneous-val',    row: 6, col: 1, decimals: 1, min: 3,   max: 70 },
-  { id: 'input-bodyage-val',         row: 7, col: 0, decimals: 0, min: 10,  max: 100 },
+  { id: 'input-weight-val',         row: 0, col: 0, decimals: 2, min: 30,  max: 250 },
+  { id: 'input-bmi-val',            row: 0, col: 1, decimals: 1, min: 10,  max: 60 },
+  { id: 'input-fat-val',            row: 1, col: 0, decimals: 1, min: 3,   max: 70 },
+  { id: 'input-heart-val',          row: 1, col: 1, decimals: 0, min: 30,  max: 220 },
+  { id: 'input-muscle-val',         row: 2, col: 0, decimals: 2, min: 10,  max: 150 },
+  { id: 'input-bmr-val',            row: 2, col: 1, decimals: 0, min: 500, max: 4000 },
+  { id: 'input-water-val',          row: 3, col: 0, decimals: 1, min: 20,  max: 80 },
+  { id: 'input-fatmass-val',        row: 3, col: 1, decimals: 2, min: 1,   max: 100 },
+  { id: 'input-leanbody-val',       row: 4, col: 0, decimals: 2, min: 20,  max: 200 },
+  { id: 'input-bone-val',           row: 4, col: 1, decimals: 2, min: 1,   max: 10 },
+  { id: 'input-visceralfat-val',    row: 5, col: 0, decimals: 1, min: 1,   max: 30 },
+  { id: 'input-proteinrate-val',    row: 5, col: 1, decimals: 1, min: 5,   max: 40 },
+  { id: 'input-skeletalmuscle-val', row: 6, col: 0, decimals: 2, min: 10,  max: 100 },
+  { id: 'input-subcutaneous-val',   row: 6, col: 1, decimals: 1, min: 3,   max: 70 },
+  { id: 'input-bodyage-val',        row: 7, col: 0, decimals: 0, min: 10,  max: 100 },
 ];
 
-// スクリーンショット例では、各カードの数値はこの相対位置に並ぶ。
-// rowStep は約 12.2% で、最終段まで同じ間隔。
+// 実際のSmart Scaleスクリーンショットを基準にした位置。
+// 大きな数値の中心は縦方向にほぼ 1/16, 3/16 ... 15/16 と並ぶ。
 const VALUE_LAYOUT = {
-  leftXMin: 0.055,
-  leftXMax: 0.465,
-  rightXMin: 0.535,
-  rightXMax: 0.965,
-  firstY: 0.066,
-  rowStep: 0.1217,
-  yHalfHeight: 0.033,
+  leftX0: 0.070,
+  leftX1: 0.470,
+  rightX0: 0.555,
+  rightX1: 0.955,
+  firstY: 0.0625,
+  rowStep: 0.125,
+  halfHeight: 0.025,
 };
 
-function normalizeNumberToken(token) {
-  const normalized = String(token || '')
-    .replace(/,/g, '.')
-    .replace(/[OoＯｏ]/g, '0')
-    .replace(/[Il１]/g, '1')
-    .replace(/[ＳS]/g, '5')
-    .replace(/[ＢB]/g, '8')
-    .replace(/[^0-9.+-]/g, '');
-  if (!normalized || normalized === '.' || normalized === '-' || normalized === '+') return null;
-  const numeric = Number(normalized);
-  return Number.isFinite(numeric) ? numeric : null;
+function getSelectedBodyImage() {
+  return document.getElementById('weight-camera-input')?.files?.[0]
+    || document.getElementById('weight-gallery-input')?.files?.[0]
+    || null;
 }
 
-function formatFieldValue(value, decimals) {
-  if (!Number.isFinite(value)) return '';
-  if (decimals === 0) return String(Math.round(value));
-  return Number(value).toFixed(decimals);
+function setLoading(visible, title = '', detail = '') {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  if (title) overlay.querySelector('p')?.replaceChildren(document.createTextNode(title));
+  if (detail) overlay.querySelector('.loading-subtext')?.replaceChildren(document.createTextNode(detail));
+  overlay.style.display = visible ? 'flex' : 'none';
 }
 
-function getWordBox(word) {
-  const bbox = word?.bbox || {};
-  const x0 = Number(bbox.x0);
-  const x1 = Number(bbox.x1);
-  const y0 = Number(bbox.y0);
-  const y1 = Number(bbox.y1);
-  if (![x0, x1, y0, y1].every(Number.isFinite)) return null;
-  return {
-    x0,
-    x1,
-    y0,
-    y1,
-    cx: (x0 + x1) / 2,
-    cy: (y0 + y1) / 2,
-  };
+function showResultEditor() {
+  const editor = document.getElementById('weight-result-edit-container');
+  if (!editor) return;
+  editor.style.display = 'block';
+  editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function getFieldRegion(field, width, height) {
-  const xMin = field.col === 0 ? VALUE_LAYOUT.leftXMin : VALUE_LAYOUT.rightXMin;
-  const xMax = field.col === 0 ? VALUE_LAYOUT.leftXMax : VALUE_LAYOUT.rightXMax;
-  const yCenter = VALUE_LAYOUT.firstY + (VALUE_LAYOUT.rowStep * field.row);
-  return {
-    x0: xMin * width,
-    x1: xMax * width,
-    y0: (yCenter - VALUE_LAYOUT.yHalfHeight) * height,
-    y1: (yCenter + VALUE_LAYOUT.yHalfHeight) * height,
-    cx: ((xMin + xMax) / 2) * width,
-    cy: yCenter * height,
-  };
-}
-
-function isInsideRegion(box, region) {
-  return box.cx >= region.x0 && box.cx <= region.x1 && box.cy >= region.y0 && box.cy <= region.y1;
-}
-
-function getNumberCandidates(words, region, field) {
-  const candidates = [];
-
-  for (const word of words || []) {
-    const box = getWordBox(word);
-    if (!box || !isInsideRegion(box, region)) continue;
-
-    // 1 word に「71.70kg」のように単位まで含まれていても数値だけ抜く。
-    const rawMatches = String(word.text || '').match(/[+\-]?(?:\d|[OoＯｏIl１ＳSＢB])+(?:[.,](?:\d|[OoＯｏIl１ＳSＢB])+)?/g) || [];
-    for (const raw of rawMatches) {
-      const value = normalizeNumberToken(raw);
-      if (value === null || value < field.min || value > field.max) continue;
-      const distance = Math.hypot((box.cx - region.cx) / Math.max(1, region.x1 - region.x0), (box.cy - region.cy) / Math.max(1, region.y1 - region.y0));
-      const confidence = Number.isFinite(Number(word.confidence)) ? Number(word.confidence) : 0;
-      candidates.push({ value, distance, confidence, raw });
-    }
-  }
-
-  candidates.sort((a, b) => {
-    // 位置を最優先し、同程度ならOCR confidenceが高い候補を採用。
-    const aScore = a.distance - (Math.max(0, a.confidence) / 1000);
-    const bScore = b.distance - (Math.max(0, b.confidence) / 1000);
-    return aScore - bScore;
+function clearBodyCompositionFields() {
+  [...SMART_SCALE_FIELDS.map((field) => field.id), 'input-bodytype-val'].forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
   });
-  return candidates;
-}
-
-function parseFixedLayoutWords(data) {
-  const width = Number(data?.imageSize?.width) || Number(data?.width) || 0;
-  const height = Number(data?.imageSize?.height) || Number(data?.height) || 0;
-  const words = Array.isArray(data?.words) ? data.words : [];
-  if (!width || !height || words.length === 0) return {};
-
-  const values = {};
-  for (const field of SMART_SCALE_FIELDS) {
-    const region = getFieldRegion(field, width, height);
-    const candidate = getNumberCandidates(words, region, field)[0];
-    if (!candidate) continue;
-    values[field.id] = formatFieldValue(candidate.value, field.decimals);
-  }
-  return values;
-}
-
-// Tesseractのバージョン差で imageSize が無いケース用。
-function inferImageSizeFromWords(words) {
-  let maxX = 0;
-  let maxY = 0;
-  for (const word of words || []) {
-    const box = getWordBox(word);
-    if (!box) continue;
-    maxX = Math.max(maxX, box.x1);
-    maxY = Math.max(maxY, box.y1);
-  }
-  return { width: maxX, height: maxY };
-}
-
-function parseBodyTypeFromFixedRegion(data) {
-  const words = Array.isArray(data?.words) ? data.words : [];
-  const fallbackSize = inferImageSizeFromWords(words);
-  const width = Number(data?.imageSize?.width) || Number(data?.width) || fallbackSize.width;
-  const height = Number(data?.imageSize?.height) || Number(data?.height) || fallbackSize.height;
-  if (!width || !height) return '';
-
-  // 最終段・右カードの値部分だけを見る。
-  const region = {
-    x0: 0.535 * width,
-    x1: 0.965 * width,
-    y0: 0.885 * height,
-    y1: 0.955 * height,
-  };
-  const regionWords = words
-    .map((word) => ({ word, box: getWordBox(word) }))
-    .filter(({ box }) => box && isInsideRegion(box, region))
-    .sort((a, b) => (a.box.y0 - b.box.y0) || (a.box.x0 - b.box.x0))
-    .map(({ word }) => String(word.text || '').trim())
-    .filter(Boolean);
-
-  const joined = regionWords.join('').replace(/\s+/g, '');
-  const knownTypes = ['標準的', '標準', '筋肉型', '運動型', 'やせ型', '痩せ型', '肥満型', '隠れ肥満型'];
-  const exact = knownTypes.find((type) => joined.includes(type));
-  if (exact) return exact;
-
-  // OCRの文字が多少崩れていても、今回の画面で頻出する標準判定は拾う。
-  if (/標.{0,2}(準|准)/.test(joined)) return '標準的';
-  return '';
-}
-
-function parseFallbackText(rawText) {
-  // 固定座標取得ができなかった場合のみ使う保険。
-  const normalized = String(rawText || '')
-    .replace(/[，、]/g, ',')
-    .replace(/[．。]/g, '.')
-    .replace(/[：]/g, ':')
-    .replace(/\r/g, '');
-  const values = {};
-  const rules = [
-    ['input-weight-val', /体重[^\d]{0,20}([\d.,]+)/, 2],
-    ['input-bmi-val', /BMI[^\d]{0,20}([\d.,]+)/i, 1],
-    ['input-fat-val', /体脂肪率[^\d]{0,20}([\d.,]+)/, 1],
-    ['input-heart-val', /心拍数[^\d]{0,20}([\d.,]+)/, 0],
-    ['input-muscle-val', /筋肉量[^\d]{0,20}([\d.,]+)/, 2],
-    ['input-bmr-val', /基礎代謝(?:量)?[^\d]{0,20}([\d.,]+)/, 0],
-    ['input-water-val', /水分量[^\d]{0,20}([\d.,]+)/, 1],
-    ['input-fatmass-val', /体脂肪量[^\d]{0,20}([\d.,]+)/, 2],
-    ['input-leanbody-val', /除脂肪体重[^\d]{0,20}([\d.,]+)/, 2],
-    ['input-bone-val', /骨量[^\d]{0,20}([\d.,]+)/, 2],
-    ['input-visceralfat-val', /内臓脂肪[^\d]{0,20}([\d.,]+)/, 1],
-    ['input-proteinrate-val', /タンパク質[^\d]{0,20}([\d.,]+)/, 1],
-    ['input-skeletalmuscle-val', /骨格筋量[^\d]{0,20}([\d.,]+)/, 2],
-    ['input-subcutaneous-val', /皮下脂肪[^\d]{0,20}([\d.,]+)/, 1],
-    ['input-bodyage-val', /体内年齢[^\d]{0,20}([\d.,]+)/, 0],
-  ];
-
-  for (const [id, pattern, decimals] of rules) {
-    const match = normalized.match(pattern);
-    const value = normalizeNumberToken(match?.[1]);
-    if (value === null) continue;
-    values[id] = formatFieldValue(value, decimals);
-  }
-  return values;
 }
 
 function applyParsedValues(values) {
@@ -248,49 +98,194 @@ function applyParsedValues(values) {
   return applied;
 }
 
-function clearBodyCompositionFields() {
-  [...SMART_SCALE_FIELDS.map((field) => field.id), 'input-bodytype-val'].forEach((id) => {
-    const input = document.getElementById(id);
-    if (input) input.value = '';
-  });
-}
-
-function getSelectedBodyImage() {
-  return document.getElementById('weight-camera-input')?.files?.[0]
-    || document.getElementById('weight-gallery-input')?.files?.[0]
-    || null;
-}
-
-function setLoading(visible, title = '', detail = '') {
-  const overlay = document.getElementById('loading-overlay');
-  if (!overlay) return;
-  if (title) {
-    const titleEl = overlay.querySelector('p');
-    if (titleEl) titleEl.textContent = title;
-  }
-  if (detail) {
-    const detailEl = overlay.querySelector('.loading-subtext');
-    if (detailEl) detailEl.textContent = detail;
-  }
-  overlay.style.display = visible ? 'flex' : 'none';
-}
-
-function showResultEditor() {
-  const editor = document.getElementById('weight-result-edit-container');
-  if (editor) {
-    editor.style.display = 'block';
-    editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
 function ensureOcrHint(button) {
-  if (!button || document.getElementById('body-ocr-hint')) return;
+  if (!button) return;
   button.textContent = 'OCRで数値を読み取る';
+  if (document.getElementById('body-ocr-hint')) return;
   const hint = document.createElement('div');
   hint.id = 'body-ocr-hint';
   hint.style.cssText = 'margin-top:8px;font-size:11px;line-height:1.5;color:var(--design-muted);text-align:center;';
-  hint.textContent = 'Smart Scaleの体組成結果画面専用。16項目の固定位置からOCRで読み取ります。AIは使用しません。';
+  hint.textContent = 'Smart Scaleの固定レイアウト専用。数値部分だけを切り出してOCRします。AIは使用しません。';
   button.insertAdjacentElement('afterend', hint);
+}
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('画像を読み込めませんでした。'));
+    };
+    image.src = url;
+  });
+}
+
+function cropRectForField(field, width, height) {
+  const x0Ratio = field.col === 0 ? VALUE_LAYOUT.leftX0 : VALUE_LAYOUT.rightX0;
+  const x1Ratio = field.col === 0 ? VALUE_LAYOUT.leftX1 : VALUE_LAYOUT.rightX1;
+  const cyRatio = VALUE_LAYOUT.firstY + VALUE_LAYOUT.rowStep * field.row;
+  return {
+    sx: Math.round(x0Ratio * width),
+    sy: Math.round((cyRatio - VALUE_LAYOUT.halfHeight) * height),
+    sw: Math.round((x1Ratio - x0Ratio) * width),
+    sh: Math.round(VALUE_LAYOUT.halfHeight * 2 * height),
+  };
+}
+
+function buildNumericComposite(image) {
+  const rowHeight = 92;
+  const markerWidth = 68;
+  const valueWidth = 360;
+  const canvas = document.createElement('canvas');
+  canvas.width = markerWidth + valueWidth;
+  canvas.height = rowHeight * SMART_SCALE_FIELDS.length;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  SMART_SCALE_FIELDS.forEach((field, index) => {
+    const rect = cropRectForField(field, image.naturalWidth, image.naturalHeight);
+    const temp = document.createElement('canvas');
+    temp.width = valueWidth;
+    temp.height = rowHeight;
+    const tctx = temp.getContext('2d', { willReadFrequently: true });
+    tctx.fillStyle = '#fff';
+    tctx.fillRect(0, 0, temp.width, temp.height);
+    tctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, temp.width, temp.height);
+
+    // 白背景＋濃い文字に寄せて、カードの色や小さなステータス文字を落とす。
+    const pixels = tctx.getImageData(0, 0, temp.width, temp.height);
+    const data = pixels.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
+      const value = gray < 150 ? 0 : 255;
+      data[i] = value;
+      data[i + 1] = value;
+      data[i + 2] = value;
+      data[i + 3] = 255;
+    }
+    tctx.putImageData(pixels, 0, 0);
+
+    const y = index * rowHeight;
+    // 行番号を人工的に描くことで、OCRが途中の行を落としても項目対応が崩れない。
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 34px Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(index + 1).padStart(2, '0'), 8, y + rowHeight / 2);
+    ctx.drawImage(temp, markerWidth, y);
+  });
+
+  return canvas;
+}
+
+function normalizeNumericText(text) {
+  return String(text || '')
+    .replace(/[OoＯｏ]/g, '0')
+    .replace(/[Il１]/g, '1')
+    .replace(/,/g, '.')
+    .replace(/[^0-9.\n ]/g, ' ')
+    .replace(/[ ]+/g, ' ');
+}
+
+function normalizeValueForField(raw, field) {
+  if (!raw) return null;
+  let cleaned = String(raw).replace(/\s+/g, '').replace(/,/g, '.');
+  const dots = cleaned.match(/\./g)?.length || 0;
+  if (dots > 1) {
+    const first = cleaned.indexOf('.');
+    cleaned = cleaned.slice(0, first + 1) + cleaned.slice(first + 1).replace(/\./g, '');
+  }
+  let value = Number(cleaned);
+  if (!Number.isFinite(value)) return null;
+
+  // 小数点がOCRで落ちた場合は、項目の想定桁数に合わせて復元する。
+  if (value > field.max && field.decimals > 0 && !cleaned.includes('.')) {
+    const scaled = value / (10 ** field.decimals);
+    if (scaled >= field.min && scaled <= field.max) value = scaled;
+  }
+  if (value < field.min || value > field.max) return null;
+  return field.decimals === 0 ? String(Math.round(value)) : value.toFixed(field.decimals);
+}
+
+function parseCompositeText(rawText) {
+  const text = normalizeNumericText(rawText);
+  const values = {};
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+
+  for (const line of lines) {
+    const digits = line.replace(/\s+/g, '');
+    // 例: "0171.70" → 行01 / 値71.70
+    const indexMatch = digits.match(/^(0[1-9]|1[0-5])(.*)$/);
+    if (!indexMatch) continue;
+    const fieldIndex = Number(indexMatch[1]) - 1;
+    const field = SMART_SCALE_FIELDS[fieldIndex];
+    if (!field) continue;
+    const valueText = indexMatch[2].match(/[0-9]+(?:\.[0-9]+)?/)?.[0] || '';
+    const normalized = normalizeValueForField(valueText, field);
+    if (normalized !== null) values[field.id] = normalized;
+  }
+
+  return values;
+}
+
+function parsePastedText(rawText) {
+  const text = String(rawText || '').replace(/[，、]/g, ',').replace(/[．。]/g, '.');
+  const values = {};
+  const rules = [
+    ['input-weight-val', /体重[^\d]{0,20}([\d.,]+)/, 0],
+    ['input-bmi-val', /BMI[^\d]{0,20}([\d.,]+)/i, 1],
+    ['input-fat-val', /体脂肪率[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-heart-val', /心拍数[^\d]{0,20}([\d.,]+)/, 3],
+    ['input-muscle-val', /筋肉量[^\d]{0,20}([\d.,]+)/, 4],
+    ['input-bmr-val', /基礎代謝(?:量)?[^\d]{0,20}([\d.,]+)/, 5],
+    ['input-water-val', /水分量[^\d]{0,20}([\d.,]+)/, 6],
+    ['input-fatmass-val', /体脂肪量[^\d]{0,20}([\d.,]+)/, 7],
+    ['input-leanbody-val', /除脂肪体重[^\d]{0,20}([\d.,]+)/, 8],
+    ['input-bone-val', /骨量[^\d]{0,20}([\d.,]+)/, 9],
+    ['input-visceralfat-val', /内臓脂肪[^\d]{0,20}([\d.,]+)/, 10],
+    ['input-proteinrate-val', /タンパク質[^\d]{0,20}([\d.,]+)/, 11],
+    ['input-skeletalmuscle-val', /骨格筋量[^\d]{0,20}([\d.,]+)/, 12],
+    ['input-subcutaneous-val', /皮下脂肪[^\d]{0,20}([\d.,]+)/, 13],
+    ['input-bodyage-val', /体内年齢[^\d]{0,20}([\d.,]+)/, 14],
+  ];
+  for (const [id, regex, fieldIndex] of rules) {
+    const raw = text.match(regex)?.[1];
+    const normalized = normalizeValueForField(raw, SMART_SCALE_FIELDS[fieldIndex]);
+    if (normalized !== null) values[id] = normalized;
+  }
+  if (/標準的|標準/.test(text)) values['input-bodytype-val'] = '標準的';
+  return values;
+}
+
+async function recognizeBodyType(Tesseract, image) {
+  // 右下カードだけを切り出して日本語OCR。失敗しても数値OCRには影響させない。
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 420;
+    canvas.height = 120;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const sx = Math.round(0.54 * image.naturalWidth);
+    const sy = Math.round(0.895 * image.naturalHeight);
+    const sw = Math.round(0.43 * image.naturalWidth);
+    const sh = Math.round(0.075 * image.naturalHeight);
+    ctx.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    const result = await Tesseract.recognize(canvas, 'jpn', { tessedit_pageseg_mode: '7' });
+    const text = String(result?.data?.text || '').replace(/\s+/g, '');
+    if (/標.{0,2}(準|准)/.test(text)) return '標準的';
+    for (const type of ['筋肉型', '運動型', 'やせ型', '痩せ型', '肥満型', '隠れ肥満型']) {
+      if (text.includes(type)) return type;
+    }
+  } catch (error) {
+    console.warn('Body type OCR skipped:', error);
+  }
+  return '';
 }
 
 async function runBodyOcr(event) {
@@ -310,33 +305,28 @@ async function runBodyOcr(event) {
   clearBodyCompositionFields();
 
   try {
-    let values = {};
+    let values = parsePastedText(pastedText);
+
     if (imageFile) {
-      setLoading(true, 'OCRで体組成データを読み取っています...', '固定位置から16項目を認識中');
-      const Tesseract = await loadTesseract();
+      setLoading(true, 'OCRで体組成データを読み取っています...', 'Smart Scaleの数値部分を切り出し中');
+      const [Tesseract, image] = await Promise.all([loadTesseract(), loadImageFromFile(imageFile)]);
       if (!Tesseract?.recognize) throw new Error('OCRを開始できませんでした。');
 
-      const result = await Tesseract.recognize(imageFile, 'jpn+eng', {
+      const composite = buildNumericComposite(image);
+      const result = await Tesseract.recognize(composite, 'eng', {
+        tessedit_char_whitelist: '0123456789.,',
+        tessedit_pageseg_mode: '6',
+        preserve_interword_spaces: '1',
         logger(message) {
           if (message.status !== 'recognizing text') return;
           const percent = Math.max(0, Math.min(100, Math.round((message.progress || 0) * 100)));
-          setLoading(true, 'OCRで体組成データを読み取っています...', `固定位置を文字認識中 ${percent}%`);
+          setLoading(true, 'OCRで体組成データを読み取っています...', `数値認識中 ${percent}%`);
         },
       });
 
-      const data = result?.data || {};
-      // imageSize が返らない環境では word bbox の最大値を画像サイズとして補う。
-      if (!data.imageSize) data.imageSize = inferImageSizeFromWords(data.words || []);
-      values = parseFixedLayoutWords(data);
-
-      const bodyType = parseBodyTypeFromFixedRegion(data);
+      values = { ...values, ...parseCompositeText(result?.data?.text || '') };
+      const bodyType = await recognizeBodyType(Tesseract, image);
       if (bodyType) values['input-bodytype-val'] = bodyType;
-
-      // 固定位置で拾えなかった項目だけ、全文ラベル解析で補完。
-      const fallbackValues = parseFallbackText(`${data.text || ''}\n${pastedText}`);
-      values = { ...fallbackValues, ...values };
-    } else {
-      values = parseFallbackText(pastedText);
     }
 
     const applied = applyParsedValues(values);
@@ -345,7 +335,7 @@ async function runBodyOcr(event) {
     if (applied === 0) {
       window.alert('OCRで数値を特定できませんでした。\n確認欄へ手動で数値を入力して保存してください。');
     } else if (applied < 12) {
-      window.alert(`${applied}項目をOCRで読み取りました。\n読み取れなかった項目だけ手動で補ってから保存してください。`);
+      window.alert(`${applied}項目をOCRで読み取りました。\n読み取れなかった項目だけ手動で補ってください。`);
     } else {
       window.alert(`${applied}項目をOCRで読み取りました。\n数値を確認してから保存してください。`);
     }
