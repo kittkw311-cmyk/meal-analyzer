@@ -26,8 +26,7 @@ function loadTesseract() {
 }
 
 // Smart Scale の2列×8段レイアウト専用。
-// 日本語ラベルではなく、各カードの「大きな数値」がある位置だけを切り出してOCRする。
-// アップロード画像の縦横サイズが変わっても比率で追従する。
+// ラベルではなく各カードの大きな数値部分を1項目ずつ切り出して認識する。
 const SMART_SCALE_FIELDS = [
   { id: 'input-weight-val',         row: 0, col: 0, decimals: 2, min: 30,  max: 250 },
   { id: 'input-bmi-val',            row: 0, col: 1, decimals: 1, min: 10,  max: 60 },
@@ -46,16 +45,16 @@ const SMART_SCALE_FIELDS = [
   { id: 'input-bodyage-val',        row: 7, col: 0, decimals: 0, min: 10,  max: 100 },
 ];
 
-// 実際のSmart Scaleスクリーンショットを基準にした位置。
-// 大きな数値の中心は縦方向にほぼ 1/16, 3/16 ... 15/16 と並ぶ。
+// 実際のSmart Scaleスクリーンショットに合わせた比率。
+// 以前の 0.125 間隔だと下段ほどずれたため、実画像の約0.118間隔に補正。
 const VALUE_LAYOUT = {
-  leftX0: 0.070,
-  leftX1: 0.470,
-  rightX0: 0.555,
-  rightX1: 0.955,
-  firstY: 0.0625,
-  rowStep: 0.125,
-  halfHeight: 0.025,
+  leftX0: 0.072,
+  leftX1: 0.455,
+  rightX0: 0.552,
+  rightX1: 0.938,
+  firstY: 0.0685,
+  rowStep: 0.1183,
+  halfHeight: 0.0185,
 };
 
 function getSelectedBodyImage() {
@@ -98,6 +97,53 @@ function applyParsedValues(values) {
   return applied;
 }
 
+function ensureBodyCompositionContrastStyles() {
+  if (document.getElementById('body-ocr-contrast-style')) return;
+  const style = document.createElement('style');
+  style.id = 'body-ocr-contrast-style';
+  style.textContent = `
+    #weight-result-edit-container.body-comp-results-edit-card {
+      background: var(--design-card, #132b3a) !important;
+      border: 1px solid var(--border-color, #294759) !important;
+    }
+    #weight-result-edit-container .results-edit-title {
+      color: var(--text-main, #f8fafc) !important;
+      opacity: 1 !important;
+    }
+    #weight-result-edit-container .result-edit-field {
+      background: var(--card-bg, #102431) !important;
+      border: 1px solid var(--border-color, #36576a) !important;
+      box-shadow: none !important;
+    }
+    #weight-result-edit-container .result-edit-field .label {
+      color: var(--text-main, #f8fafc) !important;
+      opacity: .88 !important;
+      font-weight: 700 !important;
+    }
+    #weight-result-edit-container .input-number-v2 {
+      background: rgba(4, 19, 28, .72) !important;
+      color: var(--text-main, #f8fafc) !important;
+      border: 1px solid var(--border-color, #3d6074) !important;
+      box-shadow: none !important;
+      font-weight: 800 !important;
+    }
+    #weight-result-edit-container .input-number-v2::placeholder {
+      color: var(--design-muted, #9fb0bc) !important;
+      opacity: .8 !important;
+    }
+    #weight-result-edit-container .input-number-v2:focus {
+      border-color: var(--design-accent, #22d3ee) !important;
+      outline: 2px solid color-mix(in srgb, var(--design-accent, #22d3ee) 28%, transparent) !important;
+      outline-offset: 0 !important;
+    }
+    #btn-save-weight {
+      color: #ffffff !important;
+      font-weight: 800 !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function ensureOcrHint(button) {
   if (!button) return;
   button.textContent = 'OCRで数値を読み取る';
@@ -105,7 +151,7 @@ function ensureOcrHint(button) {
   const hint = document.createElement('div');
   hint.id = 'body-ocr-hint';
   hint.style.cssText = 'margin-top:8px;font-size:11px;line-height:1.5;color:var(--design-muted);text-align:center;';
-  hint.textContent = 'Smart Scaleの固定レイアウト専用。数値部分だけを切り出してOCRします。AIは使用しません。';
+  hint.textContent = 'Smart Scale専用OCR。各数値を1項目ずつ読み取り、確認欄へ反映します。AIは使用しません。';
   button.insertAdjacentElement('afterend', hint);
 }
 
@@ -130,107 +176,76 @@ function cropRectForField(field, width, height) {
   const x1Ratio = field.col === 0 ? VALUE_LAYOUT.leftX1 : VALUE_LAYOUT.rightX1;
   const cyRatio = VALUE_LAYOUT.firstY + VALUE_LAYOUT.rowStep * field.row;
   return {
-    sx: Math.round(x0Ratio * width),
-    sy: Math.round((cyRatio - VALUE_LAYOUT.halfHeight) * height),
+    sx: Math.max(0, Math.round(x0Ratio * width)),
+    sy: Math.max(0, Math.round((cyRatio - VALUE_LAYOUT.halfHeight) * height)),
     sw: Math.round((x1Ratio - x0Ratio) * width),
     sh: Math.round(VALUE_LAYOUT.halfHeight * 2 * height),
   };
 }
 
-function buildNumericComposite(image) {
-  const rowHeight = 92;
-  const markerWidth = 68;
-  const valueWidth = 360;
+function buildFieldCanvas(image, field, threshold = 185) {
+  const rect = cropRectForField(field, image.naturalWidth, image.naturalHeight);
   const canvas = document.createElement('canvas');
-  canvas.width = markerWidth + valueWidth;
-  canvas.height = rowHeight * SMART_SCALE_FIELDS.length;
+  canvas.width = 520;
+  canvas.height = 150;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  SMART_SCALE_FIELDS.forEach((field, index) => {
-    const rect = cropRectForField(field, image.naturalWidth, image.naturalHeight);
-    const temp = document.createElement('canvas');
-    temp.width = valueWidth;
-    temp.height = rowHeight;
-    const tctx = temp.getContext('2d', { willReadFrequently: true });
-    tctx.fillStyle = '#fff';
-    tctx.fillRect(0, 0, temp.width, temp.height);
-    tctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, temp.width, temp.height);
+  // 数字周辺に余白を持たせながら大きく拡大。
+  ctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, 16, 10, canvas.width - 32, canvas.height - 20);
 
-    // 白背景＋濃い文字に寄せて、カードの色や小さなステータス文字を落とす。
-    const pixels = tctx.getImageData(0, 0, temp.width, temp.height);
-    const data = pixels.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
-      const value = gray < 150 ? 0 : 255;
-      data[i] = value;
-      data[i + 1] = value;
-      data[i + 2] = value;
-      data[i + 3] = 255;
-    }
-    tctx.putImageData(pixels, 0, 0);
-
-    const y = index * rowHeight;
-    // 行番号を人工的に描くことで、OCRが途中の行を落としても項目対応が崩れない。
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 34px Arial, sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(index + 1).padStart(2, '0'), 8, y + rowHeight / 2);
-    ctx.drawImage(temp, markerWidth, y);
-  });
-
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = pixels.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
+    const binary = gray < threshold ? 0 : 255;
+    data[i] = binary;
+    data[i + 1] = binary;
+    data[i + 2] = binary;
+    data[i + 3] = 255;
+  }
+  ctx.putImageData(pixels, 0, 0);
   return canvas;
-}
-
-function normalizeNumericText(text) {
-  return String(text || '')
-    .replace(/[OoＯｏ]/g, '0')
-    .replace(/[Il１]/g, '1')
-    .replace(/,/g, '.')
-    .replace(/[^0-9.\n ]/g, ' ')
-    .replace(/[ ]+/g, ' ');
 }
 
 function normalizeValueForField(raw, field) {
   if (!raw) return null;
-  let cleaned = String(raw).replace(/\s+/g, '').replace(/,/g, '.');
+  let cleaned = String(raw)
+    .replace(/[OoＯｏ]/g, '0')
+    .replace(/[Il１]/g, '1')
+    .replace(/,/g, '.')
+    .replace(/[^0-9.]/g, '');
+  if (!cleaned) return null;
+
   const dots = cleaned.match(/\./g)?.length || 0;
   if (dots > 1) {
     const first = cleaned.indexOf('.');
     cleaned = cleaned.slice(0, first + 1) + cleaned.slice(first + 1).replace(/\./g, '');
   }
+
   let value = Number(cleaned);
   if (!Number.isFinite(value)) return null;
 
-  // 小数点がOCRで落ちた場合は、項目の想定桁数に合わせて復元する。
+  // 71.70 → 7170 のように小数点を落とした場合を補正。
   if (value > field.max && field.decimals > 0 && !cleaned.includes('.')) {
-    const scaled = value / (10 ** field.decimals);
-    if (scaled >= field.min && scaled <= field.max) value = scaled;
+    const preferredScale = value / (10 ** field.decimals);
+    if (preferredScale >= field.min && preferredScale <= field.max) {
+      value = preferredScale;
+    } else {
+      // 体脂肪率等で 251 → 25.1 のような1桁小数も試す。
+      for (let places = 1; places <= 3; places += 1) {
+        const candidate = value / (10 ** places);
+        if (candidate >= field.min && candidate <= field.max) {
+          value = candidate;
+          break;
+        }
+      }
+    }
   }
+
   if (value < field.min || value > field.max) return null;
   return field.decimals === 0 ? String(Math.round(value)) : value.toFixed(field.decimals);
-}
-
-function parseCompositeText(rawText) {
-  const text = normalizeNumericText(rawText);
-  const values = {};
-  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
-
-  for (const line of lines) {
-    const digits = line.replace(/\s+/g, '');
-    // 例: "0171.70" → 行01 / 値71.70
-    const indexMatch = digits.match(/^(0[1-9]|1[0-5])(.*)$/);
-    if (!indexMatch) continue;
-    const fieldIndex = Number(indexMatch[1]) - 1;
-    const field = SMART_SCALE_FIELDS[fieldIndex];
-    if (!field) continue;
-    const valueText = indexMatch[2].match(/[0-9]+(?:\.[0-9]+)?/)?.[0] || '';
-    const normalized = normalizeValueForField(valueText, field);
-    if (normalized !== null) values[field.id] = normalized;
-  }
-
-  return values;
 }
 
 function parsePastedText(rawText) {
@@ -262,20 +277,68 @@ function parsePastedText(rawText) {
   return values;
 }
 
+async function recognizeOneField(worker, image, field) {
+  // 閾値を2通り試す。1回目で妥当値なら即採用。
+  for (const threshold of [195, 160]) {
+    const canvas = buildFieldCanvas(image, field, threshold);
+    const result = await worker.recognize(canvas);
+    const rawText = String(result?.data?.text || '').trim();
+    const normalized = normalizeValueForField(rawText, field);
+    if (normalized !== null) return normalized;
+  }
+  return null;
+}
+
+async function recognizeNumericFields(Tesseract, image) {
+  if (!Tesseract?.createWorker) throw new Error('OCRワーカーを開始できませんでした。');
+
+  const worker = await Tesseract.createWorker('eng', 1, {
+    logger(message) {
+      if (message.status !== 'recognizing text') return;
+      // 個別項目の進捗は外側で表示するため、ここでは詳細更新しない。
+    },
+  });
+
+  const values = {};
+  try {
+    await worker.setParameters({
+      tessedit_char_whitelist: '0123456789.,',
+      tessedit_pageseg_mode: '7',
+      preserve_interword_spaces: '0',
+    });
+
+    for (let index = 0; index < SMART_SCALE_FIELDS.length; index += 1) {
+      const field = SMART_SCALE_FIELDS[index];
+      setLoading(
+        true,
+        'OCRで体組成データを読み取っています...',
+        `数値を個別認識中 ${index + 1}/${SMART_SCALE_FIELDS.length}`,
+      );
+      const value = await recognizeOneField(worker, image, field);
+      if (value !== null) values[field.id] = value;
+    }
+  } finally {
+    await worker.terminate();
+  }
+  return values;
+}
+
 async function recognizeBodyType(Tesseract, image) {
-  // 右下カードだけを切り出して日本語OCR。失敗しても数値OCRには影響させない。
   try {
     const canvas = document.createElement('canvas');
-    canvas.width = 420;
-    canvas.height = 120;
+    canvas.width = 520;
+    canvas.height = 160;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    const sx = Math.round(0.54 * image.naturalWidth);
-    const sy = Math.round(0.895 * image.naturalHeight);
-    const sw = Math.round(0.43 * image.naturalWidth);
-    const sh = Math.round(0.075 * image.naturalHeight);
+
+    // 右下カードの「標準的」表示付近。
+    const sx = Math.round(0.55 * image.naturalWidth);
+    const sy = Math.round(0.876 * image.naturalHeight);
+    const sw = Math.round(0.40 * image.naturalWidth);
+    const sh = Math.round(0.055 * image.naturalHeight);
     ctx.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
     const result = await Tesseract.recognize(canvas, 'jpn', { tessedit_pageseg_mode: '7' });
     const text = String(result?.data?.text || '').replace(/\s+/g, '');
     if (/標.{0,2}(準|准)/.test(text)) return '標準的';
@@ -308,23 +371,12 @@ async function runBodyOcr(event) {
     let values = parsePastedText(pastedText);
 
     if (imageFile) {
-      setLoading(true, 'OCRで体組成データを読み取っています...', 'Smart Scaleの数値部分を切り出し中');
+      setLoading(true, 'OCRで体組成データを読み取っています...', 'Smart Scale画像を準備中');
       const [Tesseract, image] = await Promise.all([loadTesseract(), loadImageFromFile(imageFile)]);
-      if (!Tesseract?.recognize) throw new Error('OCRを開始できませんでした。');
+      const numericValues = await recognizeNumericFields(Tesseract, image);
+      values = { ...values, ...numericValues };
 
-      const composite = buildNumericComposite(image);
-      const result = await Tesseract.recognize(composite, 'eng', {
-        tessedit_char_whitelist: '0123456789.,',
-        tessedit_pageseg_mode: '6',
-        preserve_interword_spaces: '1',
-        logger(message) {
-          if (message.status !== 'recognizing text') return;
-          const percent = Math.max(0, Math.min(100, Math.round((message.progress || 0) * 100)));
-          setLoading(true, 'OCRで体組成データを読み取っています...', `数値認識中 ${percent}%`);
-        },
-      });
-
-      values = { ...values, ...parseCompositeText(result?.data?.text || '') };
+      setLoading(true, 'OCRで体組成データを読み取っています...', 'ボディタイプを確認中');
       const bodyType = await recognizeBodyType(Tesseract, image);
       if (bodyType) values['input-bodytype-val'] = bodyType;
     }
@@ -353,6 +405,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('btn-analyze-weight');
     if (!button) return;
+    ensureBodyCompositionContrastStyles();
     ensureOcrHint(button);
     button.addEventListener('click', runBodyOcr, { capture: true });
   });
