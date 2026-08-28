@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.0.1';
+const APP_VERSION = 'v1.0.2';
 const BODY_OCR_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 let tesseractLoader = null;
@@ -177,7 +177,6 @@ function normalizeValueForField(raw, field) {
   let value = Number(cleaned);
   if (!Number.isFinite(value)) return null;
 
-  // 小数点を落として読んだ場合（例: 7080 -> 70.80、247 -> 24.7）を復元。
   if (!cleaned.includes('.') && field.decimals > 0) {
     const preferred = value / (10 ** field.decimals);
     if (preferred >= field.min && preferred <= field.max) value = preferred;
@@ -233,10 +232,7 @@ function chooseBestCandidate(candidates, field, previousRecord) {
 
   const best = ranked[0];
   if (!best) return null;
-  if (Number.isFinite(previous) && Math.abs(Number(best.value) - previous) > field.tolerance * 2.2) {
-    // 明らかな誤読は「間違った値を自動入力」するより空欄を優先する。
-    return null;
-  }
+  if (Number.isFinite(previous) && Math.abs(Number(best.value) - previous) > field.tolerance * 2.2) return null;
   return best.value;
 }
 
@@ -247,11 +243,7 @@ async function recognizeOneField(worker, image, field, previousRecord) {
     const text = String(result?.data?.text || '').trim();
     const normalized = normalizeValueForField(text, field);
     if (normalized !== null) {
-      candidates.push({
-        value: normalized,
-        confidence: Number(result?.data?.confidence || 0),
-        text,
-      });
+      candidates.push({ value: normalized, confidence: Number(result?.data?.confidence || 0), text });
     }
   }
   return chooseBestCandidate(candidates, field, previousRecord);
@@ -271,7 +263,6 @@ function reconcileSmartScaleValues(values) {
   const bone = get('input-bone-val');
   let muscle = get('input-muscle-val');
 
-  // Smart Scale内で必ず整合する組み合わせを使って、未読・誤読を補正する。
   if (Number.isFinite(weight) && Number.isFinite(fatMass)) {
     const derivedLean = weight - fatMass;
     if (derivedLean >= 20 && derivedLean <= 200 && (!Number.isFinite(lean) || Math.abs(lean - derivedLean) > .45)) {
@@ -299,8 +290,7 @@ function reconcileSmartScaleValues(values) {
   if (Number.isFinite(lean) && Number.isFinite(bone)) {
     const derivedMuscle = lean - bone;
     if (derivedMuscle >= 10 && derivedMuscle <= 150 && (!Number.isFinite(muscle) || Math.abs(muscle - derivedMuscle) > .35)) {
-      muscle = derivedMuscle;
-      set('input-muscle-val', muscle, 2);
+      set('input-muscle-val', derivedMuscle, 2);
     }
   }
 
@@ -451,17 +441,13 @@ async function saveBodyCompositionFromConfirmation(event) {
     return;
   }
 
+  // ボディタイプはOCR精度が安定しないため任意項目として扱う。
   const bodyType = normalizeBodyTypeBeforeSave();
-  if (!bodyType) {
-    window.alert('ボディタイプを読み取れませんでした。\n「ボディタイプ」欄へ入力してから保存してください。');
-    document.getElementById('input-bodytype-val')?.focus();
-    return;
-  }
 
   bodySaveInProgress = true;
   const button = event.currentTarget;
   button.disabled = true;
-  setLoading(true, '体組成データを保存しています...', '確認した16項目をGoogle Driveへ保存中');
+  setLoading(true, '体組成データを保存しています...', '確認した項目をGoogle Driveへ保存中');
 
   try {
     const formData = new FormData();
@@ -477,11 +463,14 @@ async function saveBodyCompositionFromConfirmation(event) {
     const response = await fetch('/api/body-composition', { method:'POST', body:formData });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || 'データの保存に失敗しました。');
-    if (String(payload?.bodyType || '').trim() !== bodyType) {
-      throw new Error('ボディタイプが保存結果に反映されませんでした。');
+
+    const savedBodyType = String(payload?.bodyType || '').trim();
+    if (bodyType && savedBodyType !== bodyType) {
+      throw new Error('入力したボディタイプが保存結果に反映されませんでした。');
     }
 
-    window.alert(`体組成データを保存しました。\n筋肉量: ${fieldValue('input-muscle-val') || '--'} kg\nボディタイプ: ${payload.bodyType}`);
+    const bodyTypeText = savedBodyType || '未設定';
+    window.alert(`体組成データを保存しました。\n筋肉量: ${fieldValue('input-muscle-val') || '--'} kg\nボディタイプ: ${bodyTypeText}`);
     window.location.reload();
   } catch (error) {
     console.error('Body composition save failed:', error);
@@ -519,7 +508,7 @@ async function runBodyOcr(event) {
       const recognized = await recognizeNumericFields(Tesseract, image, previousRecord);
       values = reconcileSmartScaleValues({ ...values, ...recognized });
 
-      setLoading(true, 'OCRで体組成データを読み取っています...', 'ボディタイプを認識中');
+      setLoading(true, 'OCRで体組成データを読み取っています...', 'ボディタイプを認識中（任意）');
       const bodyType = await recognizeBodyType(Tesseract, image);
       if (bodyType) {
         lastRecognizedBodyType = bodyType;
@@ -527,26 +516,26 @@ async function runBodyOcr(event) {
       }
     }
 
-    const applied = applyParsedValues(values);
+    applyParsedValues(values);
     reconcileConfirmationFields();
     showResultEditor();
     const bodyTypeInput = document.getElementById('input-bodytype-val');
-    if (bodyTypeInput) bodyTypeInput.placeholder = '読み取れない場合は手入力';
+    if (bodyTypeInput) bodyTypeInput.placeholder = '任意（読み取れなくても保存できます）';
 
     const filledNumericCount = SMART_SCALE_FIELDS.filter(field => fieldValue(field.id) !== '').length;
     if (filledNumericCount === 0) {
       window.alert('OCRで数値を特定できませんでした。\n確認欄へ手動で入力してください。');
     } else if (filledNumericCount < SMART_SCALE_FIELDS.length) {
-      window.alert(`${filledNumericCount}/${SMART_SCALE_FIELDS.length}項目を読み取りました。\n空欄だけ確認・手入力してから保存してください。`);
+      window.alert(`${filledNumericCount}/${SMART_SCALE_FIELDS.length}項目を読み取りました。\n空欄だけ確認・手入力して保存してください。\nボディタイプは空欄のままでも保存できます。`);
     } else if (!normalizeBodyTypeBeforeSave()) {
-      window.alert('数値15項目を読み取りました。\nボディタイプだけ手入力してから保存してください。');
+      window.alert('数値15項目を読み取りました。\nボディタイプは読み取れませんでしたが、そのまま保存できます。');
     } else {
       window.alert('体組成15項目とボディタイプを読み取りました。\n数値を確認してから保存してください。');
     }
   } catch (error) {
     console.error('Body composition OCR failed:', error);
     showResultEditor();
-    window.alert('OCR読み取りに失敗しました。\n確認欄へ手動で数値を入力して保存できます。');
+    window.alert('OCR読み取りに失敗しました。\n確認欄へ手動で数値を入力して保存できます。\nボディタイプは任意です。');
   } finally {
     setLoading(false);
     button.disabled = false;
@@ -580,7 +569,7 @@ function ensureOcrHint(button) {
     hint.style.cssText = 'margin-top:8px;font-size:11px;line-height:1.5;color:#b7c7d0;text-align:center;';
     button.insertAdjacentElement('afterend', hint);
   }
-  hint.textContent = 'Smart Scale固定レイアウト専用OCR（Tesseract.js）。数値部分のみを切り出し、過去値と項目間の整合性も確認します。AIは使用しません。';
+  hint.textContent = 'Smart Scale固定レイアウト専用OCR（Tesseract.js）。数値を読み取り、ボディタイプは任意項目として扱います。AIは使用しません。';
 }
 
 if (typeof document !== 'undefined') {
@@ -589,7 +578,7 @@ if (typeof document !== 'undefined') {
     ensureBodyCompositionStyles();
 
     const bodyTypeInput = document.getElementById('input-bodytype-val');
-    if (bodyTypeInput) bodyTypeInput.placeholder = '読み取れない場合は手入力';
+    if (bodyTypeInput) bodyTypeInput.placeholder = '任意（読み取れなくても保存できます）';
 
     const analyzeButton = document.getElementById('btn-analyze-weight');
     if (analyzeButton) {
