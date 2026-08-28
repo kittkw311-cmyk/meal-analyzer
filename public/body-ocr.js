@@ -26,111 +26,214 @@ function loadTesseract() {
   return tesseractLoader;
 }
 
-const FIELD_DEFINITIONS = [
-  { id: 'input-weight-val', labels: [/^体重$/, /体重\s*[:：]?/i, /weight/i], decimals: 2 },
-  { id: 'input-bmi-val', labels: [/\bBMI\b/i], decimals: 1 },
-  { id: 'input-fat-val', labels: [/体脂肪率/, /体脂肪\s*率/, /body\s*fat\s*(rate|%)/i], decimals: 1 },
-  { id: 'input-heart-val', labels: [/心拍数/, /心拍/, /heart\s*rate/i], decimals: 0 },
-  { id: 'input-muscle-val', labels: [/筋肉量(?!.*骨格)/, /muscle\s*mass/i], decimals: 2 },
-  { id: 'input-bmr-val', labels: [/基礎代謝(?:量)?/, /\bBMR\b/i], decimals: 0 },
-  { id: 'input-water-val', labels: [/水分量/, /体水分(?:率)?/, /body\s*water/i], decimals: 1 },
-  { id: 'input-fatmass-val', labels: [/体脂肪量/, /fat\s*mass/i], decimals: 2 },
-  { id: 'input-leanbody-val', labels: [/除脂肪体重/, /除脂肪量/, /lean\s*body/i], decimals: 2 },
-  { id: 'input-bone-val', labels: [/骨量/, /bone\s*mass/i], decimals: 2 },
-  { id: 'input-visceralfat-val', labels: [/内臓脂肪(?:レベル)?/, /visceral\s*fat/i], decimals: 1 },
-  { id: 'input-proteinrate-val', labels: [/タンパク質(?:率)?/, /たんぱく質(?:率)?/, /protein\s*(rate|%)/i], decimals: 1 },
-  { id: 'input-skeletalmuscle-val', labels: [/骨格筋(?:量)?/, /skeletal\s*muscle/i], decimals: 2 },
-  { id: 'input-subcutaneous-val', labels: [/皮下脂肪(?:率)?/, /subcutaneous\s*fat/i], decimals: 1 },
-  { id: 'input-bodyage-val', labels: [/体内年齢/, /身体年齢/, /body\s*age/i], decimals: 0 },
+// Smart Scale の体組成結果画面専用レイアウト。
+// ユーザーが毎回同じ2列 x 8段の結果画面をアップロードする前提で、
+// 日本語ラベルの認識には依存せず、数値が表示される固定位置から値を取得する。
+// 座標は画像サイズに対する比率なので、端末の解像度が変わっても追従する。
+const SMART_SCALE_FIELDS = [
+  { id: 'input-weight-val',          row: 0, col: 0, decimals: 2, min: 30,  max: 250 },
+  { id: 'input-bmi-val',             row: 0, col: 1, decimals: 1, min: 10,  max: 60 },
+  { id: 'input-fat-val',             row: 1, col: 0, decimals: 1, min: 3,   max: 70 },
+  { id: 'input-heart-val',           row: 1, col: 1, decimals: 0, min: 30,  max: 220 },
+  { id: 'input-muscle-val',          row: 2, col: 0, decimals: 2, min: 10,  max: 150 },
+  { id: 'input-bmr-val',             row: 2, col: 1, decimals: 0, min: 500, max: 4000 },
+  { id: 'input-water-val',           row: 3, col: 0, decimals: 1, min: 20,  max: 80 },
+  { id: 'input-fatmass-val',         row: 3, col: 1, decimals: 2, min: 1,   max: 100 },
+  { id: 'input-leanbody-val',        row: 4, col: 0, decimals: 2, min: 20,  max: 200 },
+  { id: 'input-bone-val',            row: 4, col: 1, decimals: 2, min: 1,   max: 10 },
+  { id: 'input-visceralfat-val',     row: 5, col: 0, decimals: 1, min: 1,   max: 30 },
+  { id: 'input-proteinrate-val',     row: 5, col: 1, decimals: 1, min: 5,   max: 40 },
+  { id: 'input-skeletalmuscle-val',  row: 6, col: 0, decimals: 2, min: 10,  max: 100 },
+  { id: 'input-subcutaneous-val',    row: 6, col: 1, decimals: 1, min: 3,   max: 70 },
+  { id: 'input-bodyage-val',         row: 7, col: 0, decimals: 0, min: 10,  max: 100 },
 ];
 
-const ALL_LABEL_PATTERNS = FIELD_DEFINITIONS.flatMap((field) => field.labels);
-
-function normalizeOcrText(text) {
-  return String(text || '')
-    .replace(/[，、]/g, ',')
-    .replace(/[．。]/g, '.')
-    .replace(/[：]/g, ':')
-    .replace(/\u3000/g, ' ')
-    .replace(/[|｜]/g, ' ')
-    .replace(/\r/g, '')
-    .replace(/[ ]{2,}/g, ' ')
-    .trim();
-}
+// スクリーンショット例では、各カードの数値はこの相対位置に並ぶ。
+// rowStep は約 12.2% で、最終段まで同じ間隔。
+const VALUE_LAYOUT = {
+  leftXMin: 0.055,
+  leftXMax: 0.465,
+  rightXMin: 0.535,
+  rightXMax: 0.965,
+  firstY: 0.066,
+  rowStep: 0.1217,
+  yHalfHeight: 0.033,
+};
 
 function normalizeNumberToken(token) {
   const normalized = String(token || '')
     .replace(/,/g, '.')
     .replace(/[OoＯｏ]/g, '0')
     .replace(/[Il１]/g, '1')
+    .replace(/[ＳS]/g, '5')
+    .replace(/[ＢB]/g, '8')
     .replace(/[^0-9.+-]/g, '');
+  if (!normalized || normalized === '.' || normalized === '-' || normalized === '+') return null;
   const numeric = Number(normalized);
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function getLineNumber(line) {
-  const tokens = String(line || '').match(/[+-]?(?:\d{1,4}(?:[.,]\d{1,3})?|[OoＯｏIl１](?:[.,]\d+)?)/g) || [];
-  for (const token of tokens) {
-    const value = normalizeNumberToken(token);
-    if (value !== null) return value;
-  }
-  return null;
+function formatFieldValue(value, decimals) {
+  if (!Number.isFinite(value)) return '';
+  if (decimals === 0) return String(Math.round(value));
+  return Number(value).toFixed(decimals);
 }
 
-function lineContainsAnyLabel(line) {
-  return ALL_LABEL_PATTERNS.some((pattern) => pattern.test(line));
+function getWordBox(word) {
+  const bbox = word?.bbox || {};
+  const x0 = Number(bbox.x0);
+  const x1 = Number(bbox.x1);
+  const y0 = Number(bbox.y0);
+  const y1 = Number(bbox.y1);
+  if (![x0, x1, y0, y1].every(Number.isFinite)) return null;
+  return {
+    x0,
+    x1,
+    y0,
+    y1,
+    cx: (x0 + x1) / 2,
+    cy: (y0 + y1) / 2,
+  };
 }
 
-function findValueForField(lines, definition) {
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (!definition.labels.some((pattern) => pattern.test(line))) continue;
+function getFieldRegion(field, width, height) {
+  const xMin = field.col === 0 ? VALUE_LAYOUT.leftXMin : VALUE_LAYOUT.rightXMin;
+  const xMax = field.col === 0 ? VALUE_LAYOUT.leftXMax : VALUE_LAYOUT.rightXMax;
+  const yCenter = VALUE_LAYOUT.firstY + (VALUE_LAYOUT.rowStep * field.row);
+  return {
+    x0: xMin * width,
+    x1: xMax * width,
+    y0: (yCenter - VALUE_LAYOUT.yHalfHeight) * height,
+    y1: (yCenter + VALUE_LAYOUT.yHalfHeight) * height,
+    cx: ((xMin + xMax) / 2) * width,
+    cy: yCenter * height,
+  };
+}
 
-    const sameLineValue = getLineNumber(line);
-    if (sameLineValue !== null) return sameLineValue;
+function isInsideRegion(box, region) {
+  return box.cx >= region.x0 && box.cx <= region.x1 && box.cy >= region.y0 && box.cy <= region.y1;
+}
 
-    for (let offset = 1; offset <= 2; offset += 1) {
-      const nextLine = lines[index + offset];
-      if (!nextLine) break;
-      if (lineContainsAnyLabel(nextLine)) break;
-      const nextValue = getLineNumber(nextLine);
-      if (nextValue !== null) return nextValue;
+function getNumberCandidates(words, region, field) {
+  const candidates = [];
+
+  for (const word of words || []) {
+    const box = getWordBox(word);
+    if (!box || !isInsideRegion(box, region)) continue;
+
+    // 1 word に「71.70kg」のように単位まで含まれていても数値だけ抜く。
+    const rawMatches = String(word.text || '').match(/[+\-]?(?:\d|[OoＯｏIl１ＳSＢB])+(?:[.,](?:\d|[OoＯｏIl１ＳSＢB])+)?/g) || [];
+    for (const raw of rawMatches) {
+      const value = normalizeNumberToken(raw);
+      if (value === null || value < field.min || value > field.max) continue;
+      const distance = Math.hypot((box.cx - region.cx) / Math.max(1, region.x1 - region.x0), (box.cy - region.cy) / Math.max(1, region.y1 - region.y0));
+      const confidence = Number.isFinite(Number(word.confidence)) ? Number(word.confidence) : 0;
+      candidates.push({ value, distance, confidence, raw });
     }
   }
-  return null;
+
+  candidates.sort((a, b) => {
+    // 位置を最優先し、同程度ならOCR confidenceが高い候補を採用。
+    const aScore = a.distance - (Math.max(0, a.confidence) / 1000);
+    const bScore = b.distance - (Math.max(0, b.confidence) / 1000);
+    return aScore - bScore;
+  });
+  return candidates;
 }
 
-function parseBodyType(lines) {
-  const bodyTypeLabels = [/ボディタイプ/, /体型/, /body\s*type/i];
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const matched = bodyTypeLabels.find((pattern) => pattern.test(line));
-    if (!matched) continue;
-    const sameLine = line.replace(matched, '').replace(/^\s*[:：-]?\s*/, '').trim();
-    if (sameLine && !/^[-.\d\s]+$/.test(sameLine)) return sameLine.slice(0, 30);
-    const next = lines[index + 1]?.trim();
-    if (next && !lineContainsAnyLabel(next)) return next.slice(0, 30);
+function parseFixedLayoutWords(data) {
+  const width = Number(data?.imageSize?.width) || Number(data?.width) || 0;
+  const height = Number(data?.imageSize?.height) || Number(data?.height) || 0;
+  const words = Array.isArray(data?.words) ? data.words : [];
+  if (!width || !height || words.length === 0) return {};
+
+  const values = {};
+  for (const field of SMART_SCALE_FIELDS) {
+    const region = getFieldRegion(field, width, height);
+    const candidate = getNumberCandidates(words, region, field)[0];
+    if (!candidate) continue;
+    values[field.id] = formatFieldValue(candidate.value, field.decimals);
   }
+  return values;
+}
+
+// Tesseractのバージョン差で imageSize が無いケース用。
+function inferImageSizeFromWords(words) {
+  let maxX = 0;
+  let maxY = 0;
+  for (const word of words || []) {
+    const box = getWordBox(word);
+    if (!box) continue;
+    maxX = Math.max(maxX, box.x1);
+    maxY = Math.max(maxY, box.y1);
+  }
+  return { width: maxX, height: maxY };
+}
+
+function parseBodyTypeFromFixedRegion(data) {
+  const words = Array.isArray(data?.words) ? data.words : [];
+  const fallbackSize = inferImageSizeFromWords(words);
+  const width = Number(data?.imageSize?.width) || Number(data?.width) || fallbackSize.width;
+  const height = Number(data?.imageSize?.height) || Number(data?.height) || fallbackSize.height;
+  if (!width || !height) return '';
+
+  // 最終段・右カードの値部分だけを見る。
+  const region = {
+    x0: 0.535 * width,
+    x1: 0.965 * width,
+    y0: 0.885 * height,
+    y1: 0.955 * height,
+  };
+  const regionWords = words
+    .map((word) => ({ word, box: getWordBox(word) }))
+    .filter(({ box }) => box && isInsideRegion(box, region))
+    .sort((a, b) => (a.box.y0 - b.box.y0) || (a.box.x0 - b.box.x0))
+    .map(({ word }) => String(word.text || '').trim())
+    .filter(Boolean);
+
+  const joined = regionWords.join('').replace(/\s+/g, '');
+  const knownTypes = ['標準的', '標準', '筋肉型', '運動型', 'やせ型', '痩せ型', '肥満型', '隠れ肥満型'];
+  const exact = knownTypes.find((type) => joined.includes(type));
+  if (exact) return exact;
+
+  // OCRの文字が多少崩れていても、今回の画面で頻出する標準判定は拾う。
+  if (/標.{0,2}(準|准)/.test(joined)) return '標準的';
   return '';
 }
 
-function parseBodyCompositionText(rawText) {
-  const text = normalizeOcrText(rawText);
-  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+function parseFallbackText(rawText) {
+  // 固定座標取得ができなかった場合のみ使う保険。
+  const normalized = String(rawText || '')
+    .replace(/[，、]/g, ',')
+    .replace(/[．。]/g, '.')
+    .replace(/[：]/g, ':')
+    .replace(/\r/g, '');
   const values = {};
+  const rules = [
+    ['input-weight-val', /体重[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-bmi-val', /BMI[^\d]{0,20}([\d.,]+)/i, 1],
+    ['input-fat-val', /体脂肪率[^\d]{0,20}([\d.,]+)/, 1],
+    ['input-heart-val', /心拍数[^\d]{0,20}([\d.,]+)/, 0],
+    ['input-muscle-val', /筋肉量[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-bmr-val', /基礎代謝(?:量)?[^\d]{0,20}([\d.,]+)/, 0],
+    ['input-water-val', /水分量[^\d]{0,20}([\d.,]+)/, 1],
+    ['input-fatmass-val', /体脂肪量[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-leanbody-val', /除脂肪体重[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-bone-val', /骨量[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-visceralfat-val', /内臓脂肪[^\d]{0,20}([\d.,]+)/, 1],
+    ['input-proteinrate-val', /タンパク質[^\d]{0,20}([\d.,]+)/, 1],
+    ['input-skeletalmuscle-val', /骨格筋量[^\d]{0,20}([\d.,]+)/, 2],
+    ['input-subcutaneous-val', /皮下脂肪[^\d]{0,20}([\d.,]+)/, 1],
+    ['input-bodyage-val', /体内年齢[^\d]{0,20}([\d.,]+)/, 0],
+  ];
 
-  FIELD_DEFINITIONS.forEach((definition) => {
-    const value = findValueForField(lines, definition);
-    if (value === null) return;
-    values[definition.id] = definition.decimals === 0
-      ? String(Math.round(value))
-      : value.toFixed(definition.decimals).replace(/0+$/, '').replace(/\.$/, '');
-  });
-
-  const bodyType = parseBodyType(lines);
-  if (bodyType) values['input-bodytype-val'] = bodyType;
-
-  return { text, values };
+  for (const [id, pattern, decimals] of rules) {
+    const match = normalized.match(pattern);
+    const value = normalizeNumberToken(match?.[1]);
+    if (value === null) continue;
+    values[id] = formatFieldValue(value, decimals);
+  }
+  return values;
 }
 
 function applyParsedValues(values) {
@@ -146,7 +249,7 @@ function applyParsedValues(values) {
 }
 
 function clearBodyCompositionFields() {
-  [...FIELD_DEFINITIONS.map((field) => field.id), 'input-bodytype-val'].forEach((id) => {
+  [...SMART_SCALE_FIELDS.map((field) => field.id), 'input-bodytype-val'].forEach((id) => {
     const input = document.getElementById(id);
     if (input) input.value = '';
   });
@@ -186,7 +289,7 @@ function ensureOcrHint(button) {
   const hint = document.createElement('div');
   hint.id = 'body-ocr-hint';
   hint.style.cssText = 'margin-top:8px;font-size:11px;line-height:1.5;color:var(--design-muted);text-align:center;';
-  hint.textContent = 'AIは使用しません。写真内の文字・数値をOCRで読み取り、確認画面に反映します。';
+  hint.textContent = 'Smart Scaleの体組成結果画面専用。16項目の固定位置からOCRで読み取ります。AIは使用しません。';
   button.insertAdjacentElement('afterend', hint);
 }
 
@@ -207,9 +310,9 @@ async function runBodyOcr(event) {
   clearBodyCompositionFields();
 
   try {
-    let sourceText = pastedText;
+    let values = {};
     if (imageFile) {
-      setLoading(true, 'OCRで体組成データを読み取っています...', '写真内の文字と数値を認識中');
+      setLoading(true, 'OCRで体組成データを読み取っています...', '固定位置から16項目を認識中');
       const Tesseract = await loadTesseract();
       if (!Tesseract?.recognize) throw new Error('OCRを開始できませんでした。');
 
@@ -217,20 +320,34 @@ async function runBodyOcr(event) {
         logger(message) {
           if (message.status !== 'recognizing text') return;
           const percent = Math.max(0, Math.min(100, Math.round((message.progress || 0) * 100)));
-          setLoading(true, 'OCRで体組成データを読み取っています...', `文字認識中 ${percent}%`);
+          setLoading(true, 'OCRで体組成データを読み取っています...', `固定位置を文字認識中 ${percent}%`);
         },
       });
-      sourceText = `${result?.data?.text || ''}\n${pastedText}`.trim();
+
+      const data = result?.data || {};
+      // imageSize が返らない環境では word bbox の最大値を画像サイズとして補う。
+      if (!data.imageSize) data.imageSize = inferImageSizeFromWords(data.words || []);
+      values = parseFixedLayoutWords(data);
+
+      const bodyType = parseBodyTypeFromFixedRegion(data);
+      if (bodyType) values['input-bodytype-val'] = bodyType;
+
+      // 固定位置で拾えなかった項目だけ、全文ラベル解析で補完。
+      const fallbackValues = parseFallbackText(`${data.text || ''}\n${pastedText}`);
+      values = { ...fallbackValues, ...values };
+    } else {
+      values = parseFallbackText(pastedText);
     }
 
-    const parsed = parseBodyCompositionText(sourceText);
-    const applied = applyParsedValues(parsed.values);
+    const applied = applyParsedValues(values);
     showResultEditor();
 
     if (applied === 0) {
-      window.alert('OCRで数値を特定できませんでした。\n写真はそのまま使えるので、確認欄へ手動で数値を入力して保存してください。');
+      window.alert('OCRで数値を特定できませんでした。\n確認欄へ手動で数値を入力して保存してください。');
+    } else if (applied < 12) {
+      window.alert(`${applied}項目をOCRで読み取りました。\n読み取れなかった項目だけ手動で補ってから保存してください。`);
     } else {
-      window.alert(`${applied}項目をOCRで読み取りました。\n数値を確認・修正してから保存してください。`);
+      window.alert(`${applied}項目をOCRで読み取りました。\n数値を確認してから保存してください。`);
     }
   } catch (error) {
     console.error('Body composition OCR failed:', error);
