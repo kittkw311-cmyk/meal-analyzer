@@ -1,6 +1,7 @@
 const BODY_OCR_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 let tesseractLoader = null;
+let lastRecognizedBodyType = '';
 
 function loadTesseract() {
   if (globalThis.Tesseract) return Promise.resolve(globalThis.Tesseract);
@@ -77,6 +78,7 @@ function clearBodyCompositionFields() {
     const input = document.getElementById(id);
     if (input) input.value = '';
   });
+  lastRecognizedBodyType = '';
 }
 
 function applyParsedValues(values) {
@@ -85,6 +87,7 @@ function applyParsedValues(values) {
     const input = document.getElementById(id);
     if (!input || value === '' || value === null || value === undefined) return;
     input.value = String(value).trim();
+    if (id === 'input-bodytype-val') lastRecognizedBodyType = input.value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
     applied += 1;
@@ -305,18 +308,44 @@ async function recognizeBodyType(Tesseract, image) {
 
 function normalizeBodyTypeBeforeSave() {
   const input = document.getElementById('input-bodytype-val');
-  if (!input) return;
-  let value = String(input.value || '').trim();
+  if (!input) return '';
+  let value = String(input.value || lastRecognizedBodyType || '').trim();
   if (/^標準$/.test(value)) value = '標準的';
   if (!value) {
     const visibleText = input.closest('.result-edit-field')?.textContent || '';
     if (/標準的|標準/.test(visibleText)) value = '標準的';
   }
   if (value) {
+    lastRecognizedBodyType = value;
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }
+  return value;
+}
+
+function installWeightSaveBodyTypeGuard() {
+  if (globalThis.__physilogBodyTypeFetchGuardInstalled || typeof globalThis.fetch !== 'function') return;
+  globalThis.__physilogBodyTypeFetchGuardInstalled = true;
+  const originalFetch = globalThis.fetch.bind(globalThis);
+
+  globalThis.fetch = (input, init = {}) => {
+    try {
+      const body = init?.body;
+      if (body instanceof FormData) {
+        const looksLikeWeightSave = body.has('weight')
+          && body.has('measurementType')
+          && (body.has('fatRate') || body.has('muscleMass') || body.has('bmi'));
+        if (looksLikeWeightSave) {
+          const bodyType = normalizeBodyTypeBeforeSave();
+          if (bodyType) body.set('bodyType', bodyType);
+        }
+      }
+    } catch (error) {
+      console.warn('Body type save guard skipped:', error);
+    }
+    return originalFetch(input, init);
+  };
 }
 
 async function runBodyOcr(event) {
@@ -339,7 +368,10 @@ async function runBodyOcr(event) {
       values = { ...values, ...(await recognizeNumericFields(Tesseract, image)) };
       setLoading(true, 'OCRで体組成データを読み取っています...', 'ボディタイプを確認中');
       const bodyType = await recognizeBodyType(Tesseract, image);
-      if (bodyType) values['input-bodytype-val'] = bodyType;
+      if (bodyType) {
+        lastRecognizedBodyType = bodyType;
+        values['input-bodytype-val'] = bodyType;
+      }
     }
     const applied = applyParsedValues(values);
     normalizeBodyTypeBeforeSave();
@@ -358,6 +390,7 @@ async function runBodyOcr(event) {
 }
 
 if (typeof document !== 'undefined') {
+  installWeightSaveBodyTypeGuard();
   document.addEventListener('DOMContentLoaded', () => {
     const analyzeButton = document.getElementById('btn-analyze-weight');
     ensureBodyCompositionStyles();
