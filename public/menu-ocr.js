@@ -1,4 +1,4 @@
-const MEAL_OCR_APP_VERSION = 'v1.0.4';
+const MEAL_OCR_APP_VERSION = 'v1.0.5';
 const MEAL_OCR_TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 let mealOcrTesseractLoader = null;
@@ -13,7 +13,6 @@ function setMealOcrVersion() {
 function loadMealOcrTesseract() {
   if (globalThis.Tesseract) return Promise.resolve(globalThis.Tesseract);
   if (mealOcrTesseractLoader) return mealOcrTesseractLoader;
-
   mealOcrTesseractLoader = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-physilog-tesseract]');
     if (existing) {
@@ -22,7 +21,6 @@ function loadMealOcrTesseract() {
       existing.addEventListener('error', () => reject(new Error('OCRライブラリを読み込めませんでした。')), { once: true });
       return;
     }
-
     const script = document.createElement('script');
     script.src = MEAL_OCR_TESSERACT_URL;
     script.async = true;
@@ -31,7 +29,6 @@ function loadMealOcrTesseract() {
     script.onerror = () => reject(new Error('OCRライブラリを読み込めませんでした。'));
     document.head.appendChild(script);
   });
-
   return mealOcrTesseractLoader;
 }
 
@@ -45,27 +42,20 @@ function loadMealOcrImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('画像を読み込めませんでした。'));
-    };
+    image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('画像を読み込めませんでした。')); };
     image.src = url;
   });
 }
 
-function buildMealOcrCanvas(image, mode = 'normal') {
-  const maxWidth = 1800;
-  const scale = Math.min(2.2, Math.max(1, maxWidth / Math.max(1, image.naturalWidth)));
+function buildMealOcrCanvas(image, mode = 'auto') {
+  const maxWidth = 2000;
+  const scale = Math.min(2.5, Math.max(1, maxWidth / Math.max(1, image.naturalWidth)));
   const width = Math.max(1, Math.round(image.naturalWidth * scale));
   const height = Math.max(1, Math.round(image.naturalHeight * scale));
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, width, height);
@@ -73,15 +63,24 @@ function buildMealOcrCanvas(image, mode = 'normal') {
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(image, 0, 0, width, height);
 
-  if (mode === 'normal') return canvas;
-
   const pixels = ctx.getImageData(0, 0, width, height);
   const data = pixels.data;
+  let luminanceSum = 0;
+  const sampleStep = Math.max(4, Math.floor(data.length / 8000 / 4) * 4);
+  let sampleCount = 0;
+  for (let i = 0; i < data.length; i += sampleStep) {
+    luminanceSum += data[i] * .299 + data[i + 1] * .587 + data[i + 2] * .114;
+    sampleCount += 1;
+  }
+  const averageLuminance = sampleCount ? luminanceSum / sampleCount : 255;
+  const darkSource = averageLuminance < 125;
+
   for (let i = 0; i < data.length; i += 4) {
-    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-    let value = gray;
-    if (mode === 'contrast') value = Math.max(0, Math.min(255, (gray - 128) * 1.75 + 128));
-    if (mode === 'threshold') value = gray < 190 ? 0 : 255;
+    const gray = data[i] * .299 + data[i + 1] * .587 + data[i + 2] * .114;
+    let value = darkSource ? 255 - gray : gray;
+    if (mode === 'contrast') value = Math.max(0, Math.min(255, (value - 128) * 1.9 + 128));
+    if (mode === 'binary') value = value < 160 ? 0 : 255;
+    if (mode === 'softBinary') value = value < 190 ? 0 : 255;
     data[i] = value;
     data[i + 1] = value;
     data[i + 2] = value;
@@ -97,8 +96,10 @@ function normalizeOcrText(rawText) {
   text = text.replace(/[０-９]/g, char => String(fullWidthDigits.indexOf(char)));
   return text
     .replace(/[，、]/g, ',')
-    .replace(/[．。]/g, '.')
+    .replace(/[．。·・]/g, '.')
     .replace(/[：]/g, ':')
+    .replace(/[OoＯｏ](?=\d|\.|g)/g, '0')
+    .replace(/(?<=\d)[OoＯｏ]/g, '0')
     .replace(/ｇ/gi, 'g')
     .replace(/ＫＣＡＬ/gi, 'kcal')
     .replace(/㎉/g, 'kcal')
@@ -107,105 +108,154 @@ function normalizeOcrText(rawText) {
 }
 
 const NUTRITION_LABELS = {
-  calories: [
-    /エネルギー/i,
-    /熱\s*量/i,
-    /カロリー/i,
-    /calor(?:ie|ies)/i,
-    /energy/i,
-  ],
-  protein: [
-    /たんぱく質/i,
-    /タンパク質/i,
-    /蛋白質/i,
-    /protein/i,
-  ],
-  fat: [
-    /脂\s*質/i,
-    /脂\s*肪/i,
-    /total\s*fat/i,
-    /\bfat\b/i,
-  ],
-  carbs: [
-    /炭水化物/i,
-    /炭水化物量/i,
-    /糖質(?:量)?/i,
-    /carbohydrate(?:s)?/i,
-    /total\s*carb/i,
-  ],
+  calories: [/エネルギー/i, /熱\s*量/i, /カロリー/i, /calor(?:ie|ies)/i, /energy/i],
+  protein: [/たんぱく\s*質/i, /タンパク\s*質/i, /蛋白\s*質/i, /protein/i],
+  fat: [/脂\s*質/i, /total\s*fat/i, /\bfat\b/i],
+  carbs: [/炭水化物(?:量)?/i, /糖質(?:量)?/i, /carbohydrate(?:s)?/i, /total\s*carb/i],
 };
 
-function findUnitValue(text, unit, max) {
-  const unitPattern = unit === 'kcal' ? '(?:kcal|kcalories?)' : '(?:g|gram(?:s)?)';
-  const regex = new RegExp(`(-?\\d+(?:\\.\\d+)?)\\s*${unitPattern}`, 'i');
-  const match = String(text || '').match(regex);
-  if (!match) return null;
-  const value = Number(match[1]);
-  return Number.isFinite(value) && value >= 0 && value <= max ? value : null;
+function firstLabelMatch(line, patterns) {
+  let best = null;
+  for (const pattern of patterns) {
+    const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`;
+    const regex = new RegExp(pattern.source, flags);
+    const match = regex.exec(line);
+    if (match && (!best || match.index < best.index)) best = match;
+  }
+  return best;
 }
 
-function findLooseValue(text, max) {
-  const values = [...String(text || '').matchAll(/(?:^|[^\d])(-?\d+(?:\.\d+)?)(?!\d)/g)]
-    .map(match => Number(match[1]))
-    .filter(value => Number.isFinite(value) && value >= 0 && value <= max);
-  return values[0] ?? null;
+function numericUnitMatches(text, unit, max) {
+  const unitPattern = unit === 'kcal' ? '(?:kcal|kca[l1]|kcai|cal)' : '(?:g|gram(?:s)?)';
+  const regex = new RegExp(`(?:約|およそ)?\\s*(\\d{1,5}(?:\\.\\d{1,3})?)\\s*${unitPattern}`, 'ig');
+  return [...String(text || '').matchAll(regex)]
+    .map(match => ({ value: Number(match[1]), index: match.index || 0, raw: match[0] }))
+    .filter(item => Number.isFinite(item.value) && item.value >= 0 && item.value <= max);
 }
 
-function lineMatchesAny(line, patterns) {
-  return patterns.some(pattern => pattern.test(line));
+function suspiciousContext(text, value, key) {
+  const compact = String(text || '').replace(/\s+/g, ' ');
+  if (key === 'protein' && value === 100 && /(?:アミノ酸|amino).{0,10}(?:スコア|score)?\s*100/i.test(compact)) return true;
+  if (/スコア\s*100/i.test(compact) && value === 100) return true;
+  return false;
 }
 
-function extractNutritionValue(lines, patterns, { unit, max }) {
+function extractNutritionCandidates(lines, patterns, { unit, max, key }) {
+  const candidates = [];
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    if (!lineMatchesAny(line, patterns)) continue;
+    const labelMatch = firstLabelMatch(line, patterns);
+    if (!labelMatch) continue;
 
-    const sameLine = findUnitValue(line, unit, max);
-    if (sameLine !== null) return sameLine;
+    const afterLabel = line.slice(labelMatch.index + labelMatch[0].length, labelMatch.index + labelMatch[0].length + 52);
+    for (const item of numericUnitMatches(afterLabel, unit, max)) {
+      if (!suspiciousContext(line, item.value, key)) candidates.push({ ...item, score: 120 - item.index, source: 'same-line' });
+    }
 
-    const context = [line, lines[index + 1] || '', lines[index + 2] || ''].join(' ');
-    const nearbyUnit = findUnitValue(context, unit, max);
-    if (nearbyUnit !== null) return nearbyUnit;
-
-    const labelStripped = patterns.reduce((value, pattern) => value.replace(pattern, ' '), line);
-    const looseSameLine = findLooseValue(labelStripped, max);
-    if (looseSameLine !== null) return looseSameLine;
-
-    for (let offset = 1; offset <= 2; offset += 1) {
+    for (let offset = 1; offset <= 1; offset += 1) {
       const nextLine = lines[index + offset] || '';
-      if (!nextLine) continue;
-      if (Object.values(NUTRITION_LABELS).some(group => lineMatchesAny(nextLine, group))) break;
-      const looseNearby = findLooseValue(nextLine, max);
-      if (looseNearby !== null) return looseNearby;
+      if (!nextLine || Object.values(NUTRITION_LABELS).some(group => firstLabelMatch(nextLine, group))) break;
+      for (const item of numericUnitMatches(nextLine.slice(0, 42), unit, max)) {
+        if (!suspiciousContext(nextLine, item.value, key)) candidates.push({ ...item, score: 65 - item.index, source: 'next-line' });
+      }
     }
   }
-  return null;
+  return candidates.sort((a, b) => b.score - a.score);
 }
 
 function parseNutritionFromOcr(rawText) {
   const text = normalizeOcrText(rawText);
   const lines = text.split('\n').map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
-
-  const calories = extractNutritionValue(lines, NUTRITION_LABELS.calories, { unit: 'kcal', max: 5000 });
-  const protein = extractNutritionValue(lines, NUTRITION_LABELS.protein, { unit: 'g', max: 500 });
-  const fat = extractNutritionValue(lines, NUTRITION_LABELS.fat, { unit: 'g', max: 500 });
-  const carbs = extractNutritionValue(lines, NUTRITION_LABELS.carbs, { unit: 'g', max: 1000 });
-
+  const candidateMap = {
+    calories: extractNutritionCandidates(lines, NUTRITION_LABELS.calories, { unit: 'kcal', max: 5000, key: 'calories' }),
+    protein: extractNutritionCandidates(lines, NUTRITION_LABELS.protein, { unit: 'g', max: 500, key: 'protein' }),
+    fat: extractNutritionCandidates(lines, NUTRITION_LABELS.fat, { unit: 'g', max: 500, key: 'fat' }),
+    carbs: extractNutritionCandidates(lines, NUTRITION_LABELS.carbs, { unit: 'g', max: 1000, key: 'carbs' }),
+  };
   const basisMatches = [...text.matchAll(/(?:100\s*(?:g|ml)|1\s*(?:食|包装|個|本|袋|枚|パック)|一\s*(?:食|包装|個|本|袋|枚|パック)|当たり|あたり)/gi)]
     .map(match => match[0].replace(/\s+/g, ''));
-  const basis = [...new Set(basisMatches)].slice(0, 4);
-
-  return { calories, protein, fat, carbs, basis, rawText: text };
+  return {
+    calories: candidateMap.calories[0]?.value ?? null,
+    protein: candidateMap.protein[0]?.value ?? null,
+    fat: candidateMap.fat[0]?.value ?? null,
+    carbs: candidateMap.carbs[0]?.value ?? null,
+    candidates: candidateMap,
+    basis: [...new Set(basisMatches)].slice(0, 4),
+    rawText: text,
+  };
 }
 
-function mergeParsedNutrition(primary, secondary) {
-  const merged = {};
-  for (const key of ['calories', 'protein', 'fat', 'carbs']) {
-    merged[key] = primary[key] ?? secondary[key] ?? null;
+function addDecimalVariants(value, key) {
+  if (!Number.isFinite(value)) return [];
+  const result = [value];
+  if (key !== 'calories' && value >= 10) result.push(value / 10);
+  if (key !== 'calories' && value >= 100) result.push(value / 100);
+  return [...new Set(result.map(v => Math.round(v * 1000) / 1000))];
+}
+
+function chooseBestAcrossRuns(runs) {
+  const valuesFor = key => {
+    const votes = new Map();
+    for (const run of runs) {
+      const source = run?.candidates?.[key] || [];
+      source.slice(0, 3).forEach((candidate, index) => {
+        for (const variant of addDecimalVariants(candidate.value, key)) {
+          const mapKey = String(variant);
+          const current = votes.get(mapKey) || { value: variant, votes: 0, score: 0 };
+          current.votes += index === 0 ? 2 : 1;
+          current.score += candidate.score || 0;
+          if (variant !== candidate.value) current.score -= 28;
+          votes.set(mapKey, current);
+        }
+      });
+    }
+    return [...votes.values()].sort((a, b) => (b.votes * 100 + b.score) - (a.votes * 100 + a.score)).slice(0, 6);
+  };
+
+  const calorieOptions = valuesFor('calories').filter(x => x.value >= 1);
+  const proteinOptions = valuesFor('protein');
+  const fatOptions = valuesFor('fat');
+  const carbOptions = valuesFor('carbs');
+  const fallback = key => valuesFor(key)[0]?.value ?? null;
+
+  let best = null;
+  for (const kcal of calorieOptions.slice(0, 4)) {
+    for (const p of proteinOptions.slice(0, 5)) {
+      for (const f of fatOptions.slice(0, 5)) {
+        for (const c of carbOptions.slice(0, 5)) {
+          const macroKcal = p.value * 4 + f.value * 9 + c.value * 4;
+          const energyDelta = Math.abs(macroKcal - kcal.value);
+          const energyPenalty = energyDelta / Math.max(20, kcal.value * .28);
+          const voteReward = (kcal.votes + p.votes + f.votes + c.votes) * .38;
+          const score = energyPenalty - voteReward;
+          if (!best || score < best.score) best = { score, calories: kcal.value, protein: p.value, fat: f.value, carbs: c.value, energyDelta };
+        }
+      }
+    }
   }
-  merged.basis = [...new Set([...(primary.basis || []), ...(secondary.basis || [])])].slice(0, 4);
-  merged.rawText = `${primary.rawText || ''}\n${secondary.rawText || ''}`.trim();
-  return merged;
+
+  const selected = best && best.energyDelta <= Math.max(35, best.calories * .55)
+    ? best
+    : {
+        calories: fallback('calories'),
+        protein: fallback('protein'),
+        fat: fallback('fat'),
+        carbs: fallback('carbs'),
+      };
+
+  // 異常に大きいP/F/Cは、エネルギーとの整合が取れない限り空欄にする。
+  if (Number.isFinite(selected.calories)) {
+    for (const key of ['protein', 'fat', 'carbs']) {
+      const value = selected[key];
+      if (!Number.isFinite(value)) continue;
+      const factor = key === 'fat' ? 9 : 4;
+      if (value * factor > selected.calories * 1.35) selected[key] = null;
+    }
+  }
+
+  selected.basis = [...new Set(runs.flatMap(run => run.basis || []))].slice(0, 4);
+  selected.rawText = runs.map(run => run.rawText || '').join('\n');
+  return selected;
 }
 
 function setMealOcrLoading(visible, title = '', detail = '') {
@@ -228,31 +278,23 @@ function fillMealOcrResult(parsed) {
     ['meal-ocr-fat', parsed.fat, 1],
     ['meal-ocr-carbs', parsed.carbs, 1],
   ];
-
   for (const [id, value, decimals] of mappings) {
     const input = document.getElementById(id);
     if (!input) continue;
-    input.value = value === null || value === undefined
-      ? ''
-      : decimals === 0 ? String(Math.round(value)) : Number(value).toFixed(decimals);
+    input.value = value === null || value === undefined ? '' : decimals === 0 ? String(Math.round(value)) : Number(value).toFixed(decimals);
   }
-
   const mealText = document.getElementById('meal-text-input')?.value?.trim() || '';
   const nameInput = document.getElementById('meal-ocr-name');
-  if (nameInput && !nameInput.value.trim() && mealText) {
-    nameInput.value = mealText.split('\n')[0].slice(0, 80);
-  }
-
+  if (nameInput && !nameInput.value.trim() && mealText) nameInput.value = mealText.split('\n')[0].slice(0, 80);
   const panel = document.getElementById('meal-ocr-result');
   if (panel) panel.hidden = false;
-
   const status = document.getElementById('meal-ocr-status');
   if (status) {
     const count = [parsed.calories, parsed.protein, parsed.fat, parsed.carbs].filter(value => value !== null && value !== undefined).length;
     const basisText = parsed.basis?.length ? ` 基準表記: ${parsed.basis.join(' / ')}` : '';
     status.textContent = count === 4
-      ? `4項目を読み取りました。数値が「100g当たり」か「1食当たり」かも確認してください。${basisText}`
-      : `${count}/4項目を読み取りました。空欄は手入力できます。${basisText}`;
+      ? `4項目を読み取りました。小数点と「100g当たり／1食当たり」を確認してください。${basisText}`
+      : `${count}/4項目を読み取りました。誤認の可能性が高い値は空欄にしています。${basisText}`;
     status.dataset.state = count === 4 ? 'success' : 'warning';
   }
 }
@@ -260,47 +302,29 @@ function fillMealOcrResult(parsed) {
 async function runMealNutritionOcr() {
   if (mealOcrBusy) return;
   const imageFile = getMealOcrImageFile();
-  if (!imageFile) {
-    window.alert('栄養成分表示が写っている写真を選択してください。');
-    return;
-  }
-
+  if (!imageFile) { window.alert('栄養成分表示が写っている写真を選択してください。'); return; }
   mealOcrBusy = true;
   const button = document.getElementById('btn-meal-nutrition-ocr');
   if (button) button.disabled = true;
-  setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', 'カロリー・P・F・Cを検索中');
+  setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', '複数パターンでカロリー・P・F・Cを確認中');
 
   try {
-    const [Tesseract, image] = await Promise.all([
-      loadMealOcrTesseract(),
-      loadMealOcrImage(imageFile),
-    ]);
-
+    const [Tesseract, image] = await Promise.all([loadMealOcrTesseract(), loadMealOcrImage(imageFile)]);
     if (!Tesseract?.createWorker) throw new Error('OCRワーカーを起動できませんでした。');
     const worker = await Tesseract.createWorker('jpn+eng', 1);
-    let parsed;
+    const runs = [];
     try {
-      await worker.setParameters({
-        preserve_interword_spaces: '1',
-        user_defined_dpi: '300',
-      });
-
-      const first = await worker.recognize(buildMealOcrCanvas(image, 'normal'));
-      const firstParsed = parseNutritionFromOcr(first?.data?.text || '');
-      const complete = [firstParsed.calories, firstParsed.protein, firstParsed.fat, firstParsed.carbs].every(value => value !== null);
-
-      if (complete) {
-        parsed = firstParsed;
-      } else {
-        setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', '読み取りにくい文字を再確認中');
-        const second = await worker.recognize(buildMealOcrCanvas(image, 'contrast'));
-        parsed = mergeParsedNutrition(firstParsed, parseNutritionFromOcr(second?.data?.text || ''));
+      await worker.setParameters({ preserve_interword_spaces: '1', user_defined_dpi: '300', tessedit_pageseg_mode: '6' });
+      const modes = ['auto', 'contrast', 'binary', 'softBinary'];
+      for (let index = 0; index < modes.length; index += 1) {
+        setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', `文字を再確認中 ${index + 1}/${modes.length}`);
+        const result = await worker.recognize(buildMealOcrCanvas(image, modes[index]));
+        runs.push(parseNutritionFromOcr(result?.data?.text || ''));
       }
     } finally {
       await worker.terminate();
     }
-
-    fillMealOcrResult(parsed);
+    fillMealOcrResult(chooseBestAcrossRuns(runs));
   } catch (error) {
     console.error('Meal nutrition OCR failed:', error);
     const panel = document.getElementById('meal-ocr-result');
@@ -327,28 +351,23 @@ function numberFromInput(id) {
 
 async function saveMealFromOcr() {
   if (mealOcrSaveBusy) return;
-
   const calories = numberFromInput('meal-ocr-calories');
   const protein = numberFromInput('meal-ocr-protein');
   const fat = numberFromInput('meal-ocr-fat');
   const carbohydrates = numberFromInput('meal-ocr-carbs');
-
   if ([calories, protein, fat, carbohydrates].some(value => value === null)) {
     window.alert('カロリー・P・F・Cの4項目を確認してください。\n読み取れなかった項目は手入力できます。');
     return;
   }
-
   const nameInput = document.getElementById('meal-ocr-name');
   const mealText = document.getElementById('meal-text-input')?.value?.trim() || '';
   const name = nameInput?.value?.trim() || mealText.split('\n')[0]?.trim() || '栄養成分表 OCR';
   const date = document.getElementById('meal-date-input')?.value || '';
   const image = getMealOcrImageFile();
-
   const button = document.getElementById('btn-save-meal-ocr');
   mealOcrSaveBusy = true;
   if (button) button.disabled = true;
   setMealOcrLoading(true, 'OCRで読み取った栄養を登録しています...', '写真と栄養値を保存中');
-
   try {
     const formData = new FormData();
     formData.append('name', name);
@@ -362,11 +381,9 @@ async function saveMealFromOcr() {
     formData.append('baseServingAmount', '1');
     formData.append('servingUnit', '個');
     if (image) formData.append('image', image);
-
     const response = await fetch('/api/history/preset', { method: 'POST', body: formData });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || 'OCR栄養値の登録に失敗しました。');
-
     window.alert(`登録しました。\n${name}\n${Math.round(calories)} kcal / P ${protein.toFixed(1)}g / F ${fat.toFixed(1)}g / C ${carbohydrates.toFixed(1)}g`);
     window.location.reload();
   } catch (error) {
@@ -385,41 +402,25 @@ function ensureMealOcrStyles() {
   style.id = 'meal-ocr-style';
   style.textContent = `
     .meal-ocr-panel{display:grid;gap:9px;padding:11px;border:1px solid #36576a;border-radius:14px;background:#102431;margin-top:2px}
-    .meal-ocr-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .meal-ocr-title{font-size:13px;font-weight:800;color:#fff}
-    .meal-ocr-note{font-size:10px;line-height:1.45;color:#b7c7d0}
-    #btn-meal-nutrition-ocr{width:100%;min-height:44px;border-radius:12px;background:#126b62;border:1px solid #24d7c4;color:#fff;font-weight:800}
-    #meal-ocr-result[hidden]{display:none!important}
-    #meal-ocr-result{display:grid;gap:9px}
-    .meal-ocr-name{width:100%;padding:10px 11px;border-radius:10px;border:1px solid #3d6074;background:#071923;color:#fff;font:inherit;font-weight:700;outline:none}
-    .meal-ocr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-    .meal-ocr-field{display:grid;gap:4px;min-width:0}
-    .meal-ocr-field label{font-size:10px;font-weight:800;color:#dbe8ee}
-    .meal-ocr-field input{width:100%;min-width:0;padding:8px 5px;border-radius:8px;border:1px solid #3d6074;background:#071923;color:#fff;text-align:right;font-weight:800;font-size:14px}
-    #meal-ocr-status{font-size:10px;line-height:1.45;color:#b7c7d0}
-    #meal-ocr-status[data-state="warning"]{color:#ffd27a}
-    #meal-ocr-status[data-state="success"]{color:#7ee4b8}
-    #btn-save-meal-ocr{width:100%;min-height:44px;border-radius:12px;background:linear-gradient(135deg,#168f5c,#1fbf78);border:1px solid #42d995;color:#fff;font-weight:800}
-    @media(max-width:420px){.meal-ocr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  `;
+    .meal-ocr-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.meal-ocr-title{font-size:13px;font-weight:800;color:#fff}
+    .meal-ocr-note{font-size:10px;line-height:1.45;color:#b7c7d0}#btn-meal-nutrition-ocr{width:100%;min-height:44px;border-radius:12px;background:#126b62;border:1px solid #24d7c4;color:#fff;font-weight:800}
+    #meal-ocr-result[hidden]{display:none!important}#meal-ocr-result{display:grid;gap:9px}.meal-ocr-name{width:100%;padding:10px 11px;border-radius:10px;border:1px solid #3d6074;background:#071923;color:#fff;font:inherit;font-weight:700;outline:none}
+    .meal-ocr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.meal-ocr-field{display:grid;gap:4px;min-width:0}.meal-ocr-field label{font-size:10px;font-weight:800;color:#dbe8ee}.meal-ocr-field input{width:100%;min-width:0;padding:8px 5px;border-radius:8px;border:1px solid #3d6074;background:#071923;color:#fff;text-align:right;font-weight:800;font-size:14px}
+    #meal-ocr-status{font-size:10px;line-height:1.45;color:#b7c7d0}#meal-ocr-status[data-state="warning"]{color:#ffd27a}#meal-ocr-status[data-state="success"]{color:#7ee4b8}#btn-save-meal-ocr{width:100%;min-height:44px;border-radius:12px;background:linear-gradient(135deg,#168f5c,#1fbf78);border:1px solid #42d995;color:#fff;font-weight:800}@media(max-width:420px){.meal-ocr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}`;
   document.head.appendChild(style);
 }
 
 function ensureMealOcrPanel() {
   const modal = document.getElementById('meal-analysis-modal');
   if (!modal || document.getElementById('meal-ocr-panel')) return;
-
   const actions = modal.querySelector('.meal-analysis-actions');
   if (!actions) return;
-
   const panel = document.createElement('section');
   panel.id = 'meal-ocr-panel';
   panel.className = 'meal-ocr-panel';
   panel.innerHTML = `
-    <div class="meal-ocr-head">
-      <span class="meal-ocr-title">栄養成分表示をOCR</span>
-    </div>
-    <div class="meal-ocr-note">商品の栄養成分表示が写った写真から、カロリー・たんぱく質・脂質・炭水化物を読み取ります。フォーマットは固定でなくてもOKです。AIは使用しません。</div>
+    <div class="meal-ocr-head"><span class="meal-ocr-title">栄養成分表示をOCR</span></div>
+    <div class="meal-ocr-note">商品の栄養成分表示からカロリー・たんぱく質・脂質・炭水化物を読み取ります。暗い画像も自動反転し、小数点を複数回確認します。AIは使用しません。</div>
     <button type="button" id="btn-meal-nutrition-ocr">栄養成分表をOCRで読み取る</button>
     <div id="meal-ocr-result" hidden>
       <input type="text" id="meal-ocr-name" class="meal-ocr-name" maxlength="100" placeholder="メニュー名（空欄なら補足テキストを使用）">
@@ -431,9 +432,7 @@ function ensureMealOcrPanel() {
       </div>
       <div id="meal-ocr-status">読み取った数値を確認してから登録してください。</div>
       <button type="button" id="btn-save-meal-ocr">OCR内容で登録</button>
-    </div>
-  `;
-
+    </div>`;
   actions.insertAdjacentElement('beforebegin', panel);
   document.getElementById('btn-meal-nutrition-ocr')?.addEventListener('click', runMealNutritionOcr);
   document.getElementById('btn-save-meal-ocr')?.addEventListener('click', saveMealFromOcr);
@@ -446,9 +445,6 @@ function initMealNutritionOcr() {
 }
 
 if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMealNutritionOcr, { once: true });
-  } else {
-    initMealNutritionOcr();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMealNutritionOcr, { once: true });
+  else initMealNutritionOcr();
 }
