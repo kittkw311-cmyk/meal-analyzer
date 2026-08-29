@@ -1,4 +1,4 @@
-const MEAL_OCR_APP_VERSION = 'v1.0.6';
+const MEAL_OCR_APP_VERSION = 'v1.0.8';
 const MEAL_OCR_TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 let mealOcrTesseractLoader = null;
@@ -49,8 +49,8 @@ function loadMealOcrImage(file) {
 }
 
 function buildMealOcrCanvas(image, mode = 'auto') {
-  const maxWidth = 2000;
-  const scale = Math.min(2.5, Math.max(1, maxWidth / Math.max(1, image.naturalWidth)));
+  const maxWidth = 2200;
+  const scale = Math.min(3, Math.max(1, maxWidth / Math.max(1, image.naturalWidth)));
   const width = Math.max(1, Math.round(image.naturalWidth * scale));
   const height = Math.max(1, Math.round(image.naturalHeight * scale));
   const canvas = document.createElement('canvas');
@@ -78,9 +78,10 @@ function buildMealOcrCanvas(image, mode = 'auto') {
   for (let i = 0; i < data.length; i += 4) {
     const gray = data[i] * .299 + data[i + 1] * .587 + data[i + 2] * .114;
     let value = darkSource ? 255 - gray : gray;
-    if (mode === 'contrast') value = Math.max(0, Math.min(255, (value - 128) * 1.9 + 128));
-    if (mode === 'binary') value = value < 160 ? 0 : 255;
+    if (mode === 'contrast') value = Math.max(0, Math.min(255, (value - 128) * 2 + 128));
+    if (mode === 'binary') value = value < 155 ? 0 : 255;
     if (mode === 'softBinary') value = value < 190 ? 0 : 255;
+    if (mode === 'lightBinary') value = value < 210 ? 0 : 255;
     data[i] = value;
     data[i + 1] = value;
     data[i + 2] = value;
@@ -103,15 +104,16 @@ function normalizeOcrText(rawText) {
     .replace(/ｇ/gi, 'g')
     .replace(/ＫＣＡＬ/gi, 'kcal')
     .replace(/㎉/g, 'kcal')
+    .replace(/ｋｃａｌ/gi, 'kcal')
     .replace(/\r/g, '\n')
     .replace(/\n{2,}/g, '\n');
 }
 
 const NUTRITION_LABELS = {
   calories: [/エネルギー/i, /熱\s*量/i, /カロリー/i, /calor(?:ie|ies)/i, /energy/i],
-  protein: [/たんぱく\s*質/i, /タンパク\s*質/i, /蛋白\s*質/i, /protein/i],
+  protein: [/たんぱく\s*質/i, /タンパク\s*質/i, /蛋白\s*質/i, /蛋\s*白\s*質/i, /protein/i],
   fat: [/脂\s*質/i, /total\s*fat/i, /\bfat\b/i],
-  carbs: [/炭水化物(?:量)?/i, /糖質(?:量)?/i, /carbohydrate(?:s)?/i, /total\s*carb/i],
+  carbs: [/炭水化物(?:量)?/i, /炭\s*水\s*化\s*物/i, /糖質(?:量)?/i, /carbohydrate(?:s)?/i, /total\s*carb/i],
 };
 
 function firstLabelMatch(line, patterns) {
@@ -147,6 +149,7 @@ function suspiciousContext(text, value, key) {
   const compact = String(text || '').replace(/\s+/g, ' ');
   if (key === 'protein' && value === 100 && /(?:アミノ酸|amino).{0,10}(?:スコア|score)?\s*100/i.test(compact)) return true;
   if (/スコア\s*100/i.test(compact) && value === 100) return true;
+  if (key !== 'calories' && /食塩|塩分|salt/i.test(compact) && !/炭水化物|糖質|脂質|たんぱく|タンパク|蛋白|protein|fat|carb/i.test(compact)) return true;
   return false;
 }
 
@@ -157,20 +160,44 @@ function extractNutritionCandidates(lines, patterns, { unit, max, key }) {
     const labelMatch = firstLabelMatch(line, patterns);
     if (!labelMatch) continue;
 
-    const afterLabel = line.slice(labelMatch.index + labelMatch[0].length, labelMatch.index + labelMatch[0].length + 52);
+    const afterLabel = line.slice(labelMatch.index + labelMatch[0].length, labelMatch.index + labelMatch[0].length + 90);
     for (const item of numericUnitMatches(afterLabel, unit, max)) {
-      if (!suspiciousContext(line, item.value, key)) candidates.push({ ...item, score: 120 - item.index, source: 'same-line' });
+      if (!suspiciousContext(line, item.value, key)) candidates.push({ ...item, score: 140 - item.index, source: 'same-line' });
     }
 
-    for (let offset = 1; offset <= 1; offset += 1) {
+    for (let offset = 1; offset <= 2; offset += 1) {
       const nextLine = lines[index + offset] || '';
-      if (!nextLine || Object.values(NUTRITION_LABELS).some(group => firstLabelMatch(nextLine, group))) break;
-      for (const item of numericUnitMatches(nextLine.slice(0, 42), unit, max)) {
-        if (!suspiciousContext(nextLine, item.value, key)) candidates.push({ ...item, score: 65 - item.index, source: 'next-line' });
+      if (!nextLine) break;
+      if (offset > 1 && Object.values(NUTRITION_LABELS).some(group => firstLabelMatch(nextLine, group))) break;
+      for (const item of numericUnitMatches(nextLine.slice(0, 80), unit, max)) {
+        if (!suspiciousContext(nextLine, item.value, key)) candidates.push({ ...item, score: 82 - item.index - offset * 8, source: `next-line-${offset}` });
       }
     }
   }
   return candidates.sort((a, b) => b.score - a.score);
+}
+
+function pushOrderedFallback(candidateMap, text) {
+  const compact = String(text || '').replace(/\s+/g, ' ');
+  const kcalRegex = /(\d{1,5}(?:\.\d{1,3})?)\s*(?:kcal|kca[l1]|kcai|cal)/ig;
+  for (const kcalMatch of compact.matchAll(kcalRegex)) {
+    const kcalValue = Number(kcalMatch[1]);
+    if (!Number.isFinite(kcalValue) || kcalValue < 1 || kcalValue > 5000) continue;
+    const start = (kcalMatch.index || 0) + kcalMatch[0].length;
+    const tail = compact.slice(start, start + 220);
+    const gMatches = numericUnitMatches(tail, 'g', 1000).slice(0, 5);
+    if (gMatches.length < 3) continue;
+
+    const kcalCandidate = { value: kcalValue, rawNumber: kcalMatch[1], hadDecimal: kcalMatch[1].includes('.'), leadingZeroInteger: false, index: kcalMatch.index || 0, raw: kcalMatch[0], score: 108, source: 'ordered-row' };
+    candidateMap.calories.push(kcalCandidate);
+
+    const orderedKeys = ['protein', 'fat', 'carbs'];
+    orderedKeys.forEach((key, index) => {
+      const item = gMatches[index];
+      if (!item) return;
+      candidateMap[key].push({ ...item, score: 102 - index * 3, source: 'ordered-row' });
+    });
+  }
 }
 
 function parseNutritionFromOcr(rawText) {
@@ -182,6 +209,9 @@ function parseNutritionFromOcr(rawText) {
     fat: extractNutritionCandidates(lines, NUTRITION_LABELS.fat, { unit: 'g', max: 500, key: 'fat' }),
     carbs: extractNutritionCandidates(lines, NUTRITION_LABELS.carbs, { unit: 'g', max: 1000, key: 'carbs' }),
   };
+  pushOrderedFallback(candidateMap, text);
+  for (const key of Object.keys(candidateMap)) candidateMap[key].sort((a, b) => b.score - a.score);
+
   const basisMatches = [...text.matchAll(/(?:100\s*(?:g|ml)|1\s*(?:食|包装|個|本|袋|枚|パック)|一\s*(?:食|包装|個|本|袋|枚|パック)|当たり|あたり)/gi)]
     .map(match => match[0].replace(/\s+/g, ''));
   return {
@@ -205,20 +235,14 @@ function decimalVariantsForCandidate(candidate, key) {
     const digits = rawNumber.slice(1);
     if (digits) {
       const oneDecimal = Number(`0.${digits}`);
-      if (Number.isFinite(oneDecimal)) result.push({ value: oneDecimal, penalty: 2, reason: 'leading-zero-decimal' });
+      if (Number.isFinite(oneDecimal)) result.push({ value: oneDecimal, penalty: 1, reason: 'leading-zero-decimal' });
     }
   }
 
-  if (!candidate.hadDecimal && candidate.value >= 10) {
-    result.push({ value: candidate.value / 10, penalty: 24, reason: 'decimal-shift-1' });
-  }
-  if (!candidate.hadDecimal && candidate.value >= 100) {
-    result.push({ value: candidate.value / 100, penalty: 34, reason: 'decimal-shift-2' });
-  }
-
-  if (!candidate.hadDecimal && candidate.value > 0 && candidate.value < 10) {
-    result.push({ value: candidate.value / 10, penalty: 16, reason: 'possible-missing-leading-zero-decimal' });
-  }
+  if (!candidate.hadDecimal && candidate.value >= 10) result.push({ value: candidate.value / 10, penalty: 18, reason: 'decimal-shift-1' });
+  if (!candidate.hadDecimal && candidate.value >= 100) result.push({ value: candidate.value / 100, penalty: 20, reason: 'decimal-shift-2' });
+  if (!candidate.hadDecimal && candidate.value >= 1000) result.push({ value: candidate.value / 1000, penalty: 32, reason: 'decimal-shift-3' });
+  if (!candidate.hadDecimal && candidate.value > 0 && candidate.value < 10) result.push({ value: candidate.value / 10, penalty: 15, reason: 'possible-missing-leading-zero-decimal' });
 
   const deduped = new Map();
   for (const item of result) {
@@ -234,23 +258,24 @@ function chooseBestAcrossRuns(runs) {
     const votes = new Map();
     for (const run of runs) {
       const source = run?.candidates?.[key] || [];
-      source.slice(0, 3).forEach((candidate, index) => {
+      source.slice(0, 5).forEach((candidate, index) => {
         for (const variant of decimalVariantsForCandidate(candidate, key)) {
           const mapKey = String(variant.value);
-          const current = votes.get(mapKey) || { value: variant.value, votes: 0, score: 0, explicitDecimalVotes: 0, correctionPenalty: 0 };
+          const current = votes.get(mapKey) || { value: variant.value, votes: 0, score: 0, explicitDecimalVotes: 0, correctionPenalty: 0, orderedVotes: 0 };
           current.votes += index === 0 ? 2 : 1;
           current.score += candidate.score || 0;
           current.correctionPenalty += variant.penalty;
           if (candidate.hadDecimal && variant.value === candidate.value) current.explicitDecimalVotes += index === 0 ? 2 : 1;
-          if (variant.reason === 'leading-zero-decimal') current.score += 18;
+          if (candidate.source === 'ordered-row') current.orderedVotes += 1;
+          if (variant.reason === 'leading-zero-decimal') current.score += 20;
           votes.set(mapKey, current);
         }
       });
     }
     return [...votes.values()]
-      .map(item => ({ ...item, rank: item.votes * 100 + item.score + item.explicitDecimalVotes * 30 - item.correctionPenalty }))
+      .map(item => ({ ...item, rank: item.votes * 100 + item.score + item.explicitDecimalVotes * 38 + item.orderedVotes * 24 - item.correctionPenalty }))
       .sort((a, b) => b.rank - a.rank)
-      .slice(0, 8);
+      .slice(0, 10);
   };
 
   const calorieOptions = valuesFor('calories').filter(x => x.value >= 1);
@@ -260,38 +285,31 @@ function chooseBestAcrossRuns(runs) {
   const fallback = key => valuesFor(key)[0]?.value ?? null;
 
   let best = null;
-  for (const kcal of calorieOptions.slice(0, 5)) {
-    for (const p of proteinOptions.slice(0, 6)) {
-      for (const f of fatOptions.slice(0, 6)) {
-        for (const c of carbOptions.slice(0, 6)) {
+  for (const kcal of calorieOptions.slice(0, 6)) {
+    for (const p of proteinOptions.slice(0, 8)) {
+      for (const f of fatOptions.slice(0, 8)) {
+        for (const c of carbOptions.slice(0, 8)) {
           const macroKcal = p.value * 4 + f.value * 9 + c.value * 4;
           const energyDelta = Math.abs(macroKcal - kcal.value);
-          const energyPenalty = energyDelta / Math.max(12, kcal.value * .22);
-          const evidenceReward = (kcal.rank + p.rank + f.rank + c.rank) / 260;
+          const energyPenalty = energyDelta / Math.max(10, kcal.value * .18);
+          const evidenceReward = (kcal.rank + p.rank + f.rank + c.rank) / 300;
           const score = energyPenalty - evidenceReward;
-          if (!best || score < best.score) {
-            best = { score, calories: kcal.value, protein: p.value, fat: f.value, carbs: c.value, energyDelta };
-          }
+          if (!best || score < best.score) best = { score, calories: kcal.value, protein: p.value, fat: f.value, carbs: c.value, energyDelta };
         }
       }
     }
   }
 
-  const selected = best && best.energyDelta <= Math.max(22, best.calories * .38)
+  const selected = best && best.energyDelta <= Math.max(25, best.calories * .42)
     ? best
-    : {
-        calories: fallback('calories'),
-        protein: fallback('protein'),
-        fat: fallback('fat'),
-        carbs: fallback('carbs'),
-      };
+    : { calories: fallback('calories'), protein: fallback('protein'), fat: fallback('fat'), carbs: fallback('carbs') };
 
   if (Number.isFinite(selected.calories)) {
     for (const key of ['protein', 'fat', 'carbs']) {
       const value = selected[key];
       if (!Number.isFinite(value)) continue;
       const factor = key === 'fat' ? 9 : 4;
-      if (value * factor > selected.calories * 1.35) selected[key] = null;
+      if (value * factor > selected.calories * 1.45) selected[key] = null;
     }
   }
 
@@ -313,17 +331,22 @@ function getMealType() {
   return active?.dataset?.type || 'snack';
 }
 
+function formatMacro(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '';
+  return Number(Number(value).toFixed(2)).toString();
+}
+
 function fillMealOcrResult(parsed) {
   const mappings = [
-    ['meal-ocr-calories', parsed.calories, 0],
-    ['meal-ocr-protein', parsed.protein, 1],
-    ['meal-ocr-fat', parsed.fat, 1],
-    ['meal-ocr-carbs', parsed.carbs, 1],
+    ['meal-ocr-calories', parsed.calories, 'calories'],
+    ['meal-ocr-protein', parsed.protein, 'macro'],
+    ['meal-ocr-fat', parsed.fat, 'macro'],
+    ['meal-ocr-carbs', parsed.carbs, 'macro'],
   ];
-  for (const [id, value, decimals] of mappings) {
+  for (const [id, value, type] of mappings) {
     const input = document.getElementById(id);
     if (!input) continue;
-    input.value = value === null || value === undefined ? '' : decimals === 0 ? String(Math.round(value)) : Number(value).toFixed(decimals);
+    input.value = value === null || value === undefined ? '' : type === 'calories' ? String(Math.round(value)) : formatMacro(value);
   }
   const mealText = document.getElementById('meal-text-input')?.value?.trim() || '';
   const nameInput = document.getElementById('meal-ocr-name');
@@ -335,7 +358,7 @@ function fillMealOcrResult(parsed) {
     const count = [parsed.calories, parsed.protein, parsed.fat, parsed.carbs].filter(value => value !== null && value !== undefined).length;
     const basisText = parsed.basis?.length ? ` 基準表記: ${parsed.basis.join(' / ')}` : '';
     status.textContent = count === 4
-      ? `4項目を読み取りました。先頭0や小数点落ちも補正候補として比較しています。${basisText}`
+      ? `4項目を読み取りました。横並びの栄養表示や小数点落ちも照合しています。${basisText}`
       : `${count}/4項目を読み取りました。誤認の可能性が高い値は空欄にしています。${basisText}`;
     status.dataset.state = count === 4 ? 'success' : 'warning';
   }
@@ -348,7 +371,7 @@ async function runMealNutritionOcr() {
   mealOcrBusy = true;
   const button = document.getElementById('btn-meal-nutrition-ocr');
   if (button) button.disabled = true;
-  setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', '複数パターンでカロリー・P・F・Cを確認中');
+  setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', '複数の文字認識モードでカロリー・P・F・Cを確認中');
 
   try {
     const [Tesseract, image] = await Promise.all([loadMealOcrTesseract(), loadMealOcrImage(imageFile)]);
@@ -356,17 +379,24 @@ async function runMealNutritionOcr() {
     const worker = await Tesseract.createWorker('jpn+eng', 1);
     const runs = [];
     try {
-      await worker.setParameters({ preserve_interword_spaces: '1', user_defined_dpi: '300', tessedit_pageseg_mode: '6' });
-      const modes = ['auto', 'contrast', 'binary', 'softBinary'];
-      for (let index = 0; index < modes.length; index += 1) {
-        setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', `文字を再確認中 ${index + 1}/${modes.length}`);
-        const result = await worker.recognize(buildMealOcrCanvas(image, modes[index]));
-        runs.push(parseNutritionFromOcr(result?.data?.text || ''));
+      const modes = ['auto', 'contrast', 'binary', 'softBinary', 'lightBinary'];
+      const psmModes = ['6', '11'];
+      let progress = 0;
+      const total = modes.length * psmModes.length;
+      for (const psm of psmModes) {
+        await worker.setParameters({ preserve_interword_spaces: '1', user_defined_dpi: '300', tessedit_pageseg_mode: psm });
+        for (const mode of modes) {
+          progress += 1;
+          setMealOcrLoading(true, '栄養成分表示をOCRで読み取っています...', `文字を再確認中 ${progress}/${total}`);
+          const result = await worker.recognize(buildMealOcrCanvas(image, mode));
+          runs.push(parseNutritionFromOcr(result?.data?.text || ''));
+        }
       }
     } finally {
       await worker.terminate();
     }
     fillMealOcrResult(chooseBestAcrossRuns(runs));
+    setMealOcrVersion();
   } catch (error) {
     console.error('Meal nutrition OCR failed:', error);
     const panel = document.getElementById('meal-ocr-result');
@@ -426,7 +456,7 @@ async function saveMealFromOcr() {
     const response = await fetch('/api/history/preset', { method: 'POST', body: formData });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || 'OCR栄養値の登録に失敗しました。');
-    window.alert(`登録しました。\n${name}\n${Math.round(calories)} kcal / P ${protein.toFixed(1)}g / F ${fat.toFixed(1)}g / C ${carbohydrates.toFixed(1)}g`);
+    window.alert(`登録しました。\n${name}\n${Math.round(calories)} kcal / P ${formatMacro(protein)}g / F ${formatMacro(fat)}g / C ${formatMacro(carbohydrates)}g`);
     window.location.reload();
   } catch (error) {
     console.error('Meal OCR save failed:', error);
@@ -462,15 +492,15 @@ function ensureMealOcrPanel() {
   panel.className = 'meal-ocr-panel';
   panel.innerHTML = `
     <div class="meal-ocr-head"><span class="meal-ocr-title">栄養成分表示をOCR</span></div>
-    <div class="meal-ocr-note">商品の栄養成分表示からカロリー・たんぱく質・脂質・炭水化物を読み取ります。フォーマット固定ではなく、項目名・単位・小数点候補を照合します。AIは使用しません。</div>
+    <div class="meal-ocr-note">商品の栄養成分表示からカロリー・たんぱく質・脂質・炭水化物を読み取ります。フォーマット固定ではなく、項目名・単位・数値の並び・小数点候補を照合します。AIは使用しません。</div>
     <button type="button" id="btn-meal-nutrition-ocr">栄養成分表をOCRで読み取る</button>
     <div id="meal-ocr-result" hidden>
       <input type="text" id="meal-ocr-name" class="meal-ocr-name" maxlength="100" placeholder="メニュー名（空欄なら補足テキストを使用）">
       <div class="meal-ocr-grid">
         <div class="meal-ocr-field"><label for="meal-ocr-calories">kcal</label><input type="number" min="0" step="1" id="meal-ocr-calories" placeholder="---"></div>
-        <div class="meal-ocr-field"><label for="meal-ocr-protein">P (g)</label><input type="number" min="0" step="0.1" id="meal-ocr-protein" placeholder="--.-"></div>
-        <div class="meal-ocr-field"><label for="meal-ocr-fat">F (g)</label><input type="number" min="0" step="0.1" id="meal-ocr-fat" placeholder="--.-"></div>
-        <div class="meal-ocr-field"><label for="meal-ocr-carbs">C (g)</label><input type="number" min="0" step="0.1" id="meal-ocr-carbs" placeholder="--.-"></div>
+        <div class="meal-ocr-field"><label for="meal-ocr-protein">P (g)</label><input type="number" min="0" step="0.01" id="meal-ocr-protein" placeholder="--.--"></div>
+        <div class="meal-ocr-field"><label for="meal-ocr-fat">F (g)</label><input type="number" min="0" step="0.01" id="meal-ocr-fat" placeholder="--.--"></div>
+        <div class="meal-ocr-field"><label for="meal-ocr-carbs">C (g)</label><input type="number" min="0" step="0.01" id="meal-ocr-carbs" placeholder="--.--"></div>
       </div>
       <div id="meal-ocr-status">読み取った数値を確認してから登録してください。</div>
       <button type="button" id="btn-save-meal-ocr">OCR内容で登録</button>
