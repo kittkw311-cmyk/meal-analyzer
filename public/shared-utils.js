@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.7';
+const DISPLAY_APP_VERSION = 'v1.0.10';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -14,6 +14,14 @@ function enforceDisplayAppVersion() {
   observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true });
 }
 enforceDisplayAppVersion();
+
+function removeHistoryQuickActions() {
+  if (typeof document === 'undefined') return;
+  const remove = () => document.querySelector('.history-quick-actions')?.remove();
+  remove();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, { once: true });
+}
+removeHistoryQuickActions();
 
 const JST_TIME_ZONE = 'Asia/Tokyo';
 const DAY_MS = 86400000;
