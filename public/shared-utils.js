@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.11';
+const DISPLAY_APP_VERSION = 'v1.0.12';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -30,6 +30,16 @@ function hideHistoryQuickActions() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hide, { once: true });
 }
 hideHistoryQuickActions();
+
+// 「公式情報を検索して登録」は重く精度も安定しないため廃止。
+// 既存HTMLにボタンが残っていても、画面から削除して実行経路を無効化する。
+function removeOfficialMealSearchRegistration() {
+  if (typeof document === 'undefined') return;
+  const remove = () => document.getElementById('btn-analyze-official')?.remove();
+  remove();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, { once: true });
+}
+removeOfficialMealSearchRegistration();
 
 const JST_TIME_ZONE = 'Asia/Tokyo';
 const DAY_MS = 86400000;
