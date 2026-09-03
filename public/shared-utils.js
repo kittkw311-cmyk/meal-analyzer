@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.15';
+const DISPLAY_APP_VERSION = 'v1.0.16';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -14,63 +14,6 @@ function enforceDisplayAppVersion() {
   observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true });
 }
 enforceDisplayAppVersion();
-
-function hydrateSavedProfileInInfoTab() {
-  if (typeof document === 'undefined' || typeof window === 'undefined') return;
-
-  const applyProfile = profile => {
-    if (!profile || typeof profile !== 'object') return;
-    const values = {
-      'profile-height-input': profile.height,
-      'profile-gender-select': profile.gender,
-      'profile-activity-select': profile.activityLevel,
-      'profile-activity-notes-input': profile.activityNotes,
-      'profile-birth-date-input': profile.birthDate,
-      'profile-target-weight-input': profile.targetWeight,
-      'profile-target-date-input': profile.targetDate,
-    };
-    Object.entries(values).forEach(([id, value]) => {
-      const input = document.getElementById(id);
-      if (!input) return;
-      const nextValue = value === null || value === undefined ? '' : String(value);
-      input.value = nextValue;
-      input.dataset.originalValue = nextValue;
-    });
-
-    const ageOutput = document.getElementById('profile-age-output');
-    if (ageOutput && profile.birthDate) {
-      const birth = new Date(`${profile.birthDate}T00:00:00`);
-      if (!Number.isNaN(birth.getTime())) {
-        const now = new Date();
-        let age = now.getFullYear() - birth.getFullYear();
-        const monthDiff = now.getMonth() - birth.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age -= 1;
-        ageOutput.textContent = age >= 0 ? `${age} 歳` : '-- 歳';
-      }
-    }
-  };
-
-  const load = async () => {
-    try {
-      const response = await fetch('/api/profile', { cache: 'no-store' });
-      if (!response.ok) throw new Error(`Profile request failed: ${response.status}`);
-      applyProfile(await response.json());
-    } catch (error) {
-      console.error('Failed to hydrate saved profile in info tab:', error);
-    }
-  };
-
-  const install = () => {
-    load();
-    document.querySelector('.nav-item[data-tab="tab-stats"]')?.addEventListener('click', () => {
-      window.setTimeout(load, 0);
-    });
-  };
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
-  else install();
-}
-hydrateSavedProfileInInfoTab();
 
 // 記録タブ上部のボタンは見せないが、フロートボタンから呼ばれる
 // btn-open-meal-entry / btn-open-weight-entry 自体は DOM に残す。
@@ -88,18 +31,28 @@ function hideHistoryQuickActions() {
 }
 hideHistoryQuickActions();
 
-// AI相談タブは廃止。ナビゲーションとタブ本体、専用モーダルを画面から削除する。
-function removeAiConsultationTab() {
+// AI相談タブは画面から隠すが、app.js の初期化で参照する要素は DOM に残す。
+// 要素を削除すると後続の初期化が途中で止まり、総合タブの目標値・プログレス更新まで到達しない。
+function hideAiConsultationTab() {
   if (typeof document === 'undefined') return;
-  const remove = () => {
+  const hide = () => {
     document.querySelector('.nav-item[data-tab="tab-analyze"]')?.remove();
-    document.getElementById('tab-analyze')?.remove();
-    document.getElementById('ai-consultation-modal')?.remove();
+    const tab = document.getElementById('tab-analyze');
+    if (tab) {
+      tab.hidden = true;
+      tab.style.display = 'none';
+      tab.setAttribute('aria-hidden', 'true');
+    }
+    const modal = document.getElementById('ai-consultation-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
   };
-  remove();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, { once: true });
+  hide();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hide, { once: true });
 }
-removeAiConsultationTab();
+hideAiConsultationTab();
 
 // 「公式情報を検索して登録」は重く精度も安定しないため廃止。
 function removeOfficialMealSearchRegistration() {
