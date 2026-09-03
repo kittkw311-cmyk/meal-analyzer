@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.12';
+const DISPLAY_APP_VERSION = 'v1.0.13';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -32,7 +32,6 @@ function hideHistoryQuickActions() {
 hideHistoryQuickActions();
 
 // 「公式情報を検索して登録」は重く精度も安定しないため廃止。
-// 既存HTMLにボタンが残っていても、画面から削除して実行経路を無効化する。
 function removeOfficialMealSearchRegistration() {
   if (typeof document === 'undefined') return;
   const remove = () => document.getElementById('btn-analyze-official')?.remove();
@@ -40,6 +39,95 @@ function removeOfficialMealSearchRegistration() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, { once: true });
 }
 removeOfficialMealSearchRegistration();
+
+// 写真付きメニュー登録は、料理全体を推定する前に栄養成分表示の読み取りを最優先する。
+// 既存の /api/presets/extract-nutrition は Gemini を「文字と数字の抽出」に絞って使うため、
+// 栄養表示が写っている普段の登録では、重い料理推定を通さずその値を履歴へ保存する。
+function installNutritionLabelFirstMealRegistration() {
+  if (typeof document === 'undefined') return;
+
+  const install = () => {
+    const button = document.getElementById('btn-analyze');
+    if (!button || button.dataset.nutritionLabelFirst === '1') return;
+    button.dataset.nutritionLabelFirst = '1';
+
+    button.addEventListener('click', async event => {
+      const cameraInput = document.getElementById('meal-camera-input');
+      const galleryInput = document.getElementById('meal-gallery-input');
+      const imageFile = cameraInput?.files?.[0] || galleryInput?.files?.[0] || null;
+
+      // 写真なし（テキストだけ）の登録は従来のAI推定に任せる。
+      if (!imageFile) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = '栄養表示を読み取り中…';
+
+      try {
+        const extractForm = new FormData();
+        extractForm.append('file', imageFile, imageFile.name || 'meal.jpg');
+        const extractResponse = await fetch('/api/presets/extract-nutrition', {
+          method: 'POST',
+          body: extractForm,
+          cache: 'no-store',
+        });
+        const extracted = await extractResponse.json().catch(() => ({}));
+        if (!extractResponse.ok) throw new Error(extracted.error || '栄養表示の読み取りに失敗しました。');
+
+        const values = [extracted.calories, extracted.protein, extracted.fat, extracted.carbohydrates].map(Number);
+        if (values.some(value => !Number.isFinite(value) || value < 0)) {
+          throw new Error('栄養表示からkcal/P/F/Cを正しく取得できませんでした。');
+        }
+
+        button.textContent = '読み取った数値を登録中…';
+        const selectedType = document.querySelector('#meal-type-chips .chip.active')?.dataset?.type || 'snack';
+        const dateValue = document.getElementById('meal-date-input')?.value || '';
+        const textInput = document.getElementById('meal-text-input')?.value?.trim() || '';
+        const saveForm = new FormData();
+        saveForm.append('name', String(extracted.name || textInput || '食事').slice(0, 40));
+        saveForm.append('calories', String(values[0]));
+        saveForm.append('protein', String(values[1]));
+        saveForm.append('fat', String(values[2]));
+        saveForm.append('carbohydrates', String(values[3]));
+        saveForm.append('mealDate', buildMealDateFromDateInput(dateValue));
+        saveForm.append('mealType', selectedType);
+        saveForm.append('baseAmount', String(Number(extracted.baseAmount) > 0 ? extracted.baseAmount : 1));
+        saveForm.append('servingUnit', extracted.servingUnit === 'g' ? 'g' : '個');
+        saveForm.append('image', imageFile, imageFile.name || 'meal.jpg');
+
+        const saveResponse = await fetch('/api/history/preset', {
+          method: 'POST',
+          body: saveForm,
+          cache: 'no-store',
+        });
+        const saved = await saveResponse.json().catch(() => ({}));
+        if (!saveResponse.ok) throw new Error(saved.error || 'メニューの登録に失敗しました。');
+
+        button.textContent = '登録しました';
+        window.setTimeout(() => window.location.reload(), 250);
+      } catch (error) {
+        console.error('Nutrition-label-first meal registration failed:', error);
+        button.textContent = '読み取り失敗・通常AIで再試行';
+        button.disabled = false;
+        button.dataset.nutritionLabelFallback = '1';
+        window.alert(error?.message || '栄養表示の読み取りに失敗しました。');
+      } finally {
+        if (button.textContent !== '登録しました' && button.dataset.nutritionLabelFallback !== '1') {
+          button.textContent = originalText;
+          button.disabled = false;
+        }
+      }
+    }, true);
+  };
+
+  install();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
+}
+installNutritionLabelFirstMealRegistration();
 
 const JST_TIME_ZONE = 'Asia/Tokyo';
 const DAY_MS = 86400000;
