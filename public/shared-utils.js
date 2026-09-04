@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.17';
+const DISPLAY_APP_VERSION = 'v1.0.18';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -94,6 +94,23 @@ function installPresetFreeWordSearch() {
       input = wrap.querySelector('#preset-freeword-search');
     }
 
+    // 検索欄追加後も新規登録（＋）ボタンを必ず表示する。
+    const newPresetButton = document.getElementById('presets-manual-toggle');
+    if (newPresetButton) {
+      newPresetButton.hidden = false;
+      newPresetButton.removeAttribute('aria-hidden');
+      newPresetButton.style.display = 'inline-flex';
+      newPresetButton.style.flex = '0 0 44px';
+      newPresetButton.style.width = '44px';
+      newPresetButton.style.minWidth = '44px';
+      newPresetButton.style.height = '44px';
+      newPresetButton.style.alignItems = 'center';
+      newPresetButton.style.justifyContent = 'center';
+      newPresetButton.style.order = '0';
+      newPresetButton.style.position = 'relative';
+      newPresetButton.style.zIndex = '2';
+    }
+
     if (!document.getElementById('preset-freeword-search-style')) {
       const style = document.createElement('style');
       style.id = 'preset-freeword-search-style';
@@ -103,7 +120,8 @@ function installPresetFreeWordSearch() {
         .preset-freeword-search:focus{border-color:var(--design-accent,#64748b);box-shadow:0 0 0 3px color-mix(in srgb,var(--design-accent,#64748b) 14%,transparent)}
         .preset-freeword-search-icon{position:absolute;left:12px;width:18px;height:18px;pointer-events:none;opacity:.55}
         .preset-freeword-no-results{padding:24px 12px;text-align:center;color:var(--design-muted,#6b7280);font-size:.9rem}
-        @media(max-width:720px){.preset-freeword-search-wrap{flex-basis:100%;order:-1}.preset-freeword-search{height:44px}}
+        #presets-manual-toggle{display:inline-flex!important;visibility:visible!important;opacity:1!important;flex:0 0 44px!important;width:44px!important;min-width:44px!important;height:44px!important;align-items:center;justify-content:center;order:0!important}
+        @media(max-width:720px){.preset-freeword-search-wrap{flex:1 1 calc(100% - 56px);min-width:0;order:1}.preset-freeword-search{height:44px}#presets-manual-toggle{order:0!important}}
       `;
       document.head.appendChild(style);
     }
