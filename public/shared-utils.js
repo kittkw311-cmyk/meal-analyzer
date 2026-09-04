@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.16';
+const DISPLAY_APP_VERSION = 'v1.0.17';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -62,6 +62,94 @@ function removeOfficialMealSearchRegistration() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, { once: true });
 }
 removeOfficialMealSearchRegistration();
+
+// 定番タブにフリーワード検索を追加。表示中の定番名をリアルタイムに絞り込む。
+function installPresetFreeWordSearch() {
+  if (typeof document === 'undefined') return;
+
+  const normalize = value => String(value || '')
+    .normalize('NFKC')
+    .toLocaleLowerCase('ja-JP')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const install = () => {
+    const toolbar = document.querySelector('.presets-toolbar');
+    const list = document.getElementById('presets-list');
+    if (!toolbar || !list) return;
+
+    let input = document.getElementById('preset-freeword-search');
+    if (!input) {
+      const wrap = document.createElement('div');
+      wrap.className = 'preset-freeword-search-wrap';
+      wrap.innerHTML = `
+        <svg class="preset-freeword-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input id="preset-freeword-search" class="preset-freeword-search" type="search" inputmode="search" autocomplete="off" placeholder="定番を検索" aria-label="定番メニューをフリーワード検索">
+      `;
+      const categoryFilter = document.getElementById('preset-category-filter');
+      toolbar.insertBefore(wrap, categoryFilter || toolbar.firstChild);
+      input = wrap.querySelector('#preset-freeword-search');
+    }
+
+    if (!document.getElementById('preset-freeword-search-style')) {
+      const style = document.createElement('style');
+      style.id = 'preset-freeword-search-style';
+      style.textContent = `
+        .preset-freeword-search-wrap{position:relative;display:flex;align-items:center;flex:1 1 220px;min-width:160px}
+        .preset-freeword-search{width:100%;height:42px;padding:0 12px 0 38px;border:1px solid var(--design-border,#d7dbe2);border-radius:12px;background:var(--design-card,#fff);color:inherit;font:inherit;outline:none}
+        .preset-freeword-search:focus{border-color:var(--design-accent,#64748b);box-shadow:0 0 0 3px color-mix(in srgb,var(--design-accent,#64748b) 14%,transparent)}
+        .preset-freeword-search-icon{position:absolute;left:12px;width:18px;height:18px;pointer-events:none;opacity:.55}
+        .preset-freeword-no-results{padding:24px 12px;text-align:center;color:var(--design-muted,#6b7280);font-size:.9rem}
+        @media(max-width:720px){.preset-freeword-search-wrap{flex-basis:100%;order:-1}.preset-freeword-search{height:44px}}
+      `;
+      document.head.appendChild(style);
+    }
+
+    let noResults = document.getElementById('preset-freeword-no-results');
+    if (!noResults) {
+      noResults = document.createElement('div');
+      noResults.id = 'preset-freeword-no-results';
+      noResults.className = 'preset-freeword-no-results';
+      noResults.textContent = '検索条件に一致する定番メニューがありません。';
+      noResults.hidden = true;
+      list.insertAdjacentElement('afterend', noResults);
+    }
+
+    const applyFilter = () => {
+      const query = normalize(input.value);
+      const rows = Array.from(list.querySelectorAll('.preset-list-row'));
+      let visibleCount = 0;
+      rows.forEach(row => {
+        const name = normalize(row.querySelector('.preset-list-row-name')?.textContent || row.textContent);
+        const matched = !query || name.includes(query);
+        row.hidden = !matched;
+        if (matched) visibleCount += 1;
+      });
+      noResults.hidden = !query || rows.length === 0 || visibleCount > 0;
+    };
+
+    if (input.dataset.freewordBound !== '1') {
+      input.dataset.freewordBound = '1';
+      input.addEventListener('input', applyFilter);
+      input.addEventListener('search', applyFilter);
+    }
+
+    if (list.dataset.freewordObserved !== '1') {
+      list.dataset.freewordObserved = '1';
+      const observer = new MutationObserver(() => queueMicrotask(applyFilter));
+      observer.observe(list, { childList: true, subtree: true });
+    }
+
+    applyFilter();
+  };
+
+  install();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
+}
+installPresetFreeWordSearch();
 
 // 写真付きメニュー登録は、料理全体を推定する前に栄養成分表示の読み取りを最優先する。
 function installNutritionLabelFirstMealRegistration() {
