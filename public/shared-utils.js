@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.19';
+const DISPLAY_APP_VERSION = 'v1.0.20';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -53,7 +53,60 @@ removeOfficialMealSearchRegistration();
 
 function installPresetFreeWordSearch() {
   if (typeof document === 'undefined') return;
-  const normalize = value => String(value || '').normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, ' ').trim();
+  const normalize = value => String(value || '')
+    .normalize('NFKC')
+    .toLocaleLowerCase('ja-JP')
+    .replace(/[\s・･ー―‐-]+/g, '')
+    .trim();
+
+  const isSubsequence = (query, text) => {
+    if (!query) return true;
+    let q = 0;
+    for (let i = 0; i < text.length && q < query.length; i += 1) {
+      if (text[i] === query[q]) q += 1;
+    }
+    return q === query.length;
+  };
+
+  const levenshteinDistance = (a, b, maxDistance = Infinity) => {
+    if (Math.abs(a.length - b.length) > maxDistance) return maxDistance + 1;
+    const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    const curr = new Array(b.length + 1);
+    for (let i = 1; i <= a.length; i += 1) {
+      curr[0] = i;
+      let rowMin = curr[0];
+      for (let j = 1; j <= b.length; j += 1) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+        rowMin = Math.min(rowMin, curr[j]);
+      }
+      if (rowMin > maxDistance) return maxDistance + 1;
+      for (let j = 0; j <= b.length; j += 1) prev[j] = curr[j];
+    }
+    return prev[b.length];
+  };
+
+  const fuzzyMatch = (queryValue, nameValue) => {
+    const query = normalize(queryValue);
+    const name = normalize(nameValue);
+    if (!query) return true;
+    if (!name) return false;
+    if (name.includes(query) || query.includes(name)) return true;
+    if (query.length >= 2 && isSubsequence(query, name)) return true;
+
+    const maxDistance = query.length <= 3 ? 1 : Math.max(1, Math.floor(query.length * 0.25));
+    if (levenshteinDistance(query, name, maxDistance) <= maxDistance) return true;
+
+    if (name.length > query.length) {
+      const windowSize = Math.min(name.length, query.length + maxDistance);
+      for (let i = 0; i <= name.length - Math.max(1, query.length - maxDistance); i += 1) {
+        const part = name.slice(i, i + windowSize);
+        if (levenshteinDistance(query, part, maxDistance) <= maxDistance) return true;
+      }
+    }
+    return false;
+  };
+
   const install = () => {
     const toolbar = document.querySelector('.presets-toolbar');
     const list = document.getElementById('presets-list');
@@ -62,10 +115,13 @@ function installPresetFreeWordSearch() {
     if (!input) {
       const wrap = document.createElement('div');
       wrap.className = 'preset-freeword-search-wrap';
-      wrap.innerHTML = `<svg class="preset-freeword-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="preset-freeword-search" class="preset-freeword-search" type="search" inputmode="search" autocomplete="off" placeholder="定番を検索" aria-label="定番メニューをフリーワード検索">`;
+      wrap.innerHTML = `<svg class="preset-freeword-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="preset-freeword-search" class="preset-freeword-search" type="search" inputmode="search" autocomplete="off" placeholder="定番をあいまい検索" aria-label="定番メニューをあいまい検索">`;
       const categoryFilter = document.getElementById('preset-category-filter');
       toolbar.insertBefore(wrap, categoryFilter || toolbar.firstChild);
       input = wrap.querySelector('#preset-freeword-search');
+    } else {
+      input.placeholder = '定番をあいまい検索';
+      input.setAttribute('aria-label', '定番メニューをあいまい検索');
     }
     const newPresetButton = document.getElementById('presets-manual-toggle');
     if (newPresetButton) {
@@ -96,9 +152,14 @@ function installPresetFreeWordSearch() {
       noResults.textContent = '検索条件に一致する定番メニューがありません。'; noResults.hidden = true; list.insertAdjacentElement('afterend', noResults);
     }
     const applyFilter = () => {
-      const query = normalize(input.value); const rows = Array.from(list.querySelectorAll('.preset-list-row')); let visibleCount = 0;
-      rows.forEach(row => { const name = normalize(row.querySelector('.preset-list-row-name')?.textContent || row.textContent); const matched = !query || name.includes(query); row.hidden = !matched; if (matched) visibleCount += 1; });
-      noResults.hidden = !query || rows.length === 0 || visibleCount > 0;
+      const query = input.value; const rows = Array.from(list.querySelectorAll('.preset-list-row')); let visibleCount = 0;
+      rows.forEach(row => {
+        const name = row.querySelector('.preset-list-row-name')?.textContent || row.textContent;
+        const matched = fuzzyMatch(query, name);
+        row.hidden = !matched;
+        if (matched) visibleCount += 1;
+      });
+      noResults.hidden = !normalize(query) || rows.length === 0 || visibleCount > 0;
     };
     if (input.dataset.freewordBound !== '1') { input.dataset.freewordBound = '1'; input.addEventListener('input', applyFilter); input.addEventListener('search', applyFilter); }
     if (list.dataset.freewordObserved !== '1') { list.dataset.freewordObserved = '1'; const observer = new MutationObserver(() => queueMicrotask(applyFilter)); observer.observe(list, { childList: true, subtree: true }); }
