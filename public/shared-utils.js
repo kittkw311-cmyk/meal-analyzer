@@ -1,7 +1,7 @@
 import './body-ocr.js';
 import './menu-ocr.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.20';
+const DISPLAY_APP_VERSION = 'v1.0.22';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
@@ -93,10 +93,8 @@ function installPresetFreeWordSearch() {
     if (!name) return false;
     if (name.includes(query) || query.includes(name)) return true;
     if (query.length >= 2 && isSubsequence(query, name)) return true;
-
     const maxDistance = query.length <= 3 ? 1 : Math.max(1, Math.floor(query.length * 0.25));
     if (levenshteinDistance(query, name, maxDistance) <= maxDistance) return true;
-
     if (name.length > query.length) {
       const windowSize = Math.min(name.length, query.length + maxDistance);
       for (let i = 0; i <= name.length - Math.max(1, query.length - maxDistance); i += 1) {
