@@ -1,7 +1,8 @@
 import './body-ocr.js';
 import './menu-ocr.js';
+import './body-ocr-fix.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.22';
+const DISPLAY_APP_VERSION = 'v1.0.23';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
