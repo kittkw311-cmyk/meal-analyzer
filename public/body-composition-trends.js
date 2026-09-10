@@ -1,24 +1,23 @@
 const BODY_TREND_METRICS = [
-  { key:'bmi', label:'BMI', unit:'', decimals:1 },
-  { key:'fatRate', label:'体脂肪率', unit:'%', decimals:1 },
-  { key:'heartRate', label:'心拍数', unit:'bpm', decimals:0 },
-  { key:'muscleMass', label:'筋肉量', unit:'kg', decimals:2 },
-  { key:'bmr', label:'基礎代謝量', unit:'kcal', decimals:0 },
-  { key:'waterRate', label:'水分量', unit:'%', decimals:1 },
-  { key:'fatMass', label:'体脂肪量', unit:'kg', decimals:2 },
-  { key:'leanBodyMass', label:'除脂肪体重', unit:'kg', decimals:2 },
-  { key:'boneMass', label:'骨量', unit:'kg', decimals:2 },
-  { key:'visceralFat', label:'内臓脂肪レベル', unit:'', decimals:1 },
-  { key:'proteinRate', label:'タンパク質', unit:'%', decimals:1 },
-  { key:'skeletalMuscleMass', label:'骨格筋量', unit:'kg', decimals:2 },
-  { key:'subcutaneousFat', label:'皮下脂肪', unit:'%', decimals:1 },
-  { key:'bodyAge', label:'体内年齢', unit:'歳', decimals:0 },
+  { key:'bmi', label:'BMI推移', unit:'', decimals:1 },
+  { key:'fatRate', label:'体脂肪率推移', unit:'%', decimals:1 },
+  { key:'heartRate', label:'心拍数推移', unit:'bpm', decimals:0 },
+  { key:'muscleMass', label:'筋肉量推移', unit:'kg', decimals:2 },
+  { key:'bmr', label:'基礎代謝量推移', unit:'kcal', decimals:0 },
+  { key:'waterRate', label:'水分量推移', unit:'%', decimals:1 },
+  { key:'fatMass', label:'体脂肪量推移', unit:'kg', decimals:2 },
+  { key:'leanBodyMass', label:'除脂肪体重推移', unit:'kg', decimals:2 },
+  { key:'boneMass', label:'骨量推移', unit:'kg', decimals:2 },
+  { key:'visceralFat', label:'内臓脂肪レベル推移', unit:'', decimals:1 },
+  { key:'proteinRate', label:'タンパク質推移', unit:'%', decimals:1 },
+  { key:'skeletalMuscleMass', label:'骨格筋量推移', unit:'kg', decimals:2 },
+  { key:'subcutaneousFat', label:'皮下脂肪推移', unit:'%', decimals:1 },
+  { key:'bodyAge', label:'体内年齢推移', unit:'歳', decimals:0 },
 ];
 
-let bodyTrendChart = null;
+const bodyTrendCharts = new Map();
+const bodyTrendRanges = new Map(BODY_TREND_METRICS.map(metric => [metric.key, 'month']));
 let bodyTrendRecords = [];
-let bodyTrendRange = 'month';
-let bodyTrendMetric = 'fatRate';
 
 function toDate(value) {
   if (!value) return null;
@@ -43,31 +42,23 @@ function formatDateLabel(date, range) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-function getMetric() {
-  return BODY_TREND_METRICS.find(metric => metric.key === bodyTrendMetric) || BODY_TREND_METRICS[0];
-}
-
-function getFilteredRecords(metric) {
-  const start = startDateForRange(bodyTrendRange);
+function filteredRecords(metric, range) {
+  const start = startDateForRange(range);
   return bodyTrendRecords
     .map(record => ({ record, date: toDate(record?.date) }))
     .filter(item => item.date && item.date >= start && Number.isFinite(Number(item.record?.[metric.key])))
     .sort((a, b) => a.date - b.date);
 }
 
-function renderBodyTrendChart() {
-  const canvas = document.getElementById('body-composition-trend-chart');
-  if (!canvas || !globalThis.Chart) return;
-
-  const metric = getMetric();
-  const filtered = getFilteredRecords(metric);
-  const labels = [...new Set(filtered.map(item => formatDateLabel(item.date, bodyTrendRange)))];
+function buildDatasets(metric, range) {
+  const filtered = filteredRecords(metric, range);
+  const labels = [...new Set(filtered.map(item => formatDateLabel(item.date, range)))];
   const types = [ ['morning','朝'], ['night','夜'], ['other','その他'] ];
-  const datasets = types.map(([key,label]) => {
+  const datasets = types.map(([key, label]) => {
     const byLabel = new Map();
     filtered
       .filter(item => (item.record?.measurementType || 'other') === key)
-      .forEach(item => byLabel.set(formatDateLabel(item.date, bodyTrendRange), Number(item.record[metric.key])));
+      .forEach(item => byLabel.set(formatDateLabel(item.date, range), Number(item.record[metric.key])));
     return {
       label,
       data: labels.map(labelKey => byLabel.has(labelKey) ? byLabel.get(labelKey) : null),
@@ -76,45 +67,65 @@ function renderBodyTrendChart() {
       pointHoverRadius: 5,
       tension: .28,
       spanGaps: true,
+      fill: false,
     };
   }).filter(dataset => dataset.data.some(value => value !== null));
+  return { labels, datasets };
+}
 
-  const empty = document.getElementById('body-composition-trend-empty');
+function renderMetricChart(metric) {
+  const canvas = document.getElementById(`body-trend-chart-${metric.key}`);
+  if (!canvas || !globalThis.Chart) return;
+  const range = bodyTrendRanges.get(metric.key) || 'month';
+  const { labels, datasets } = buildDatasets(metric, range);
+  const empty = document.getElementById(`body-trend-empty-${metric.key}`);
   if (empty) empty.hidden = datasets.length > 0;
 
-  if (bodyTrendChart) {
-    bodyTrendChart.destroy();
-    bodyTrendChart = null;
-  }
+  bodyTrendCharts.get(metric.key)?.destroy();
+  bodyTrendCharts.delete(metric.key);
 
-  bodyTrendChart = new Chart(canvas.getContext('2d'), {
-    type:'line',
-    data:{ labels, datasets },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      interaction:{ mode:'index', intersect:false },
-      plugins:{
-        legend:{ display:true, labels:{ usePointStyle:true, boxWidth:8 } },
-        tooltip:{ callbacks:{ label(context){
-          const value = Number(context.raw);
-          if (!Number.isFinite(value)) return '';
-          return `${context.dataset.label}: ${value.toFixed(metric.decimals)}${metric.unit ? ` ${metric.unit}` : ''}`;
-        } } },
+  const chart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            label(context) {
+              const value = Number(context.raw);
+              if (!Number.isFinite(value)) return '';
+              const suffix = metric.unit ? ` ${metric.unit}` : '';
+              return `${context.dataset.label}: ${value.toFixed(metric.decimals)}${suffix}`;
+            },
+          },
+        },
       },
-      scales:{
-        x:{ grid:{ display:false }, ticks:{ maxRotation:0, autoSkip:true } },
-        y:{
+      scales: {
+        x: {
+          grid: { display:false },
+          ticks: { maxRotation:0, autoSkip:true },
+        },
+        y: {
           beginAtZero:false,
-          title:{ display:!!metric.unit, text:metric.unit },
-          ticks:{ callback(value){
-            const numeric = Number(value);
-            return Number.isFinite(numeric) ? numeric.toFixed(metric.decimals) : value;
-          } },
+          ticks: {
+            callback(value) {
+              const numeric = Number(value);
+              return Number.isFinite(numeric) ? numeric.toFixed(metric.decimals) : value;
+            },
+          },
         },
       },
     },
   });
+  bodyTrendCharts.set(metric.key, chart);
+}
+
+function renderAllBodyTrendCharts() {
+  BODY_TREND_METRICS.forEach(renderMetricChart);
 }
 
 function installBodyTrendStyles() {
@@ -122,55 +133,61 @@ function installBodyTrendStyles() {
   const style = document.createElement('style');
   style.id = 'body-composition-trend-style';
   style.textContent = `
-    .body-composition-trend-card{margin-top:14px}
-    .body-composition-trend-controls{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
-    .body-composition-trend-select{min-width:170px;height:40px;border-radius:10px;border:1px solid var(--design-border,#314959);background:var(--design-card,#102431);color:inherit;padding:0 12px;font:inherit}
-    .body-composition-trend-range{display:flex;gap:6px}
-    .body-composition-trend-range button{min-width:44px;height:36px;border-radius:999px;border:1px solid var(--design-border,#314959);background:transparent;color:inherit;font:inherit;font-weight:700}
-    .body-composition-trend-range button.is-active{background:var(--design-primary,#14b8a6);color:#fff;border-color:transparent}
-    .body-composition-trend-chart-wrap{position:relative;height:260px}
-    .body-composition-trend-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--design-muted,#8194a0);font-size:.9rem;pointer-events:none}
-    .body-composition-trend-empty[hidden]{display:none!important}
-    @media(max-width:520px){.body-composition-trend-controls{align-items:stretch}.body-composition-trend-select{width:100%}.body-composition-trend-range{width:100%}.body-composition-trend-range button{flex:1}.body-composition-trend-chart-wrap{height:230px}}
+    .body-trend-card{margin-top:14px}
+    .body-trend-chart-wrap{position:relative;height:260px}
+    .body-trend-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--design-muted,#8194a0);font-size:.9rem;pointer-events:none}
+    .body-trend-empty[hidden]{display:none!important}
+    .overview-chart-legend-swatch.other{background:currentColor;opacity:.45}
+    @media(max-width:520px){.body-trend-chart-wrap{height:230px}}
   `;
   document.head.appendChild(style);
 }
 
-function installBodyTrendCard() {
+function trendCardMarkup(metric) {
+  return `
+    <div class="card overview-trend-card body-trend-card" id="body-trend-card-${metric.key}">
+      <div class="overview-trend-header">
+        <h3 class="chart-title"><svg class="icon-svg" style="margin-right: 6px; color: var(--design-primary); vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${metric.label}</h3>
+        <div class="overview-chart-range" role="group" aria-label="${metric.label}の表示期間">
+          <button type="button" class="overview-chart-range-btn" data-body-metric="${metric.key}" data-body-range="week">週</button>
+          <button type="button" class="overview-chart-range-btn is-active" data-body-metric="${metric.key}" data-body-range="month">月</button>
+          <button type="button" class="overview-chart-range-btn" data-body-metric="${metric.key}" data-body-range="year">年</button>
+        </div>
+      </div>
+      <div class="chart-container overview-trend-chart-container body-trend-chart-wrap">
+        <canvas id="body-trend-chart-${metric.key}"></canvas>
+        <div id="body-trend-empty-${metric.key}" class="body-trend-empty" hidden>この期間のデータがありません</div>
+      </div>
+      <div class="overview-chart-legend" aria-label="グラフの凡例">
+        <span class="overview-chart-legend-item"><span class="overview-chart-legend-swatch morning" aria-hidden="true"></span><span>朝</span></span>
+        <span class="overview-chart-legend-item"><span class="overview-chart-legend-swatch night" aria-hidden="true"></span><span>夜</span></span>
+        <span class="overview-chart-legend-item"><span class="overview-chart-legend-swatch other" aria-hidden="true"></span><span>その他</span></span>
+      </div>
+    </div>`;
+}
+
+function installBodyTrendCards() {
   const overview = document.getElementById('tab-overview');
   const weightCard = overview?.querySelector('.overview-trend-card');
-  if (!overview || !weightCard || document.getElementById('body-composition-trend-card')) return;
+  if (!overview || !weightCard || document.getElementById('body-trend-card-fatRate')) return;
 
-  const card = document.createElement('div');
-  card.id = 'body-composition-trend-card';
-  card.className = 'card overview-trend-card body-composition-trend-card';
-  card.innerHTML = `
-    <div class="overview-trend-header"><h3 class="chart-title">体組成推移</h3></div>
-    <div class="body-composition-trend-controls">
-      <select id="body-composition-trend-metric" class="body-composition-trend-select" aria-label="表示する体組成項目">
-        ${BODY_TREND_METRICS.map(metric => `<option value="${metric.key}"${metric.key === bodyTrendMetric ? ' selected' : ''}>${metric.label}</option>`).join('')}
-      </select>
-      <div class="body-composition-trend-range" role="group" aria-label="表示期間">
-        <button type="button" data-body-trend-range="week">週</button>
-        <button type="button" data-body-trend-range="month" class="is-active">月</button>
-        <button type="button" data-body-trend-range="year">年</button>
-      </div>
-    </div>
-    <div class="body-composition-trend-chart-wrap">
-      <canvas id="body-composition-trend-chart"></canvas>
-      <div id="body-composition-trend-empty" class="body-composition-trend-empty" hidden>この期間のデータがありません</div>
-    </div>`;
-  weightCard.insertAdjacentElement('afterend', card);
+  const holder = document.createElement('div');
+  holder.id = 'body-composition-trend-stack';
+  holder.innerHTML = BODY_TREND_METRICS.map(trendCardMarkup).join('');
+  weightCard.insertAdjacentElement('afterend', holder);
 
-  card.querySelector('#body-composition-trend-metric')?.addEventListener('change', event => {
-    bodyTrendMetric = event.target.value;
-    renderBodyTrendChart();
+  holder.querySelectorAll('[data-body-metric][data-body-range]').forEach(button => {
+    button.addEventListener('click', () => {
+      const metricKey = button.dataset.bodyMetric;
+      const range = button.dataset.bodyRange || 'month';
+      bodyTrendRanges.set(metricKey, range);
+      holder.querySelectorAll(`[data-body-metric="${metricKey}"]`).forEach(btn => {
+        btn.classList.toggle('is-active', btn === button);
+      });
+      const metric = BODY_TREND_METRICS.find(item => item.key === metricKey);
+      if (metric) renderMetricChart(metric);
+    });
   });
-  card.querySelectorAll('[data-body-trend-range]').forEach(button => button.addEventListener('click', () => {
-    bodyTrendRange = button.dataset.bodyTrendRange || 'month';
-    card.querySelectorAll('[data-body-trend-range]').forEach(btn => btn.classList.toggle('is-active', btn === button));
-    renderBodyTrendChart();
-  }));
 }
 
 async function loadBodyTrendRecords() {
@@ -183,14 +200,14 @@ async function loadBodyTrendRecords() {
     console.error('Failed to load body composition trends:', error);
     bodyTrendRecords = [];
   }
-  renderBodyTrendChart();
+  renderAllBodyTrendCharts();
 }
 
 function installBodyCompositionTrends() {
   if (typeof document === 'undefined') return;
   const install = () => {
     installBodyTrendStyles();
-    installBodyTrendCard();
+    installBodyTrendCards();
     loadBodyTrendRecords();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
