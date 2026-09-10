@@ -61,8 +61,6 @@ function buildWaterCanvas(image, mode = 'gray') {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Smart Scaleの左4段目（水分量）。通常OCRより上下左右を広めに取り、
-  // 51.3 の小数点や末尾桁が欠けにくいようにする。
   const sx = Math.round(image.naturalWidth * 0.055);
   const sy = Math.round(image.naturalHeight * 0.394);
   const sw = Math.round(image.naturalWidth * 0.405);
@@ -181,4 +179,91 @@ function installSmartScaleReconcileFix() {
   }, true);
 }
 
+function installBodyOcrReturnFix() {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+  const ensureStyle = () => {
+    if (document.getElementById('body-ocr-return-fix-style')) return;
+    const style = document.createElement('style');
+    style.id = 'body-ocr-return-fix-style';
+    style.textContent = `
+      #loading-overlay.body-ocr-force-hidden{display:none!important;pointer-events:none!important}
+      .body-ocr-result-notice{margin:10px 0 12px;padding:10px 12px;border:1px solid var(--design-border,#36576a);border-radius:10px;background:rgba(20,184,166,.08);color:inherit;font-size:12px;line-height:1.5}
+    `;
+    document.head.appendChild(style);
+  };
+
+  const closeOcrOverlay = () => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.classList.add('body-ocr-force-hidden');
+      overlay.style.setProperty('display', 'none', 'important');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+    const editor = document.getElementById('weight-result-edit-container');
+    if (editor) {
+      editor.style.display = 'block';
+      requestAnimationFrame(() => editor.scrollIntoView({ behavior:'smooth', block:'start' }));
+    }
+  };
+
+  const prepareForOcr = () => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.classList.remove('body-ocr-force-hidden');
+      overlay.style.removeProperty('display');
+      overlay.removeAttribute('aria-hidden');
+    }
+    document.getElementById('body-ocr-result-notice')?.remove();
+  };
+
+  const showNotice = message => {
+    const editor = document.getElementById('weight-result-edit-container');
+    if (!editor) return;
+    let notice = document.getElementById('body-ocr-result-notice');
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.id = 'body-ocr-result-notice';
+      notice.className = 'body-ocr-result-notice';
+      editor.prepend(notice);
+    }
+    notice.textContent = String(message || '').replace(/\n+/g, ' ');
+  };
+
+  const isBodyOcrResultMessage = message => {
+    const text = String(message || '');
+    return /(?:\d+\/15項目を読み取りました|体組成15項目を読み取りました|数値15項目を読み取りました|OCRで数値を特定できませんでした|OCR読み取りに失敗しました)/.test(text);
+  };
+
+  const install = () => {
+    ensureStyle();
+    const analyzeButton = document.getElementById('btn-analyze-weight');
+    if (analyzeButton && analyzeButton.dataset.returnFixBound !== '1') {
+      analyzeButton.dataset.returnFixBound = '1';
+      analyzeButton.addEventListener('click', prepareForOcr, true);
+      const observer = new MutationObserver(() => {
+        if (!analyzeButton.disabled) closeOcrOverlay();
+      });
+      observer.observe(analyzeButton, { attributes:true, attributeFilter:['disabled'] });
+    }
+
+    if (!window.__physilogBodyOcrAlertWrapped) {
+      window.__physilogBodyOcrAlertWrapped = true;
+      const nativeAlert = window.alert.bind(window);
+      window.alert = message => {
+        if (isBodyOcrResultMessage(message)) {
+          closeOcrOverlay();
+          showNotice(message);
+          return;
+        }
+        nativeAlert(message);
+      };
+    }
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
+  else install();
+}
+
 installSmartScaleReconcileFix();
+installBodyOcrReturnFix();
