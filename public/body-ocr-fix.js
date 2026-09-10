@@ -182,6 +182,16 @@ function installSmartScaleReconcileFix() {
 function installBodyOcrReturnFix() {
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
+  let watchdogTimer = null;
+  let finalStageTimer = null;
+
+  const clearWatchdogs = () => {
+    if (watchdogTimer) window.clearTimeout(watchdogTimer);
+    if (finalStageTimer) window.clearTimeout(finalStageTimer);
+    watchdogTimer = null;
+    finalStageTimer = null;
+  };
+
   const ensureStyle = () => {
     if (document.getElementById('body-ocr-return-fix-style')) return;
     const style = document.createElement('style');
@@ -207,16 +217,6 @@ function installBodyOcrReturnFix() {
     }
   };
 
-  const prepareForOcr = () => {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-      overlay.classList.remove('body-ocr-force-hidden');
-      overlay.style.removeProperty('display');
-      overlay.removeAttribute('aria-hidden');
-    }
-    document.getElementById('body-ocr-result-notice')?.remove();
-  };
-
   const showNotice = message => {
     const editor = document.getElementById('weight-result-edit-container');
     if (!editor) return;
@@ -230,6 +230,28 @@ function installBodyOcrReturnFix() {
     notice.textContent = String(message || '').replace(/\n+/g, ' ');
   };
 
+  const forceReturn = message => {
+    clearWatchdogs();
+    const analyzeButton = document.getElementById('btn-analyze-weight');
+    if (analyzeButton) analyzeButton.disabled = false;
+    closeOcrOverlay();
+    showNotice(message || 'OCR処理の待機を終了しました。読み取れた項目を確認して、必要な箇所だけ手入力してください。');
+  };
+
+  const prepareForOcr = () => {
+    clearWatchdogs();
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.classList.remove('body-ocr-force-hidden');
+      overlay.style.removeProperty('display');
+      overlay.removeAttribute('aria-hidden');
+    }
+    document.getElementById('body-ocr-result-notice')?.remove();
+    watchdogTimer = window.setTimeout(() => {
+      forceReturn('OCRが長時間応答しなかったため処理待ちを終了しました。読み取れた項目を確認してください。');
+    }, 30000);
+  };
+
   const isBodyOcrResultMessage = message => {
     const text = String(message || '');
     return /(?:\d+\/15項目を読み取りました|体組成15項目を読み取りました|数値15項目を読み取りました|OCRで数値を特定できませんでした|OCR読み取りに失敗しました)/.test(text);
@@ -241,10 +263,27 @@ function installBodyOcrReturnFix() {
     if (analyzeButton && analyzeButton.dataset.returnFixBound !== '1') {
       analyzeButton.dataset.returnFixBound = '1';
       analyzeButton.addEventListener('click', prepareForOcr, true);
-      const observer = new MutationObserver(() => {
-        if (!analyzeButton.disabled) closeOcrOverlay();
+      const buttonObserver = new MutationObserver(() => {
+        if (!analyzeButton.disabled) {
+          clearWatchdogs();
+          closeOcrOverlay();
+        }
       });
-      observer.observe(analyzeButton, { attributes:true, attributeFilter:['disabled'] });
+      buttonObserver.observe(analyzeButton, { attributes:true, attributeFilter:['disabled'] });
+    }
+
+    const subtext = document.querySelector('#loading-overlay .loading-subtext');
+    if (subtext && subtext.dataset.bodyOcrFinalWatch !== '1') {
+      subtext.dataset.bodyOcrFinalWatch = '1';
+      const finalObserver = new MutationObserver(() => {
+        const text = String(subtext.textContent || '');
+        if (/15\/15/.test(text) && !finalStageTimer) {
+          finalStageTimer = window.setTimeout(() => {
+            forceReturn('最終項目のOCR応答待ちを打ち切りました。読み取れた項目を確認してください。');
+          }, 4500);
+        }
+      });
+      finalObserver.observe(subtext, { childList:true, subtree:true, characterData:true });
     }
 
     if (!window.__physilogBodyOcrAlertWrapped) {
@@ -252,6 +291,7 @@ function installBodyOcrReturnFix() {
       const nativeAlert = window.alert.bind(window);
       window.alert = message => {
         if (isBodyOcrResultMessage(message)) {
+          clearWatchdogs();
           closeOcrOverlay();
           showNotice(message);
           return;
