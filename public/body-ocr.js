@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.0.37';
+const APP_VERSION = 'v1.0.38';
 const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 const OCR_TIMEOUT_MS = 10000;
 
@@ -23,13 +23,33 @@ const FIELDS = [
   { id:'input-bodyage-val', key:'bodyAge', row:7, col:0, decimals:0, min:10, max:100 },
 ];
 
-// Smart Scale の固定カード配置。数値本体だけを切り出す。
+// Smart Scale の固定カード配置。各カードの「大きい数字」だけを切り出す。
 const LAYOUT = {
   left:[0.075,0.390],
   right:[0.565,0.820],
   firstY:0.067,
   rowStep:0.1195,
   cropHalfHeight:0.0145,
+};
+
+// 単位 (kg / bpm / kcal / %) をOCRに入れないため、項目ごとに右端を詰める。
+// 体内年齢だけ最下段の配置が少し上なのでY座標も固定する。
+const FIELD_CROP_OVERRIDES = {
+  'input-weight-val': { x0:0.075, x1:0.325 },
+  'input-bmi-val': { x0:0.565, x1:0.755 },
+  'input-fat-val': { x0:0.075, x1:0.300 },
+  'input-heart-val': { x0:0.565, x1:0.705 },
+  'input-muscle-val': { x0:0.075, x1:0.325 },
+  'input-bmr-val': { x0:0.565, x1:0.805 },
+  'input-water-val': { x0:0.075, x1:0.300 },
+  'input-fatmass-val': { x0:0.565, x1:0.805 },
+  'input-leanbody-val': { x0:0.075, x1:0.325 },
+  'input-bone-val': { x0:0.565, x1:0.745 },
+  'input-visceralfat-val': { x0:0.075, x1:0.285 },
+  'input-proteinrate-val': { x0:0.565, x1:0.755 },
+  'input-skeletalmuscle-val': { x0:0.075, x1:0.325 },
+  'input-subcutaneous-val': { x0:0.565, x1:0.755 },
+  'input-bodyage-val': { x0:0.075, x1:0.235, cy:0.892 },
 };
 
 function loadTesseract(){
@@ -113,7 +133,6 @@ function normalizeNumber(raw,field){
   let value=Number(token);
   if(!Number.isFinite(value)) return null;
 
-  // 小数点だけ落ちた場合は項目の表示桁数に合わせて復元する。
   if(!token.includes('.')&&field.decimals>0&&value>field.max){
     for(let p=field.decimals;p<=3;p+=1){
       const candidate=value/(10**p);
@@ -125,19 +144,22 @@ function normalizeNumber(raw,field){
 }
 
 function cropRect(field,image){
-  const xs=field.col===0?LAYOUT.left:LAYOUT.right;
-  const cy=LAYOUT.firstY+LAYOUT.rowStep*field.row;
+  const base=field.col===0?LAYOUT.left:LAYOUT.right;
+  const override=FIELD_CROP_OVERRIDES[field.id]||{};
+  const x0=Number.isFinite(override.x0)?override.x0:base[0];
+  const x1=Number.isFinite(override.x1)?override.x1:base[1];
+  const cy=Number.isFinite(override.cy)?override.cy:(LAYOUT.firstY+LAYOUT.rowStep*field.row);
   return {
-    sx:Math.round(xs[0]*image.naturalWidth),
+    sx:Math.round(x0*image.naturalWidth),
     sy:Math.max(0,Math.round((cy-LAYOUT.cropHalfHeight)*image.naturalHeight)),
-    sw:Math.round((xs[1]-xs[0])*image.naturalWidth),
+    sw:Math.max(1,Math.round((x1-x0)*image.naturalWidth)),
     sh:Math.round(LAYOUT.cropHalfHeight*2*image.naturalHeight),
   };
 }
 
 function buildValueGrid(image,fields=FIELDS,{threshold=false,compact=false}={}){
-  const cellW=compact?620:500;
-  const cellH=compact?124:110;
+  const cellW=compact?650:500;
+  const cellH=compact?132:110;
   const cols=compact?1:2;
   const rows=compact?Math.max(1,fields.length):8;
   const canvas=document.createElement('canvas');
@@ -159,8 +181,8 @@ function buildValueGrid(image,fields=FIELDS,{threshold=false,compact=false}={}){
   const data=pixels.data;
   for(let i=0;i<data.length;i+=4){
     const gray=data[i]*.299+data[i+1]*.587+data[i+2]*.114;
-    let v=Math.max(0,Math.min(255,(gray-150)*1.85+150));
-    if(threshold) v=gray<190?0:255;
+    let v=Math.max(0,Math.min(255,(gray-148)*1.9+148));
+    if(threshold) v=gray<198?0:255;
     data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;
   }
   ctx.putImageData(pixels,0,0);
@@ -180,10 +202,9 @@ function valueFromCell(cellTokens,field){
   if(!cellTokens.length) return null;
   const ordered=[...cellTokens].sort((a,b)=>a.x0-b.x0);
   const bestHeight=Math.max(...ordered.map(t=>t.height),1);
-  const source=ordered.filter(t=>t.height>=bestHeight*.55&&t.confidence>=15);
+  const source=ordered.filter(t=>t.height>=bestHeight*.50&&t.confidence>=10);
   const use=source.length?source:ordered;
 
-  // 数字と小数点が別wordになっても左から連結して読む。
   let value=normalizeNumber(use.map(t=>t.text).join(''),field);
   if(value!==null) return value;
 
@@ -233,7 +254,7 @@ async function recognizeNumbers(Tesseract,image){
   try{
     await worker.setParameters({
       tessedit_char_whitelist:'0123456789.,',
-      tessedit_pageseg_mode:'6',
+      tessedit_pageseg_mode:'11',
       preserve_interword_spaces:'1',
       user_defined_dpi:'300',
     });
@@ -244,13 +265,20 @@ async function recognizeNumbers(Tesseract,image){
 
     const retryIds=new Set(FIELDS.filter(field=>!values[field.id]).map(field=>field.id));
     inconsistentPrecisionFields(values).forEach(id=>retryIds.add(id));
+
+    // どれか未取得なら、同じ再OCRの中で誤読しやすい整数2項目も一緒に再確認する。
+    // OCR回数は増やさず、心拍数/体内年齢の 93→35 / 40→20 のような誤読だけを抑える。
+    if(retryIds.size){
+      retryIds.add('input-heart-val');
+      retryIds.add('input-bodyage-val');
+      retryIds.add('input-muscle-val');
+    }
     const retryFields=FIELDS.filter(field=>retryIds.has(field.id));
 
-    // 追加OCRは未取得・整合性に疑いがある項目だけ。通常の処理時間は増やさない。
     if(retryFields.length){
       setLoading(true,`要確認 ${retryFields.length}項目だけ再確認中`);
-      const retryGrid=buildValueGrid(image,retryFields,{threshold:true,compact:true});
-      await worker.setParameters({tessedit_pageseg_mode:'6'});
+      const retryGrid=buildValueGrid(image,retryFields,{threshold:false,compact:true});
+      await worker.setParameters({tessedit_pageseg_mode:'11'});
       const second=await withTimeout(worker.recognize(retryGrid.canvas),6500);
       const retryValues=mapGridResult(second,retryGrid,retryFields);
       values={...values,...retryValues};
