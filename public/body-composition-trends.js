@@ -43,9 +43,16 @@ function startDateForRange(range) {
   return start;
 }
 
-function formatDateLabel(date, range) {
-  if (range === 'year') return `${date.getFullYear()}/${date.getMonth() + 1}`;
-  return `${date.getMonth() + 1}/${date.getDate()}`;
+function formatDateLabel(date, range, measurementType = '') {
+  const base = range === 'year'
+    ? `${date.getFullYear()}/${date.getMonth() + 1}`
+    : `${date.getMonth() + 1}/${date.getDate()}`;
+  const typeSuffix = measurementType === 'morning'
+    ? ' 朝'
+    : measurementType === 'night'
+      ? ' 夜'
+      : '';
+  return `${base}${typeSuffix}`;
 }
 
 function formatTooltipDate(date) {
@@ -64,10 +71,21 @@ function measurementTypeLabel(type) {
 
 function filteredRecords(metric, range) {
   const start = startDateForRange(range);
+  const typePriority = { morning:1, night:2, other:3 };
   return bodyTrendRecords
     .map(record => ({ record, date:toDate(record?.date) }))
-    .filter(item => item.date && item.date >= start && Number.isFinite(Number(item.record?.[metric.key])))
-    .sort((a, b) => a.date - b.date);
+    .filter(item => {
+      const raw = item.record?.[metric.key];
+      return item.date && item.date >= start && raw !== null && raw !== '' && Number.isFinite(Number(raw));
+    })
+    .sort((a, b) => {
+      const dateDiff = a.date - b.date;
+      if (dateDiff !== 0) return dateDiff;
+      const aPriority = typePriority[a.record?.measurementType] || 3;
+      const bPriority = typePriority[b.record?.measurementType] || 3;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return String(a.record?.id || '').localeCompare(String(b.record?.id || ''));
+    });
 }
 
 function chartColors() {
@@ -90,7 +108,7 @@ function renderMetricChart(metric) {
   const range = bodyTrendRanges.get(metric.key) || 'week';
   const rangeConfig = BODY_TREND_RANGE_CONFIG[range] || BODY_TREND_RANGE_CONFIG.week;
   const filtered = filteredRecords(metric, range);
-  const labels = filtered.map(item => formatDateLabel(item.date, range));
+  const labels = filtered.map(item => formatDateLabel(item.date, range, item.record?.measurementType));
   const values = filtered.map(item => Number(item.record[metric.key]));
   const colors = chartColors();
   const pointColors = filtered.map(item => {
