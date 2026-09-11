@@ -16,13 +16,18 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const formatDisplayDate = (dateLike) => sharedFormatDisplayDate(jstDateKey(dateLike));
-  const formatOverviewWeightLabel = (dateLike) => {
+  const formatOverviewWeightLabel = (dateLike, measurementType = '') => {
     const dateKey = jstDateKey(dateLike);
     const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!match) return '';
     const month = String(Number(match[2]));
     const day = String(Number(match[3]));
-    return `${month}/${day}`;
+    const typeSuffix = measurementType === 'morning'
+      ? ' 朝'
+      : measurementType === 'night'
+        ? ' 夜'
+        : '';
+    return `${month}/${day}${typeSuffix}`;
   };
 
 // DOM Elements
