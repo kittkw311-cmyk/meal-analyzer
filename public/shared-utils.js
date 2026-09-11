@@ -2,7 +2,7 @@ import './body-ocr.js';
 import './menu-ocr.js';
 import './body-composition-trends.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.36';
+const DISPLAY_APP_VERSION = 'v1.0.37';
 function enforceDisplayAppVersion() {
   const apply = () => {
     const version = document.querySelector('.app-version');
