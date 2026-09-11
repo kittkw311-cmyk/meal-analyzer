@@ -121,9 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
     month: { days: 30, maxTicksLimit: 8, pointRadius: 3.5, pointHoverRadius: 5.5 },
     year: { days: 365, maxTicksLimit: 12, pointRadius: 2.5, pointHoverRadius: 4.5 }
   };
-  let overviewWeightRange = localStorage.getItem(OVERVIEW_WEIGHT_RANGE_KEY) || 'month';
+  let overviewWeightRange = localStorage.getItem(OVERVIEW_WEIGHT_RANGE_KEY) || 'week';
   if (!OVERVIEW_WEIGHT_RANGE_CONFIG[overviewWeightRange]) {
-    overviewWeightRange = 'month';
+    overviewWeightRange = 'week';
   }
 
 
@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const summaryWeightVal = document.getElementById('summary-weight-val');
   const dailyBmrCalories = document.getElementById('daily-bmr-calories');
   const overviewTdeeCalories = document.getElementById('overview-tdee-calories');
-  const overviewWeightRangeButtons = document.querySelectorAll('.overview-chart-range-btn');
+  const overviewWeightRangeButtons = document.querySelectorAll('.overview-chart-range-btn[data-overview-range]');
   const overviewAiQuestion = document.getElementById('overview-ai-question');
   const btnOverviewAiConsultation = document.getElementById('btn-overview-ai-consultation');
   const dailyTargetProtein = document.getElementById('daily-target-protein');
