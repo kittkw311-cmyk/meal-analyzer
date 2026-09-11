@@ -2,7 +2,7 @@ import './body-ocr.js';
 import './menu-ocr.js';
 import './body-composition-trends.js';
 
-const DISPLAY_APP_VERSION = 'v1.0.41';
+const DISPLAY_APP_VERSION = 'v1.0.42';
 function enforceDisplayAppVersion(){const apply=()=>{const version=document.querySelector('.app-version');if(version&&version.textContent!==DISPLAY_APP_VERSION)version.textContent=DISPLAY_APP_VERSION;};if(typeof document==='undefined')return;apply();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});const observer=new MutationObserver(apply);observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true});}
 enforceDisplayAppVersion();
 
